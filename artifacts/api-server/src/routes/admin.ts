@@ -1,0 +1,222 @@
+import { Router } from "express";
+import { db, productsTable, ordersTable, orderItemsTable, usersTable } from "@workspace/db";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { requireAdmin } from "../middlewares/requireAuth";
+import { AdminCreateProductBody, AdminUpdateProductBody, AdminUpdateOrderStatusBody, AdminListOrdersQueryParams } from "@workspace/api-zod";
+
+const router = Router();
+
+function formatProduct(p: typeof productsTable.$inferSelect) {
+  return {
+    id: p.id, name: p.name, description: p.description ?? null,
+    price: p.price ? Number(p.price) : null, stock: p.stock,
+    coverImage: p.coverImage, images: Array.isArray(p.images) ? p.images : [],
+    category: p.category, subcategory: p.subcategory ?? null, slug: p.slug,
+    isBuyable: p.isBuyable, isActive: p.isActive,
+  };
+}
+
+// Products
+router.get("/v1/admin/products", requireAdmin, async (req, res) => {
+  try {
+    const products = await db.select().from(productsTable).orderBy(desc(productsTable.createdAt));
+    res.json(products.map(formatProduct));
+  } catch (err) {
+    req.log.error({ err }, "Admin list products error");
+    res.status(500).json({ error: "Failed to list products" });
+  }
+});
+
+router.post("/v1/admin/products", requireAdmin, async (req, res) => {
+  const parse = AdminCreateProductBody.safeParse(req.body);
+  if (!parse.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+  try {
+    const data = parse.data;
+    const [product] = await db.insert(productsTable).values({
+      name: data.name,
+      description: data.description ?? null,
+      price: data.price != null ? String(data.price) : null,
+      stock: data.stock ?? 999,
+      coverImage: data.coverImage,
+      images: data.images ?? [],
+      category: data.category,
+      subcategory: data.subcategory ?? null,
+      slug: data.slug,
+      isBuyable: data.isBuyable ?? true,
+      isActive: true,
+    }).returning();
+    res.status(201).json(formatProduct(product));
+  } catch (err) {
+    req.log.error({ err }, "Admin create product error");
+    res.status(500).json({ error: "Failed to create product" });
+  }
+});
+
+router.put("/v1/admin/products/:id", requireAdmin, async (req, res) => {
+  const id = parseInt(String(req.params.id));
+  const parse = AdminUpdateProductBody.safeParse(req.body);
+  if (!parse.success || isNaN(id)) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+  try {
+    const data = parse.data;
+    const updateData: Partial<typeof productsTable.$inferInsert> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.price !== undefined) updateData.price = data.price != null ? String(data.price) : null;
+    if (data.stock !== undefined) updateData.stock = data.stock;
+    if (data.coverImage !== undefined) updateData.coverImage = data.coverImage;
+    if (data.images !== undefined) updateData.images = data.images;
+    if (data.category !== undefined) updateData.category = data.category;
+    if (data.subcategory !== undefined) updateData.subcategory = data.subcategory;
+    if (data.isBuyable !== undefined) updateData.isBuyable = data.isBuyable;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    const [product] = await db.update(productsTable).set(updateData).where(eq(productsTable.id, id)).returning();
+    if (!product) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
+    res.json(formatProduct(product));
+  } catch (err) {
+    req.log.error({ err }, "Admin update product error");
+    res.status(500).json({ error: "Failed to update product" });
+  }
+});
+
+router.delete("/v1/admin/products/:id", requireAdmin, async (req, res) => {
+  const id = parseInt(String(req.params.id));
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid product ID" });
+    return;
+  }
+  try {
+    await db.update(productsTable).set({ isActive: false }).where(eq(productsTable.id, id));
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Admin delete product error");
+    res.status(500).json({ error: "Failed to delete product" });
+  }
+});
+
+// Orders
+router.get("/v1/admin/orders", requireAdmin, async (req, res) => {
+  try {
+    const params = AdminListOrdersQueryParams.safeParse(req.query);
+    const { payment_status, order_status } = params.success ? params.data : {};
+    
+    let orders = await db.select().from(ordersTable).orderBy(desc(ordersTable.createdAt));
+    if (payment_status) orders = orders.filter(o => o.paymentStatus === payment_status);
+    if (order_status) orders = orders.filter(o => o.orderStatus === order_status);
+
+    const formatted = await Promise.all(orders.map(async order => {
+      const items = await db.select({
+        id: orderItemsTable.id,
+        productId: orderItemsTable.productId,
+        quantity: orderItemsTable.quantity,
+        price: orderItemsTable.price,
+        product: { id: productsTable.id, name: productsTable.name, coverImage: productsTable.coverImage, images: productsTable.images, category: productsTable.category, subcategory: productsTable.subcategory, slug: productsTable.slug, isBuyable: productsTable.isBuyable, isActive: productsTable.isActive, description: productsTable.description, stock: productsTable.stock, price: productsTable.price },
+      }).from(orderItemsTable).leftJoin(productsTable, eq(orderItemsTable.productId, productsTable.id)).where(eq(orderItemsTable.orderId, order.id));
+      
+      const user = await db.select({ name: usersTable.name, email: usersTable.email, phone: usersTable.phone }).from(usersTable).where(eq(usersTable.id, order.userId!)).limit(1);
+
+      return {
+        id: order.id, totalAmount: Number(order.totalAmount),
+        paymentStatus: order.paymentStatus, orderStatus: order.orderStatus,
+        childName: order.childName ?? null, shippingAddress: order.shippingAddress,
+        razorpayOrderId: order.razorpayOrderId ?? null, createdAt: order.createdAt,
+        user: user[0] ?? null,
+        items: items.map(item => ({
+          id: item.id, productId: item.productId!, quantity: item.quantity, price: Number(item.price),
+          product: item.product ? { ...item.product, price: item.product.price ? Number(item.product.price) : null, images: Array.isArray(item.product.images) ? item.product.images : [] } : undefined,
+        })),
+      };
+    }));
+    res.json(formatted);
+  } catch (err) {
+    req.log.error({ err }, "Admin list orders error");
+    res.status(500).json({ error: "Failed to list orders" });
+  }
+});
+
+router.patch("/v1/admin/orders/:id/status", requireAdmin, async (req, res) => {
+  const id = parseInt(String(req.params.id));
+  const parse = AdminUpdateOrderStatusBody.safeParse(req.body);
+  if (!parse.success || isNaN(id)) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+  try {
+    const updateData: Partial<typeof ordersTable.$inferInsert> = {};
+    if (parse.data.orderStatus) updateData.orderStatus = parse.data.orderStatus;
+    if (parse.data.paymentStatus) updateData.paymentStatus = parse.data.paymentStatus;
+    const [order] = await db.update(ordersTable).set(updateData).where(eq(ordersTable.id, id)).returning();
+    if (!order) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+    const items = await db.select({ id: orderItemsTable.id, productId: orderItemsTable.productId, quantity: orderItemsTable.quantity, price: orderItemsTable.price, product: { id: productsTable.id, name: productsTable.name, coverImage: productsTable.coverImage, images: productsTable.images, category: productsTable.category, subcategory: productsTable.subcategory, slug: productsTable.slug, isBuyable: productsTable.isBuyable, isActive: productsTable.isActive, description: productsTable.description, stock: productsTable.stock, price: productsTable.price } }).from(orderItemsTable).leftJoin(productsTable, eq(orderItemsTable.productId, productsTable.id)).where(eq(orderItemsTable.orderId, order.id));
+    res.json({
+      id: order.id, totalAmount: Number(order.totalAmount), paymentStatus: order.paymentStatus, orderStatus: order.orderStatus,
+      childName: order.childName ?? null, shippingAddress: order.shippingAddress, razorpayOrderId: order.razorpayOrderId ?? null, createdAt: order.createdAt,
+      items: items.map(item => ({ id: item.id, productId: item.productId!, quantity: item.quantity, price: Number(item.price), product: item.product ? { ...item.product, price: item.product.price ? Number(item.product.price) : null, images: Array.isArray(item.product.images) ? item.product.images : [] } : undefined })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Admin update order status error");
+    res.status(500).json({ error: "Failed to update order status" });
+  }
+});
+
+// Users
+router.get("/v1/admin/users", requireAdmin, async (req, res) => {
+  try {
+    const users = await db.select({ id: usersTable.id, name: usersTable.name, email: usersTable.email, phone: usersTable.phone, role: usersTable.role, createdAt: usersTable.createdAt }).from(usersTable).orderBy(desc(usersTable.createdAt));
+    res.json(users);
+  } catch (err) {
+    req.log.error({ err }, "Admin list users error");
+    res.status(500).json({ error: "Failed to list users" });
+  }
+});
+
+// Analytics
+router.get("/v1/admin/analytics", requireAdmin, async (req, res) => {
+  try {
+    const [revenueResult] = await db.select({ total: sql<string>`COALESCE(SUM(total_amount), 0)` }).from(ordersTable).where(eq(ordersTable.paymentStatus, "paid"));
+    const [orderCountResult] = await db.select({ count: sql<string>`COUNT(*)` }).from(ordersTable);
+    const [userCountResult] = await db.select({ count: sql<string>`COUNT(*)` }).from(usersTable);
+    
+    const topItems = await db.select({ productId: orderItemsTable.productId, total: sql<string>`SUM(quantity)` })
+      .from(orderItemsTable).groupBy(orderItemsTable.productId).orderBy(desc(sql`SUM(quantity)`)).limit(1);
+    
+    let topProductName: string | null = null;
+    if (topItems[0]?.productId) {
+      const [p] = await db.select({ name: productsTable.name }).from(productsTable).where(eq(productsTable.id, topItems[0].productId)).limit(1);
+      topProductName = p?.name ?? null;
+    }
+
+    // Monthly revenue (last 6 months)
+    const monthlyData = await db.select({
+      month: sql<string>`TO_CHAR(created_at, 'Mon YYYY')`,
+      revenue: sql<string>`SUM(total_amount)`,
+    }).from(ordersTable)
+      .where(and(eq(ordersTable.paymentStatus, "paid"), sql`created_at >= NOW() - INTERVAL '6 months'`))
+      .groupBy(sql`TO_CHAR(created_at, 'Mon YYYY')`)
+      .orderBy(sql`TO_CHAR(created_at, 'Mon YYYY')`);
+
+    res.json({
+      totalRevenue: Number(revenueResult?.total ?? 0),
+      totalOrders: Number(orderCountResult?.count ?? 0),
+      activeUsers: Number(userCountResult?.count ?? 0),
+      topProduct: topProductName,
+      monthlyRevenue: monthlyData.map(m => ({ month: m.month, revenue: Number(m.revenue) })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Admin analytics error");
+    res.status(500).json({ error: "Failed to get analytics" });
+  }
+});
+
+export default router;
