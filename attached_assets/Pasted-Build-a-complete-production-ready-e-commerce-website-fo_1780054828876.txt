@@ -1,0 +1,613 @@
+Build a complete production-ready e-commerce website for "TreasureTots Creations" — an Indian children's personalized books and learning products store.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TECH STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Frontend  : Next.js 14 (App Router) + Tailwind CSS
+Backend   : Flask (Python)
+Database  : PostgreSQL on Supabase
+Auth      : JWT — email/password + phone/password
+Payments  : Razorpay (UPI, Cards, Net Banking, QR)
+Images    : Cloudinary (admin uploads) + local public/assets
+Deploy FE : Vercel
+Deploy BE : Render
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BRAND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Name         : TreasureTots Creations
+Primary      : #FF7A00 (orange)
+Background   : #FFFAF5 (warm white)
+Design       : Soft, child-friendly, modern, smooth animations, rounded cards
+Logo         : /public/assets/logo.png
+Font         : Poppins or Inter
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTACT — embed on every page
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WhatsApp  : https://wa.me/918050640552
+Phone     : +91 805 064 0552
+Instagram : https://www.instagram.com/treasuretots2025
+Email     : treasuretots2025@gmail.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PAGES (App Router)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/                          Homepage
+/learning-devotion          Learning & Devotion listing
+/learning-devotion/[slug]   Product detail (Flipkart style)
+/flashcards                 Flash Cards listing
+/flashcards/[slug]          Flash card detail
+/custom-storybooks          Storybooks showcase gallery
+/custom-storybooks/[slug]   Single storybook detail
+/custom-wallpapers          Wallpapers & Frames
+/custom-labels              Labels & Stickers (buy directly)
+/cart                       Cart
+/checkout                   5-step checkout
+/order-success              Order confirmation
+/dashboard                  User dashboard (protected)
+/admin                      Admin dashboard (protected)
+/login                      Login
+/register                   Register
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMAGE FOLDERS — copy from ZIP exactly
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+public/assets/
+  logo.png
+  learning/
+    hanuman/        hanuman1.jpg–hanuman6.jpg
+    color-book/     godsandcolor1.jpg–godsandcolor6.jpg
+    balamantra/     balamantra1.jpg–balamantra4.jpg
+    vemana/         vemana1.jpg–vemana3.jpg + vemana4.jpeg–vemana7.jpeg
+    kalyanam/       kalyanam1.jpg–kalyanam4.jpg
+    sanatana/       sanatana1.jpg–sanatana3.jpg
+  flashcards/
+    az-phonics/     abc1.jpg–abc7.jpg           ← ONLY these for phonics
+    az-gods/        englishgod1.jpg–englishgod5.jpg  ← ONLY these for gods
+    telugu/         telugufc1.jpg–telugufc3.jpg + telugufc4.jpeg–telugufc7.jpeg
+  storybooks/
+    (38 subfolders, each has image1=cover image2=inside preview)
+  customised-tags/  customised-tags1.jpg–customised-tags8.jpg
+  labels-stickers/  labels-stickers1.jpg–labels-stickers6.jpg
+  wallpapers/       wallpapers.jpg + wallpaper2.jpeg + wallpaper3.jpeg
+  frames/           customized-frame-1.jpeg
+
+RENAME files with spaces when copying:
+  "vemana 4.jpeg" → vemana4.jpeg
+  "customised tags1.jpg" → customised-tags1.jpg
+  "labels-stickers1.jpg" → labels-stickers1.jpg
+  "customized frame 1.jpeg" → customized-frame-1.jpeg
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRODUCTS — exact mapping, do not mix images
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LEARNING & DEVOTION (buyable, Add to Cart + Buy Now):
+
+1. Hanuman Chalisa Book (English & Telugu)
+   slug    : hanuman-chalisa-book
+   price   : ₹120
+   cover   : /assets/learning/hanuman/hanuman1.jpg
+   images  : hanuman1.jpg to hanuman6.jpg
+
+2. Coloring Book of Gods & Goddess
+   slug    : coloring-book-gods-goddess
+   price   : ₹70
+   cover   : /assets/learning/color-book/godsandcolor1.jpg
+   images  : godsandcolor1.jpg to godsandcolor6.jpg
+
+3. Bala Mantra Shloka Book
+   slug    : bala-mantra-shloka-book
+   price   : ₹120
+   cover   : /assets/learning/balamantra/balamantra1.jpg
+   images  : balamantra1.jpg to balamantra4.jpg
+
+4. Vemana Padyalu Book
+   slug    : vemana-padyalu-book
+   price   : ₹100
+   cover   : /assets/learning/vemana/vemana1.jpg
+   images  : vemana1.jpg, vemana2.jpg, vemana3.jpg, vemana4.jpeg, vemana5.jpeg, vemana6.jpeg, vemana7.jpeg
+
+5. Srinivasa Kalyanam
+   slug    : srinivasa-kalyanam
+   price   : ₹200
+   cover   : /assets/learning/kalyanam/kalyanam1.jpg
+   images  : kalyanam1.jpg to kalyanam4.jpg
+
+6. Sanatana Stories
+   slug    : sanatana-stories
+   price   : ₹150
+   cover   : /assets/learning/sanatana/sanatana1.jpg
+   images  : sanatana1.jpg to sanatana3.jpg
+
+FLASH CARDS (buyable, Add to Cart + Buy Now):
+
+7. A-Z Phonics Flash Cards
+   slug    : az-phonics-flash-cards
+   price   : ₹250
+   cover   : /assets/flashcards/az-phonics/abc1.jpg
+   images  : abc1.jpg to abc7.jpg
+   STRICT  : ONLY abc*.jpg — do NOT mix with gods or telugu images
+
+8. A-Z Gods & Goddess Flash Cards
+   slug    : az-gods-goddess-flash-cards
+   price   : ₹250
+   cover   : /assets/flashcards/az-gods/englishgod1.jpg
+   images  : englishgod1.jpg to englishgod5.jpg
+   STRICT  : ONLY englishgod*.jpg — do NOT mix with phonics or telugu images
+
+9. Telugu Varnamala Achulu Flash Cards
+   slug    : telugu-varnamala-flash-cards
+   price   : ₹200
+   cover   : /assets/flashcards/telugu/telugufc1.jpg
+   images  : telugufc1.jpg, telugufc2.jpg, telugufc3.jpg, telugufc4.jpeg, telugufc5.jpeg, telugufc6.jpeg, telugufc7.jpeg
+   STRICT  : ONLY telugufc*.jpg/jpeg — do NOT mix with phonics or gods images
+
+LABELS & STICKERS (buyable, child name required):
+
+10. Customised Name Tags
+    slug    : customised-name-tags
+    price   : ₹150 per tag
+    cover   : /assets/customised-tags/customised-tags1.jpg
+    images  : customised-tags1.jpg to customised-tags8.jpg
+    SPECIAL : order form must include mandatory "Child's Name" field
+
+11. Labels & Stickers
+    slug    : labels-stickers
+    price   : ₹150
+    cover   : /assets/labels-stickers/labels-stickers1.jpg
+    images  : labels-stickers1.jpg to labels-stickers6.jpg
+
+CUSTOMIZED STORY BOOKS (showcase only — NO price, NO cart, NO buy button):
+
+38 books. Each has cover (image1) and inside preview (image2).
+Folder: /assets/storybooks/[slug]/
+
+MYTHOLOGY:
+  a-day-with-hanuman     | A Day with Hanuman
+  abhimanyu              | Abhimanyu
+  andal                  | Andal
+  arjuna                 | Arjuna
+  bala-tripura-sundari   | Bala Tripura Sundari
+  princess-jijabai       | Princess Jijabai
+  krishna                | Krishna
+  lord-rama              | Lord Rama
+  lord-shiva             | Lord Shiva
+  navadurga              | Navadurga
+  radha                  | Radha
+  rani-rudramadevi       | Rani Rudramadevi
+  shivaji                | Chatrapati Shivaji Maharaj
+
+ADVENTURE:
+  astronaut              | Astronaut Adventure
+  cycle-adventure        | Cycle Adventure
+  dragon-adventure       | Dragon Adventure
+  ice-crystal            | Ice Crystal Adventure
+  black-belt             | Journey of Future Black Belt
+  magic-lamp             | Magic Lamp
+  mowgli                 | Mowgli - The Jungle Roar
+  racer-adventure        | Racer Adventure
+  sea-surfer             | Sea Surfer
+  space-adventure        | Space Adventure
+  underwater             | Underwater Adventure
+
+PRINCESS / FANTASY:
+  cinderella             | Cinderella
+  frozen-princess        | Frozen Princess
+  mermaid                | Mermaid
+  moana                  | Moana's Adventure
+  unicorn-princess       | Unicorn Princess
+
+SUPERHERO / ANIME:
+  avengers               | Avengers Adventure
+  harry-potter           | Harry Potter
+  hermione-granger       | Hermione Granger
+  lightning-mcqueen      | Lightning McQueen
+  naruto                 | Naruto Adventure
+  spiderman              | Spiderman
+
+SPORTS / CAREER:
+  firefighter            | Firefighter
+  police-officer         | Police Officer
+  taekwondo              | Taekwondo Champion
+
+WALLPAPERS & FRAMES (showcase only — NO price, NO cart):
+  images: wallpapers.jpg, wallpaper2.jpeg, wallpaper3.jpeg, customized-frame-1.jpeg
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOMEPAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NAVBAR (sticky):
+  Left  : logo + "Treasure Tots Creations"
+  Center: Home | Story Books | Learning | Flash Cards | Wallpapers | Labels
+  Right : Search | Cart (badge) | Profile
+  Mobile: hamburger → slide-in drawer
+
+HERO BANNER:
+  Headline   : "Stories Where Your Child is the Hero"
+  Subheading : "Personalized books, flashcards and learning materials handcrafted with love"
+  CTA buttons: "Explore Story Books" → /custom-storybooks
+               "Shop Learning Books" → /learning-devotion
+  Trust badges: ⭐ 4.9 Rating | 100% Handmade | Pan-India Shipping
+
+SECTION 1 — Learning & Devotion:
+  Auto-sliding carousel (4s). All 6 learning products.
+  Card: cover image, name, ₹price, [Buy Now] button.
+  Prev/Next arrows. Dot indicators.
+  "View All →" → /learning-devotion
+
+SECTION 2 — Flash Cards:
+  Auto-sliding carousel. All 3 flash card products.
+  Card: cover image, name, ₹price, [Buy Now] button.
+  "View All →" → /flashcards
+
+SECTION 3 — Customized Story Books:
+  Large hero slider. Show 1 best cover per category:
+    Mythology → Lord Rama cover
+    Adventure → Dragon Adventure cover
+    Princess  → Frozen Princess cover
+    Superhero → Spiderman cover
+    Anime     → Naruto Adventure cover
+    Sports    → Taekwondo Champion cover
+  Card: cover image, book name, category badge ONLY.
+  NO price. NO enquire button on cards.
+  One line below slider: "These are made to order — contact us to personalize"
+  "View All Story Books →" → /custom-storybooks
+
+SECTION 4 — Wallpapers & Frames:
+  Image carousel: all wallpaper + frame images.
+  No price. Contact buttons: WhatsApp | Email | Call | Instagram
+  "View All →" → /custom-wallpapers
+
+SECTION 5 — Labels & Stickers:
+  Carousel of all tag/label images. Price ₹150.
+  [Buy Now] → /custom-labels
+
+REVIEWS SECTION:
+  Heading: "Loved by Parents Across India ⭐⭐⭐⭐⭐"
+  Horizontal scrollable cards. 13 reviews:
+  1. "Received the items... quality is very nice. Proper packing. Thanks dear." ★★★★★
+  2. "Received the book. It is too good. He liked it very much. Thank you ❤️" ★★★★★
+  3. "Really beautiful. The photo feels real. Doesn't look animated or AI." ★★★★★
+  4. "We received the book and we love it ❤️😍 Looking forward to more!!!" ★★★★★
+  5. "Absolutely beautiful. Quality is great, personalization is perfect. My son loved it!" ★★★★★
+  6. "Turned out really well. Quality is excellent. Looking forward to ordering again." ★★★★★
+  7. "Hanuman Chalisa book is so perfect. Affordable too. Quality is very good." ★★★★★
+  8. "Beautiful personalized Harry Potter book. He's flying to USA tomorrow and absolutely loved it." ★★★★★
+  9. "Everyone in the house liked it. Nice work. Keep shining with unique projects." ★★★★★
+  10. "Really good story book. All her friends' parents took your contact number." ★★★★★
+  11. "Most favourite birthday gift was the rangoli book. She is learning through it." ★★★★★
+  12. "Bought flashcards from Sundara Hanuman event stall. They are really good." ★★★★★
+  13. "My son loved the book. He was so happy." ★★★★★
+
+CONTACT SECTION:
+  Orange background.
+  Heading: "Ready to Create Magic?"
+  Buttons: 💬 WhatsApp | 📞 +91 805 064 0552 | 📸 Instagram | 📧 Email
+
+FOOTER:
+  Logo + tagline
+  Links: Story Books | Flash Cards | Learning | Wallpapers | Labels
+  Social icons: Instagram | WhatsApp | Email
+  © 2025 Treasure Tots Creations. Handmade with ❤️
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CUSTOM STORYBOOKS PAGE — IMPORTANT RULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+At the TOP of /custom-storybooks page show this sticky banner:
+
+┌──────────────────────────────────────────────────────────────┐
+│  🎨 These storybooks are customized for every child          │
+│  They are displayed here for showcase only.                  │
+│  To place an order, please enquire:                          │
+│  [💬 WhatsApp] [📧 Email] [📞 Call Us] [📸 Instagram]       │
+└──────────────────────────────────────────────────────────────┘
+
+This banner is the ONLY place for enquiry CTAs on this page.
+
+STORYBOOK CARDS — clean, simple, NO buttons:
+  Cover image + book name + category badge only.
+  Clicking card → /custom-storybooks/[slug]
+
+FILTER TABS below banner:
+  All | Mythology | Adventure | Princess | Superhero | Anime | Sports | Career
+
+STORYBOOK DETAIL PAGE /custom-storybooks/[slug]:
+  Same sticky banner at top (no individual enquire buttons anywhere).
+  Left  : cover image (image1) + thumbnail [Cover] [Inside Preview]
+  Right : category badge, book name, ⭐⭐⭐⭐⭐,
+          feature highlights:
+            🌟 Your child is the hero
+            🎨 AI-illustrated personalized art
+            📖 Custom name & photo included
+            🚚 Delivered Pan-India
+          "💬 Price on enquiry — use the contact buttons above"
+  How It Works box:
+    1. Contact us on WhatsApp or call
+    2. Share child's name, age & photo
+    3. Choose pronouns (He / She / They)
+    4. Add dedication message (optional)
+    5. We create your unique illustrated book
+    6. Delivered to your door across India
+  More from this theme: 3 related books
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRODUCT DETAIL PAGES — Flipkart style
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For /learning-devotion/[slug] and /flashcards/[slug]:
+
+LEFT (55%):
+  Large main image. Hover = zoom magnifier effect.
+  Thumbnail strip — click updates main image with fade.
+  "X / Y" counter badge.
+  Mobile: swipe left/right.
+
+RIGHT (45%):
+  Breadcrumb: Home > Section > Product Name
+  Category badge
+  Product name (large bold)
+  ⭐⭐⭐⭐⭐ 4.9 · 13 reviews
+  ₹XXX (orange bold)
+  ✅ In Stock · 🚚 Pan-India Shipping · 🎁 Handmade with Love
+  Short description
+  Qty: [−] [1] [+]
+  [Add to Cart] orange filled
+  [Buy Now] orange outlined
+  Or contact: [WhatsApp] [Call] [Instagram]
+
+TABS (full width below):
+  Description | Details (spec table) | Reviews (13)
+
+You May Also Like: 4 products same category
+
+MOBILE STICKY BOTTOM BAR:
+  ₹XXX · [Add to Cart] [Buy Now]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AUTHENTICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Register : Full Name + Email OR Phone + Password
+Login    : Email OR Phone + Password
+JWT      : stored in httpOnly cookie
+Protected: /cart /checkout /dashboard /admin
+           → redirect to /login if not authenticated
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHECKOUT FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1 : Login check (skip if already logged in)
+Step 2 : Address — Full Name, Phone, House No, Street, City, State, Pincode
+Step 3 : Order Summary — items, prices, total
+Step 4 : Razorpay payment
+         UPI | UPI QR | GPay | PhonePe | Paytm | Cards | Net Banking
+         color: #FF7A00 | name: "Treasure Tots Creations"
+         NEVER trust frontend — always verify signature on backend
+Step 5 : Order Success — confetti, order ID, [View My Orders] button
+
+LABELS EXTRA STEP (before Step 2):
+  "Child's Name for Customization:" [required input]
+  Save with order in database.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RAZORPAY BACKEND (backend/payments/razorpay_utils.py)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import razorpay, hmac, hashlib, os
+
+client = razorpay.Client(auth=(
+    os.getenv("RAZORPAY_KEY_ID"),
+    os.getenv("RAZORPAY_KEY_SECRET")
+))
+
+def create_order(amount_rupees, receipt):
+    return client.order.create({
+        "amount": int(amount_rupees * 100),
+        "currency": "INR",
+        "receipt": receipt,
+        "payment_capture": 1
+    })
+
+def verify_signature(order_id, payment_id, signature):
+    msg = f"{order_id}|{payment_id}"
+    expected = hmac.new(
+        os.getenv("RAZORPAY_KEY_SECRET").encode(),
+        msg.encode(), hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+def verify_webhook(raw_body, signature):
+    expected = hmac.new(
+        os.getenv("RAZORPAY_WEBHOOK_SECRET").encode(),
+        raw_body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+IMPORTANT: Register raw body capture BEFORE json parsing in app.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATABASE SCHEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE users (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name          VARCHAR(100) NOT NULL,
+  email         VARCHAR(255) UNIQUE,
+  phone         VARCHAR(15) UNIQUE,
+  password_hash TEXT NOT NULL,
+  role          VARCHAR(20) DEFAULT 'user',
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE products (
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name         VARCHAR(200) NOT NULL,
+  description  TEXT,
+  price        NUMERIC(10,2),
+  stock        INTEGER DEFAULT 999,
+  cover_image  TEXT,
+  images       JSONB,
+  category     VARCHAR(100),
+  subcategory  VARCHAR(100),
+  slug         VARCHAR(200) UNIQUE,
+  is_buyable   BOOLEAN DEFAULT TRUE,
+  is_active    BOOLEAN DEFAULT TRUE,
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE orders (
+  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id           UUID REFERENCES users(id),
+  total_amount      NUMERIC(10,2),
+  payment_status    VARCHAR(30) DEFAULT 'pending',
+  order_status      VARCHAR(50) DEFAULT 'order_received',
+  child_name        VARCHAR(100),
+  shipping_address  JSONB,
+  razorpay_order_id TEXT,
+  created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id   UUID REFERENCES orders(id) ON DELETE CASCADE,
+  product_id UUID REFERENCES products(id),
+  quantity   INTEGER DEFAULT 1,
+  price      NUMERIC(10,2)
+);
+
+CREATE TABLE payments (
+  id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id            UUID REFERENCES orders(id),
+  razorpay_payment_id TEXT UNIQUE,
+  razorpay_order_id   TEXT,
+  razorpay_signature  TEXT,
+  status              VARCHAR(30) DEFAULT 'pending',
+  amount              NUMERIC(10,2),
+  paid_at             TIMESTAMPTZ,
+  created_at          TIMESTAMPTZ DEFAULT NOW()
+);
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKEND ROUTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GET  /api/health
+
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+GET  /api/v1/auth/me
+
+GET  /api/v1/products          ?category= &subcategory= &page=
+GET  /api/v1/products/search   ?q=
+GET  /api/v1/products/:slug
+
+POST /api/v1/orders/initialize  → create order + razorpay order
+POST /api/v1/orders/verify      → verify HMAC + update DB + reduce stock
+POST /api/v1/orders/webhook     → razorpay webhook (raw body)
+GET  /api/v1/orders             → user's orders (JWT)
+GET  /api/v1/orders/:id         → single order (JWT)
+
+POST   /api/v1/admin/products
+PUT    /api/v1/admin/products/:id
+DELETE /api/v1/admin/products/:id
+POST   /api/v1/admin/products/upload
+GET    /api/v1/admin/orders
+PATCH  /api/v1/admin/orders/:id/status
+GET    /api/v1/admin/users
+GET    /api/v1/admin/analytics
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+USER DASHBOARD /dashboard
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Tab 1 Profile   : Name, Email, Phone, Edit button
+Tab 2 My Orders : Order cards with status timeline
+                  Order Received → Making → Dispatched → Delivered
+Tab 3 Addresses : Saved addresses + add new
+Tab 4 Wishlist  : Saved products grid
+Tab 5 Cart      : Current cart items
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADMIN DASHBOARD /admin
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Analytics : Revenue | Orders | Users | Best Seller + bar chart
+Products  : Table with Add/Edit/Delete + Cloudinary image upload
+Orders    : Table with status filter + update status dropdown
+Users     : Table with role management
+Categories: Manage categories
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ENVIRONMENT VARIABLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+backend/.env (add to Replit Secrets):
+  DATABASE_URL           = postgresql://postgres:[PASS]@db.[REF].supabase.co:5432/postgres
+  SUPABASE_URL           = https://[REF].supabase.co
+  SUPABASE_SERVICE_KEY   = your_service_role_key
+  JWT_SECRET             = any_random_64_char_string
+  SECRET_KEY             = any_flask_secret
+  RAZORPAY_KEY_ID        = rzp_test_xxxx
+  RAZORPAY_KEY_SECRET    = your_secret
+  RAZORPAY_WEBHOOK_SECRET= your_webhook_secret
+  CLOUDINARY_CLOUD_NAME  = your_cloud
+  CLOUDINARY_API_KEY     = your_key
+  CLOUDINARY_API_SECRET  = your_secret
+  FRONTEND_URL           = http://localhost:3000
+  PORT                   = 5000
+
+frontend/.env.local:
+  NEXT_PUBLIC_API_URL           = http://localhost:5000/api/v1
+  NEXT_PUBLIC_RAZORPAY_KEY_ID   = rzp_test_xxxx
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GLOBAL RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Floating WhatsApp button bottom-right all pages → https://wa.me/918050640552
+2. Toast notifications (react-hot-toast) for all actions
+3. Skeleton loaders on all data fetches
+4. Mobile responsive — works on 375px, 768px, 1280px
+5. Breadcrumbs on all inner pages
+6. Share button on detail pages → copy URL → toast
+7. Back button → router.back() preserving scroll position
+8. Never trust frontend payment amount — calculate on backend
+9. Verify Razorpay signature on backend before marking order paid
+10. Passwords hashed with bcrypt (12 rounds)
+11. All admin routes verify role === 'admin' from JWT
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DO NOT BUILD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- No COD
+- No multi-language
+- No reviews submission form (reviews are static hardcoded)
+- No price on storybooks / wallpapers / frames
+- No cart / buy button on storybooks / wallpapers / frames
+- No individual enquire buttons on storybook cards
+- No social login
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BUILD ORDER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1.  Create folder structure. Copy images from ZIP to correct folders. Rename files with spaces.
+2.  database/schema.sql — all 5 tables + indexes
+3.  database/seed.sql — all 11 buyable products with correct slugs, prices, image arrays
+4.  Flask backend — app.py, utils/db.py, middleware/auth.py, all routes, payments/razorpay_utils.py
+5.  Next.js layout — Navbar, Footer, WhatsAppFloat, AuthContext, CartContext
+6.  Homepage — hero + 5 carousels + reviews + contact
+7.  Learning & Devotion page + detail page
+8.  Flash Cards page + detail page
+9.  Storybooks page (sticky banner + clean cards + filter tabs) + detail page
+10. Wallpapers & Frames page
+11. Labels & Stickers page + child name + checkout
+12. Cart + Checkout (5 steps) + Razorpay
+13. Order Success page
+14. User Dashboard (5 tabs)
+15. Admin Dashboard
+16. Login + Register pages
+17. Test end to end
+18. Deploy — Vercel (frontend) + Render (backend)
+
+Start with Step 1. Complete each step fully before moving to the next.

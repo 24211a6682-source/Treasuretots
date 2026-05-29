@@ -1,5 +1,5 @@
 export type ProductCategory = "learning" | "flashcards" | "storybooks" | "wallpapers" | "labels";
-export type StoryCategory = "mythology" | "adventure" | "princess" | "superhero" | "sports";
+export type StoryCategory = "mythology" | "adventure" | "princess" | "superhero" | "anime" | "sports" | "career";
 
 export interface ProductData {
   id: number;
@@ -336,17 +336,19 @@ export const storybookProducts: StorybookData[] = [
   { id: 303, slug: "mermaid", name: "Mermaid", storyCategory: "princess", coverImage: "/assets/images/customized story books/mermaid/Mermaid1.jpg", previewImage: "/assets/images/customized story books/mermaid/Mermaid2.jpg" },
   { id: 304, slug: "moana-adventure", name: "Moana's Adventure", storyCategory: "princess", coverImage: "/assets/images/customized story books/mona/Moana's Adventure1.jpg", previewImage: "/assets/images/customized story books/mona/Moana's Adventure2.jpg" },
   { id: 305, slug: "unicorn-princess", name: "Unicorn Princess", storyCategory: "princess", coverImage: "/assets/images/customized story books/unicorn princess/Unicorn Princess1.jpg", previewImage: "/assets/images/customized story books/unicorn princess/Unicorn Princess2.jpg" },
-  // SUPERHERO / ANIME
+  // SUPERHERO
   { id: 401, slug: "avengers-adventure", name: "Avengers Adventure", storyCategory: "superhero", coverImage: "/assets/images/customized story books/Avengers/Avengers Advanture1.jpg", previewImage: "/assets/images/customized story books/Avengers/Avengers Advanture2.jpg" },
-  { id: 402, slug: "harry-potter", name: "Harry Potter", storyCategory: "superhero", coverImage: "/assets/images/customized story books/harry potter/Harry Potter1.jpg", previewImage: "/assets/images/customized story books/harry potter/Harry Potter2.jpg" },
-  { id: 403, slug: "hermione-granger", name: "Hermione Granger", storyCategory: "superhero", coverImage: "/assets/images/customized story books/hermoine granger/Hermione Granger1.jpg", previewImage: "/assets/images/customized story books/hermoine granger/Hermione Granger2.jpg" },
-  { id: 404, slug: "lightning-mcqueen", name: "Lightning McQueen", storyCategory: "superhero", coverImage: "/assets/images/customized story books/lightning mcqueen/Lightning MC Queen1.jpg", previewImage: "/assets/images/customized story books/lightning mcqueen/Lightning MC Queen2.jpg" },
-  { id: 405, slug: "naruto-adventure", name: "Naruto Adventure", storyCategory: "superhero", coverImage: "/assets/images/customized story books/naruto adv/Naruto Adventure1.jpg", previewImage: "/assets/images/customized story books/naruto adv/Naruto Adventure2.jpg" },
   { id: 406, slug: "spiderman", name: "Spiderman", storyCategory: "superhero", coverImage: "/assets/images/customized story books/spidey/Spiderman1.jpg", previewImage: "/assets/images/customized story books/spidey/Spiderman2.jpg" },
-  // SPORTS / CAREER
-  { id: 501, slug: "firefighter", name: "Firefighter", storyCategory: "sports", coverImage: "/assets/images/customized story books/fire fighter/Firefighter1.jpg", previewImage: "/assets/images/customized story books/fire fighter/Firefighter2.jpg" },
-  { id: 502, slug: "police-officer", name: "Police Officer", storyCategory: "sports", coverImage: "/assets/images/customized story books/police officer/Police officer1.jpg", previewImage: "/assets/images/customized story books/police officer/Police officer2.jpg" },
+  // ANIME
+  { id: 402, slug: "harry-potter", name: "Harry Potter", storyCategory: "anime", coverImage: "/assets/images/customized story books/harry potter/Harry Potter1.jpg", previewImage: "/assets/images/customized story books/harry potter/Harry Potter2.jpg" },
+  { id: 403, slug: "hermione-granger", name: "Hermione Granger", storyCategory: "anime", coverImage: "/assets/images/customized story books/hermoine granger/Hermione Granger1.jpg", previewImage: "/assets/images/customized story books/hermoine granger/Hermione Granger2.jpg" },
+  { id: 404, slug: "lightning-mcqueen", name: "Lightning McQueen", storyCategory: "anime", coverImage: "/assets/images/customized story books/lightning mcqueen/Lightning MC Queen1.jpg", previewImage: "/assets/images/customized story books/lightning mcqueen/Lightning MC Queen2.jpg" },
+  { id: 405, slug: "naruto-adventure", name: "Naruto Adventure", storyCategory: "anime", coverImage: "/assets/images/customized story books/naruto adv/Naruto Adventure1.jpg", previewImage: "/assets/images/customized story books/naruto adv/Naruto Adventure2.jpg" },
+  // SPORTS
   { id: 503, slug: "taekwondo-champion", name: "Taekwondo Champion", storyCategory: "sports", coverImage: "/assets/images/customized story books/taekwondo/Taekwondo Champion1.jpg", previewImage: "/assets/images/customized story books/taekwondo/Taekwondo Champion2.jpg" },
+  // CAREER
+  { id: 501, slug: "firefighter", name: "Firefighter", storyCategory: "career", coverImage: "/assets/images/customized story books/fire fighter/Firefighter1.jpg", previewImage: "/assets/images/customized story books/fire fighter/Firefighter2.jpg" },
+  { id: 502, slug: "police-officer", name: "Police Officer", storyCategory: "career", coverImage: "/assets/images/customized story books/police officer/Police officer1.jpg", previewImage: "/assets/images/customized story books/police officer/Police officer2.jpg" },
 ];
 
 export const reviews = [

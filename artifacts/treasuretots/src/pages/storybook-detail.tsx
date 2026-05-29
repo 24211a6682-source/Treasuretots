@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { storybookProducts, getWhatsAppEnquiryUrl, PHONE, INSTAGRAM_URL } from "@/lib/products";
+import { storybookProducts, getWhatsAppEnquiryUrl, PHONE, INSTAGRAM_URL, WHATSAPP_URL, EMAIL } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
-import { Star, MessageCircle, Phone, Instagram, Sparkles, Paintbrush, FileText, Truck } from "lucide-react";
+import { Star, MessageCircle, Phone, Instagram, Sparkles, Paintbrush, FileText, Truck, Mail } from "lucide-react";
 import { StorybookCard } from "@/components/StorybookCard";
 
 const categoryColors: Record<string, string> = {
@@ -12,7 +12,9 @@ const categoryColors: Record<string, string> = {
   adventure: "bg-blue-100 text-blue-800",
   princess: "bg-pink-100 text-pink-800",
   superhero: "bg-red-100 text-red-800",
+  anime: "bg-purple-100 text-purple-800",
   sports: "bg-green-100 text-green-800",
+  career: "bg-yellow-100 text-yellow-800",
 };
 
 export default function StorybookDetail() {
@@ -28,6 +30,43 @@ export default function StorybookDetail() {
   const relatedBooks = storybookProducts.filter(b => b.storyCategory === book.storyCategory && b.id !== book.id).slice(0, 3);
 
   return (
+    <div className="w-full">
+      {/* Sticky Enquiry Banner */}
+      <div className="sticky top-16 z-30 bg-orange-50 border-b border-orange-200 shadow-sm">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-center sm:text-left">
+              <p className="font-semibold text-gray-900 text-sm md:text-base">
+                These storybooks are customized for every child — displayed here for showcase only.
+              </p>
+              <p className="text-xs md:text-sm text-gray-600">To place an order, please enquire via:</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Button asChild size="sm" className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full gap-1.5 text-xs">
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                </a>
+              </Button>
+              <Button asChild size="sm" variant="outline" className="rounded-full gap-1.5 text-xs">
+                <a href={`mailto:${EMAIL}`}>
+                  <Mail className="w-3.5 h-3.5" /> Email
+                </a>
+              </Button>
+              <Button asChild size="sm" variant="outline" className="rounded-full gap-1.5 text-xs">
+                <a href={`tel:${PHONE.replace(/\s+/g, '')}`}>
+                  <Phone className="w-3.5 h-3.5" /> Call Us
+                </a>
+              </Button>
+              <Button asChild size="sm" variant="outline" className="rounded-full gap-1.5 text-xs">
+                <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+                  <Instagram className="w-3.5 h-3.5 text-pink-600" /> Instagram
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center text-sm text-muted-foreground mb-6">
         <Link href="/" className="hover:text-primary">Home</Link>
@@ -133,46 +172,31 @@ export default function StorybookDetail() {
       
       {/* How it works */}
       <div className="mt-20 max-w-4xl mx-auto">
-        <div className="bg-cream p-8 md:p-12 rounded-3xl border shadow-sm text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-8">How Personalization Works</h2>
-          
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl mb-4">1</div>
-              <h4 className="font-bold text-lg mb-2">Choose Book</h4>
-              <p className="text-gray-600 text-sm">Select from our magical themes.</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl mb-4">2</div>
-              <h4 className="font-bold text-lg mb-2">WhatsApp Us</h4>
-              <p className="text-gray-600 text-sm">Click enquire and chat with us.</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl mb-4">3</div>
-              <h4 className="font-bold text-lg mb-2">Share Details</h4>
-              <p className="text-gray-600 text-sm">Provide name and clear photos.</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl mb-4">4</div>
-              <h4 className="font-bold text-lg mb-2">Digital Review</h4>
-              <p className="text-gray-600 text-sm">We'll show you a digital preview.</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl mb-4">5</div>
-              <h4 className="font-bold text-lg mb-2">Payment</h4>
-              <p className="text-gray-600 text-sm">Confirm order via secure payment.</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xl mb-4">6</div>
-              <h4 className="font-bold text-lg mb-2">Delivery</h4>
-              <p className="text-gray-600 text-sm">Shipped securely to your home!</p>
-            </div>
+        <div className="bg-orange-50/60 p-8 md:p-12 rounded-3xl border border-orange-100 shadow-sm">
+          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">How It Works</h2>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {[
+              { n: 1, title: "Contact us on WhatsApp or call", desc: "Reach out to us via WhatsApp or phone to express your interest." },
+              { n: 2, title: "Share child's name, age & photo", desc: "Send a clear photo of your child along with their name and age." },
+              { n: 3, title: "Choose pronouns", desc: "Let us know whether to use He / She / They in the story." },
+              { n: 4, title: "Add dedication message (optional)", desc: "A personal note to be printed in the book — optional but special." },
+              { n: 5, title: "We create your unique illustrated book", desc: "Our artists craft a one-of-a-kind personalized storybook for your child." },
+              { n: 6, title: "Delivered to your door across India", desc: "Securely packaged and shipped Pan-India with tracking." },
+            ].map(({ n, title, desc }) => (
+              <div key={n} className="flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-base shrink-0 mt-0.5">{n}</div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">{title}</h4>
+                  <p className="text-gray-600 text-sm">{desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {relatedBooks.length > 0 && (
-        <div className="mt-20">
+        <div className="mt-16 mb-24">
           <h2 className="text-2xl font-bold mb-6">More from this theme</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {relatedBooks.map(b => (
@@ -191,6 +215,7 @@ export default function StorybookDetail() {
           </a>
         </Button>
       </div>
+    </div>
     </div>
   );
 }
