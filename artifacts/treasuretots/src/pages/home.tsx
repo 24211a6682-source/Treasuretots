@@ -6,22 +6,12 @@ import {
   PHONE, INSTAGRAM_URL, EMAIL, WHATSAPP_URL
 } from "@/lib/products";
 import { ProductCard } from "@/components/ProductCard";
-import { StorybookCard } from "@/components/StorybookCard";
+import { BookCarousel3D } from "@/components/BookCarousel3D";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Star, MessageCircle, Phone, Instagram, Mail, ChevronLeft, ChevronRight } from "lucide-react";
-
-// One featured book per category for the storybooks showcase
-const FEATURED_BOOKS = [
-  storybookProducts.find(b => b.slug === "lord-rama")!,
-  storybookProducts.find(b => b.slug === "dragon-adventure")!,
-  storybookProducts.find(b => b.slug === "frozen-princess")!,
-  storybookProducts.find(b => b.slug === "spiderman")!,
-  storybookProducts.find(b => b.slug === "naruto-adventure")!,
-  storybookProducts.find(b => b.slug === "taekwondo-champion")!,
-].filter(Boolean);
 
 // All wallpaper + frame images
 const WALLPAPER_IMAGES = [
@@ -172,30 +162,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Section 3: Customized Story Books */}
+      {/* Section 3: Customized Story Books — mini 3D carousel */}
       <section className="py-16 md:py-20 bg-orange-50/50">
         <div className="container mx-auto px-4">
-          <div className="flex items-end justify-between mb-6">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Customized Story Books</h2>
-              <p className="text-gray-600">Your child becomes the hero — AI-illustrated, fully personalized.</p>
-            </div>
-            <Button asChild variant="ghost" className="text-primary hover:text-primary/80 hidden md:flex">
-              <Link href="/storybooks">View All Story Books →</Link>
-            </Button>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Customized Story Books</h2>
+            <p className="text-gray-500 text-sm md:text-base">
+              Made to order — contact us to personalize for your child
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 mb-6">
-            {FEATURED_BOOKS.map(book => (
-              <StorybookCard key={book.id} book={book} />
-            ))}
+          <div className="px-8 md:px-16">
+            <BookCarousel3D books={storybookProducts} mini />
           </div>
 
-          <p className="text-center text-sm text-gray-500 italic mb-4">
-            These are made to order — contact us to personalize
-          </p>
-          <div className="text-center md:hidden mt-4">
-            <Button asChild variant="outline" className="w-full">
+          <div className="text-center mt-8">
+            <Button asChild variant="outline" className="rounded-full px-6 border-primary text-primary hover:bg-primary hover:text-white">
               <Link href="/storybooks">View All Story Books →</Link>
             </Button>
           </div>

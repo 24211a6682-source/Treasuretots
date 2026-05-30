@@ -1,21 +1,20 @@
 import { useState } from "react";
-import { Link } from "wouter";
 import { storybookProducts, StoryCategory, WHATSAPP_URL, PHONE, INSTAGRAM_URL, EMAIL } from "@/lib/products";
-import { StorybookCard } from "@/components/StorybookCard";
+import { BookCarousel3D } from "@/components/BookCarousel3D";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Phone, Instagram, Mail } from "lucide-react";
 
 type FilterType = StoryCategory | "all";
 
-const FILTERS: { value: FilterType; label: string; active: string; hover: string }[] = [
-  { value: "all",       label: "All",        active: "bg-white shadow-sm text-gray-900",          hover: "hover:text-gray-900" },
-  { value: "mythology", label: "Mythology",  active: "bg-orange-100 text-orange-800 shadow-sm",   hover: "hover:text-orange-600" },
-  { value: "adventure", label: "Adventure",  active: "bg-blue-100 text-blue-800 shadow-sm",       hover: "hover:text-blue-600" },
-  { value: "princess",  label: "Princess",   active: "bg-pink-100 text-pink-800 shadow-sm",       hover: "hover:text-pink-600" },
-  { value: "superhero", label: "Superhero",  active: "bg-red-100 text-red-800 shadow-sm",         hover: "hover:text-red-600" },
-  { value: "anime",     label: "Anime",      active: "bg-purple-100 text-purple-800 shadow-sm",   hover: "hover:text-purple-600" },
-  { value: "sports",    label: "Sports",     active: "bg-green-100 text-green-800 shadow-sm",     hover: "hover:text-green-600" },
-  { value: "career",    label: "Career",     active: "bg-yellow-100 text-yellow-800 shadow-sm",   hover: "hover:text-yellow-600" },
+const FILTERS: { value: FilterType; label: string }[] = [
+  { value: "all",       label: "All"       },
+  { value: "mythology", label: "Mythology" },
+  { value: "adventure", label: "Adventure" },
+  { value: "princess",  label: "Princess"  },
+  { value: "superhero", label: "Superhero" },
+  { value: "anime",     label: "Anime"     },
+  { value: "sports",    label: "Sports"    },
+  { value: "career",    label: "Career"    },
 ];
 
 export default function Storybooks() {
@@ -27,57 +26,61 @@ export default function Storybooks() {
 
   return (
     <div className="w-full">
-      {/* Sticky Enquiry Banner */}
-      <div className="sticky top-16 z-30 bg-orange-50 border-b border-orange-200 shadow-sm">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="text-center sm:text-left">
-              <p className="font-semibold text-gray-900 text-sm md:text-base">
-                These storybooks are customized for every child — displayed here for showcase only.
-              </p>
-              <p className="text-xs md:text-sm text-gray-600">To place an order, please enquire via:</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <Button asChild size="sm" className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full gap-1.5 text-xs">
-                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-                </a>
-              </Button>
-              <Button asChild size="sm" variant="outline" className="rounded-full gap-1.5 text-xs">
-                <a href={`mailto:${EMAIL}`}>
-                  <Mail className="w-3.5 h-3.5" /> Email
-                </a>
-              </Button>
-              <Button asChild size="sm" variant="outline" className="rounded-full gap-1.5 text-xs">
-                <a href={`tel:${PHONE.replace(/\s+/g, '')}`}>
-                  <Phone className="w-3.5 h-3.5" /> Call Us
-                </a>
-              </Button>
-              <Button asChild size="sm" variant="outline" className="rounded-full gap-1.5 text-xs">
-                <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
-                  <Instagram className="w-3.5 h-3.5 text-pink-600" /> Instagram
-                </a>
-              </Button>
-            </div>
-          </div>
+      {/* Header Section */}
+      <div className="container mx-auto px-4 pt-10 pb-6 text-center max-w-2xl">
+        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-3">
+          Customized Story Books
+        </h1>
+        <p className="text-gray-500 text-sm md:text-base mb-4 leading-relaxed">
+          These storybooks are customized for every child.<br />
+          To order, contact us via WhatsApp, Email, Phone or Instagram.
+        </p>
+
+        {/* Contact pills — the ONLY place contact buttons appear on this page */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#25D366]/10 text-[#128C7E] border border-[#25D366]/30 hover:bg-[#25D366]/20 transition"
+          >
+            <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+          </a>
+          <a
+            href={`mailto:${EMAIL}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
+          >
+            <Mail className="w-3.5 h-3.5" /> Email
+          </a>
+          <a
+            href={`tel:${PHONE.replace(/\s+/g, "")}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition"
+          >
+            <Phone className="w-3.5 h-3.5" /> Call
+          </a>
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100 transition"
+          >
+            <Instagram className="w-3.5 h-3.5" /> Instagram
+          </a>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 text-center max-w-2xl mx-auto">
-          <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-4">Customized Story Books</h1>
-          <p className="text-gray-600 text-lg">Your child becomes the hero of their own personalized adventure.</p>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="flex justify-center mb-10 overflow-x-auto pb-2 hide-scrollbar">
-          <div className="flex gap-2 p-1 bg-muted/30 rounded-xl">
+      {/* Filter Tabs */}
+      <div className="container mx-auto px-4 mb-8">
+        <div className="flex justify-center overflow-x-auto pb-2 hide-scrollbar">
+          <div className="flex gap-1 border-b border-gray-200">
             {FILTERS.map(f => (
               <button
                 key={f.value}
                 onClick={() => setFilter(f.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  filter === f.value ? f.active : `text-gray-500 ${f.hover}`
+                className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
+                  filter === f.value
+                    ? "border-primary text-primary"
+                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"
                 }`}
               >
                 {f.label}
@@ -85,12 +88,15 @@ export default function Storybooks() {
             ))}
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredBooks.map(book => (
-            <StorybookCard key={book.id} book={book} />
-          ))}
-        </div>
+      {/* 3D Carousel */}
+      <div className="container mx-auto px-8 pb-16">
+        {filteredBooks.length > 0 ? (
+          <BookCarousel3D books={filteredBooks} />
+        ) : (
+          <p className="text-center text-gray-500 py-20">No books in this category yet.</p>
+        )}
       </div>
     </div>
   );
