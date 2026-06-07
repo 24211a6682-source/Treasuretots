@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useLogin } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,16 +8,19 @@ export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login, user } = useAuth();
+  const { login, user, isLoading } = useAuth();
   const loginMutation = useLogin();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // If already admin, redirect
-  if (user?.role === "admin") {
-    setLocation("/admin");
-    return null;
-  }
+  // If already admin, redirect (via effect to avoid render-time setState)
+  useEffect(() => {
+    if (user?.role === "admin") {
+      setLocation("/admin");
+    }
+  }, [user, setLocation]);
+
+  if (isLoading) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

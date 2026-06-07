@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -571,7 +571,7 @@ function UsersSection({ users, loadingUsers, onToggleRole }: any) {
 // ── Main Admin Page ────────────────────────────────────────────────────────────
 
 export default function Admin() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -580,31 +580,21 @@ export default function Admin() {
   const [productModal, setProductModal] = useState<{ open: boolean; form: ProductFormData }>({ open: false, form: emptyForm });
   const [restockModal, setRestockModal] = useState<{ open: boolean; product: any }>({ open: false, product: null });
 
-  // Auth guard
-  if (!isAuthenticated && typeof window !== "undefined") {
-    setLocation("/admin/login");
-    return null;
-  }
-  if (user && user.role !== "admin") {
-    return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-4">
-        <div className="text-5xl">🔒</div>
-        <h2 className="text-xl font-bold text-white">Admin access required</h2>
-        <button onClick={() => setLocation("/admin/login")} className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition">
-          Go to Admin Login
-        </button>
-      </div>
-    );
-  }
+  // Auth guard — effect only, never during render
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setLocation("/admin/login");
+    }
+  }, [isLoading, isAuthenticated, setLocation]);
 
-  // ── Queries ──────────────────────────────────────────────────────────────────
-  const enabled = user?.role === "admin";
-  const { data: analytics, isLoading: loadingAnalytics } = useAdminGetAnalytics({ query: { queryKey: ["adminAnalytics"], enabled } });
-  const { data: products, isLoading: loadingProducts } = useAdminListProducts({ query: { queryKey: ["adminProducts"], enabled } });
-  const { data: orders = [], isLoading: loadingOrders } = useAdminListOrders({}, { query: { queryKey: ["adminOrders"], enabled } });
-  const { data: users = [], isLoading: loadingUsers } = useAdminListUsers({ query: { queryKey: ["adminUsers"], enabled } });
+  // ── ALL hooks must be called before any conditional returns ──────────────────
+  const isAdmin = user?.role === "admin";
 
-  // ── Mutations ────────────────────────────────────────────────────────────────
+  const { data: analytics, isLoading: loadingAnalytics } = useAdminGetAnalytics({ query: { queryKey: ["adminAnalytics"], enabled: isAdmin } });
+  const { data: products, isLoading: loadingProducts } = useAdminListProducts({ query: { queryKey: ["adminProducts"], enabled: isAdmin } });
+  const { data: orders = [], isLoading: loadingOrders } = useAdminListOrders({}, { query: { queryKey: ["adminOrders"], enabled: isAdmin } });
+  const { data: users = [], isLoading: loadingUsers } = useAdminListUsers({ query: { queryKey: ["adminUsers"], enabled: isAdmin } });
+
   const updateOrderStatus = useAdminUpdateOrderStatus({
     mutation: {
       onSuccess: () => { qc.invalidateQueries({ queryKey: ["adminOrders"] }); toast({ title: "Order status updated" }); },
@@ -629,6 +619,36 @@ export default function Admin() {
       onError: () => toast({ title: "Failed", variant: "destructive" }),
     }
   });
+
+  // ── Now safe to do conditional renders ──────────────────────────────────────
+
+  // Still loading auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated — redirect handled by effect above, show nothing
+  if (!isAuthenticated) return null;
+
+  // Authenticated but not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-4">
+        <div className="text-5xl">🔒</div>
+        <h2 className="text-xl font-bold text-white">Admin access required</h2>
+        <button onClick={() => setLocation("/admin/login")} className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition">
+          Go to Admin Login
+        </button>
+      </div>
+    );
+  }
 
   const handleSaveProduct = useCallback(() => {
     const { id, name, slug, category, subcategory, description, coverImage, price, stock, isBuyable } = productModal.form;
