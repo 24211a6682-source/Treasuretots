@@ -620,35 +620,7 @@ export default function Admin() {
     }
   });
 
-  // ── Now safe to do conditional renders ──────────────────────────────────────
-
-  // Still loading auth
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm">Loading…</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Not authenticated — redirect handled by effect above, show nothing
-  if (!isAuthenticated) return null;
-
-  // Authenticated but not admin
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-4">
-        <div className="text-5xl">🔒</div>
-        <h2 className="text-xl font-bold text-white">Admin access required</h2>
-        <button onClick={() => setLocation("/admin/login")} className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition">
-          Go to Admin Login
-        </button>
-      </div>
-    );
-  }
+  // ── Callbacks (must be before any early returns) ─────────────────────────────
 
   const handleSaveProduct = useCallback(() => {
     const { id, name, slug, category, subcategory, description, coverImage, price, stock, isBuyable } = productModal.form;
@@ -688,7 +660,37 @@ export default function Admin() {
     }
   }, [qc, toast]);
 
-  const handleLogout = () => { logout(); setLocation("/admin/login"); };
+  const handleLogout = useCallback(() => { logout(); setLocation("/admin/login"); }, [logout, setLocation]);
+
+  // ── Conditional renders (safe now that all hooks are above) ──────────────────
+
+  // Still loading auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated — redirect handled by effect above, show nothing
+  if (!isAuthenticated) return null;
+
+  // Authenticated but not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-4">
+        <div className="text-5xl">🔒</div>
+        <h2 className="text-xl font-bold text-white">Admin access required</h2>
+        <button onClick={() => setLocation("/admin/login")} className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition">
+          Go to Admin Login
+        </button>
+      </div>
+    );
+  }
 
   const SECTION_TITLES: Record<Section, string> = {
     analytics: "Analytics", products: "Products", orders: "Orders", users: "Users"
