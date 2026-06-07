@@ -181,6 +181,31 @@ router.get("/v1/admin/users", requireAdmin, async (req, res) => {
   }
 });
 
+// Users — update role
+router.patch("/v1/admin/users/:id/role", requireAdmin, async (req, res) => {
+  const id = parseInt(String(req.params.id));
+  const { role } = req.body as { role?: string };
+  if (isNaN(id) || !["admin", "user"].includes(role ?? "")) {
+    res.status(400).json({ error: "Invalid user ID or role. Must be 'admin' or 'user'." });
+    return;
+  }
+  try {
+    const [updated] = await db
+      .update(usersTable)
+      .set({ role })
+      .where(eq(usersTable.id, id))
+      .returning({ id: usersTable.id, name: usersTable.name, email: usersTable.email, role: usersTable.role });
+    if (!updated) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json(updated);
+  } catch (err) {
+    req.log.error({ err }, "Admin update user role error");
+    res.status(500).json({ error: "Failed to update user role" });
+  }
+});
+
 // Analytics
 router.get("/v1/admin/analytics", requireAdmin, async (req, res) => {
   try {

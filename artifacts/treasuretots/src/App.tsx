@@ -21,13 +21,14 @@ import Checkout from "@/pages/checkout";
 import OrderSuccess from "@/pages/order-success";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
+import AdminLogin from "@/pages/admin-login";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
-function Layout({ children }: { children: React.ReactNode }) {
+function UserLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[100dvh] flex-col relative">
       <Navbar />
@@ -40,28 +41,29 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Router() {
+function UserRouter() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/learning" component={Learning} />
-      <Route path="/learning/:slug" component={LearningDetail} />
-      <Route path="/flashcards" component={Flashcards} />
-      <Route path="/flashcards/:slug" component={FlashcardDetail} />
-      <Route path="/storybooks" component={Storybooks} />
-      <Route path="/storybooks/:slug" component={StorybookDetail} />
-      <Route path="/wallpapers" component={Wallpapers} />
-      <Route path="/labels" component={Labels} />
-      <Route path="/labels/:slug" component={LabelDetail} />
-      <Route path="/cart" component={Cart} />
-      <Route path="/checkout" component={Checkout} />
-      <Route path="/order-success" component={OrderSuccess} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/admin" component={Admin} />
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route component={NotFound} />
-    </Switch>
+    <UserLayout>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/learning" component={Learning} />
+        <Route path="/learning/:slug" component={LearningDetail} />
+        <Route path="/flashcards" component={Flashcards} />
+        <Route path="/flashcards/:slug" component={FlashcardDetail} />
+        <Route path="/storybooks" component={Storybooks} />
+        <Route path="/storybooks/:slug" component={StorybookDetail} />
+        <Route path="/wallpapers" component={Wallpapers} />
+        <Route path="/labels" component={Labels} />
+        <Route path="/labels/:slug" component={LabelDetail} />
+        <Route path="/cart" component={Cart} />
+        <Route path="/checkout" component={Checkout} />
+        <Route path="/order-success" component={OrderSuccess} />
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route component={NotFound} />
+      </Switch>
+    </UserLayout>
   );
 }
 
@@ -70,9 +72,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Layout>
-            <Router />
-          </Layout>
+          <Switch>
+            {/* Admin routes — completely separate UI, no user layout */}
+            <Route path="/admin/login" component={AdminLogin} />
+            <Route path="/admin" component={Admin} />
+            {/* All user-facing routes wrapped in UserLayout */}
+            <Route component={UserRouter} />
+          </Switch>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>
