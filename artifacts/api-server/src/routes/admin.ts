@@ -1,8 +1,11 @@
 import { Router } from "express";
+import multer from "multer";
 import { db, productsTable, ordersTable, orderItemsTable, usersTable } from "@workspace/db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAuth";
 import { AdminCreateProductBody, AdminUpdateProductBody, AdminUpdateOrderStatusBody, AdminListOrdersQueryParams } from "@workspace/api-zod";
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const router = Router();
 
@@ -15,6 +18,40 @@ function formatProduct(p: typeof productsTable.$inferSelect) {
     isBuyable: p.isBuyable, isActive: p.isActive,
   };
 }
+
+// Image upload → Cloudinary (unsigned preset, no API key needed)
+router.post("/v1/admin/products/upload", requireAdmin, upload.single("file"), async (req, res) => {
+  if (!req.file) {
+    res.status(400).json({ error: "No file provided" });
+    return;
+  }
+  try {
+    const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const preset = process.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+    if (!cloudName || !preset) {
+      res.status(500).json({ error: "Cloudinary not configured" });
+      return;
+    }
+    const fd = new FormData();
+    fd.append("file", new Blob([new Uint8Array(req.file.buffer)], { type: req.file.mimetype }), req.file.originalname);
+    fd.append("upload_preset", preset);
+    fd.append("folder", "treasuretots/products");
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST",
+      body: fd,
+    });
+    const result = await response.json() as { secure_url?: string; error?: { message: string } };
+    if (!result.secure_url) {
+      req.log.error({ result }, "Cloudinary upload failed");
+      res.status(500).json({ error: result.error?.message ?? "Upload failed" });
+      return;
+    }
+    res.json({ url: result.secure_url });
+  } catch (err) {
+    req.log.error({ err }, "Upload route error");
+    res.status(500).json({ error: "Upload failed" });
+  }
+});
 
 // Products
 router.get("/v1/admin/products", requireAdmin, async (req, res) => {

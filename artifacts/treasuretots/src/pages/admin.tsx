@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -116,39 +116,59 @@ function Sidebar({ active, setActive, onLogout }: { active: Section; setActive: 
 function ProductModal({ form, setForm, onSave, onClose, isPending }: {
   form: ProductFormData;
   setForm: React.Dispatch<React.SetStateAction<ProductFormData>>;
-  onSave: () => void;
+  onSave: (coverImageOverride?: string) => void;
   onClose: () => void;
   isPending: boolean;
 }) {
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const [coverIdx, setCoverIdx] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const browseRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const set = (k: keyof ProductFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value }));
 
-  const openUploadWidget = () => {
-    if (!window.cloudinary) {
-      alert("Cloudinary widget is still loading, please try again in a moment.");
-      return;
-    }
-    setUploading(true);
-    window.cloudinary.openUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
-        folder: "treasuretots/products",
-        sources: ["local", "url"],
-        multiple: false,
-        resourceType: "image",
-        clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
-        showPoweredBy: false,
-      },
-      (_error, result) => {
+  const addFiles = (files: FileList | File[]) => {
+    const imgs = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (!imgs.length) return;
+    setStagedFiles(prev => [...prev, ...imgs]);
+  };
+
+  const removeStaged = (i: number) => {
+    setStagedFiles(f => f.filter((_, j) => j !== i));
+    setCoverIdx(c => (i < c ? c - 1 : i === c ? 0 : c));
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const token = localStorage.getItem("tt_token");
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/v1/admin/products/upload", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token ?? ""}` },
+      body: fd,
+    });
+    if (!res.ok) throw new Error("Upload failed");
+    const data = await res.json() as { url: string };
+    return data.url;
+  };
+
+  const handleSave = async () => {
+    if (stagedFiles.length > 0) {
+      setUploading(true);
+      try {
+        const url = await uploadFile(stagedFiles[coverIdx]);
         setUploading(false);
-        if (result?.event === "success") {
-          setForm(f => ({ ...f, coverImage: result.info.secure_url }));
-        }
+        onSave(url);
+      } catch {
+        setUploading(false);
+        alert("Image upload failed. Please try again or paste a URL instead.");
       }
-    );
+    } else {
+      onSave();
+    }
   };
 
   return (
@@ -168,83 +188,97 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
             <div key={k} className={full ? "col-span-2" : ""}>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">{label}</label>
               {type === "textarea" ? (
-                <textarea
-                  value={String(form[k])}
-                  onChange={set(k)}
-                  rows={3}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
-                />
+                <textarea value={String(form[k])} onChange={set(k)} rows={3}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
               ) : (
-                <input
-                  type={type}
-                  value={String(form[k])}
-                  onChange={set(k)}
-                  className="w-full h-10 px-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
+                <input type={type} value={String(form[k])} onChange={set(k)}
+                  className="w-full h-10 px-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
               )}
             </div>
           ))}
 
-          {/* Cover Image — upload button + URL fallback */}
+          {/* ── Image upload section ── */}
           <div className="col-span-2">
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Cover Image</label>
-            <div className="flex gap-3 items-start">
-              {/* Preview thumbnail */}
-              {form.coverImage ? (
+            <label className="block text-xs font-medium text-gray-400 mb-2">Product Image</label>
+
+            {/* Drag & drop zone */}
+            <div
+              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={e => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
+              className={`border-2 border-dashed rounded-xl p-5 text-center mb-3 transition-colors select-none ${
+                dragOver ? "border-orange-500 bg-orange-500/10" : "border-gray-700 bg-gray-800/40"
+              }`}
+            >
+              <p className="text-gray-400 text-sm">Drag &amp; drop images here or choose below</p>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 mb-3">
+              <button type="button" onClick={() => browseRef.current?.click()}
+                className="flex-1 h-10 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white text-sm font-medium rounded-xl transition flex items-center justify-center gap-2">
+                📁 Browse Files
+              </button>
+              <button type="button" onClick={() => cameraRef.current?.click()}
+                className="flex-1 h-10 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white text-sm font-medium rounded-xl transition flex items-center justify-center gap-2">
+                📷 Take Photo
+              </button>
+            </div>
+            {/* Hidden inputs */}
+            <input ref={browseRef} type="file" accept="image/*" multiple className="hidden"
+              onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }} />
+            <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }} />
+
+            {/* Staged file thumbnails */}
+            {stagedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {stagedFiles.map((file, i) => (
+                  <div key={i} className="relative cursor-pointer" onClick={() => setCoverIdx(i)}>
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      className={`w-20 h-24 object-cover rounded-xl border-2 transition ${
+                        coverIdx === i ? "border-orange-500" : "border-gray-700 opacity-70"
+                      }`}
+                    />
+                    {coverIdx === i && (
+                      <span className="absolute top-1 left-1 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-tight">
+                        COVER
+                      </span>
+                    )}
+                    <button type="button"
+                      onClick={e => { e.stopPropagation(); removeStaged(i); }}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold leading-none">
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Existing URL preview when no staged files */}
+            {stagedFiles.length === 0 && form.coverImage && (
+              <div className="flex items-center gap-3 mb-3">
                 <div className="relative flex-shrink-0">
-                  <img
-                    src={form.coverImage}
-                    alt="Cover preview"
-                    className="w-20 h-24 object-cover rounded-xl border border-gray-700"
-                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                  <button
-                    type="button"
+                  <img src={form.coverImage} alt="Current cover"
+                    className="w-20 h-24 object-cover rounded-xl border-2 border-orange-500"
+                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  <span className="absolute top-1 left-1 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-tight">COVER</span>
+                  <button type="button"
                     onClick={() => setForm(f => ({ ...f, coverImage: "" }))}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold leading-none"
-                    title="Remove image"
-                  >
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold leading-none">
                     ×
                   </button>
                 </div>
-              ) : (
-                <div className="flex-shrink-0 w-20 h-24 rounded-xl border-2 border-dashed border-gray-700 flex items-center justify-center text-gray-600 text-xs text-center px-1">
-                  No image
-                </div>
-              )}
-
-              <div className="flex-1 flex flex-col gap-2">
-                {/* Upload button */}
-                <button
-                  type="button"
-                  onClick={openUploadWidget}
-                  disabled={uploading}
-                  className="w-full h-10 px-4 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition flex items-center justify-center gap-2"
-                >
-                  {uploading ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Uploading…
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                      </svg>
-                      Upload Image
-                    </>
-                  )}
-                </button>
-                {/* Manual URL input */}
-                <input
-                  type="text"
-                  value={form.coverImage}
-                  onChange={set("coverImage")}
-                  placeholder="Or paste image URL…"
-                  className="w-full h-10 px-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
+                <p className="text-gray-500 text-xs">Upload new files above to replace this image.</p>
               </div>
-            </div>
+            )}
+
+            {/* URL paste fallback */}
+            <input type="text" value={form.coverImage} onChange={set("coverImage")}
+              placeholder="Or paste image URL directly…"
+              className="w-full h-10 px-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1.5">Category</label>
@@ -281,11 +315,13 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
             Cancel
           </button>
           <button
-            onClick={onSave}
-            disabled={isPending}
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white transition disabled:opacity-60 shadow-lg shadow-orange-500/20"
+            onClick={handleSave}
+            disabled={isPending || uploading}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white transition disabled:opacity-60 shadow-lg shadow-orange-500/20 flex items-center gap-2"
           >
-            {isPending ? "Saving…" : form.id ? "Save Changes" : "Add Product"}
+            {uploading ? (
+              <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Uploading…</>
+            ) : isPending ? "Saving…" : form.id ? "Save Changes" : "Add Product"}
           </button>
         </div>
       </div>
@@ -711,14 +747,15 @@ export default function Admin() {
 
   // ── Callbacks (must be before any early returns) ─────────────────────────────
 
-  const handleSaveProduct = useCallback(() => {
+  const handleSaveProduct = useCallback((coverImageOverride?: string) => {
     const { id, name, slug, category, subcategory, description, coverImage, price, stock, isBuyable } = productModal.form;
+    const finalImage = coverImageOverride ?? coverImage;
     const payload = {
       name, slug, category,
       subcategory: subcategory || undefined,
       description: description || undefined,
-      coverImage,
-      images: coverImage ? [coverImage] : [],
+      coverImage: finalImage,
+      images: finalImage ? [finalImage] : [],
       price: price ? Number(price) : undefined,
       stock: stock ? Number(stock) : 999,
       isBuyable,
