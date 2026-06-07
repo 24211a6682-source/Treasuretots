@@ -37,3 +37,9 @@ externalPort = 3000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VITE_CLOUDINARY_CLOUD_NAME = "dnionnijz"
+VITE_CLOUDINARY_UPLOAD_PRESET = "treasuretots_unsigned"

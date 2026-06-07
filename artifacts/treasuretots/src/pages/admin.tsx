@@ -120,8 +120,36 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
   onClose: () => void;
   isPending: boolean;
 }) {
+  const [uploading, setUploading] = useState(false);
+
   const set = (k: keyof ProductFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value }));
+
+  const openUploadWidget = () => {
+    if (!window.cloudinary) {
+      alert("Cloudinary widget is still loading, please try again in a moment.");
+      return;
+    }
+    setUploading(true);
+    window.cloudinary.openUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+        folder: "treasuretots/products",
+        sources: ["local", "url"],
+        multiple: false,
+        resourceType: "image",
+        clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
+        showPoweredBy: false,
+      },
+      (_error, result) => {
+        setUploading(false);
+        if (result?.event === "success") {
+          setForm(f => ({ ...f, coverImage: result.info.secure_url }));
+        }
+      }
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -135,7 +163,6 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
             { k: "slug", label: "URL Slug", type: "text", full: false },
             { k: "price", label: "Price (₹)", type: "number", full: false },
             { k: "stock", label: "Stock", type: "number", full: false },
-            { k: "coverImage", label: "Cover Image URL", type: "text", full: true },
             { k: "description", label: "Description", type: "textarea", full: true },
           ] as { k: keyof ProductFormData; label: string; type: string; full: boolean }[]).map(({ k, label, type, full }) => (
             <div key={k} className={full ? "col-span-2" : ""}>
@@ -157,6 +184,68 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
               )}
             </div>
           ))}
+
+          {/* Cover Image — upload button + URL fallback */}
+          <div className="col-span-2">
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Cover Image</label>
+            <div className="flex gap-3 items-start">
+              {/* Preview thumbnail */}
+              {form.coverImage ? (
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={form.coverImage}
+                    alt="Cover preview"
+                    className="w-20 h-24 object-cover rounded-xl border border-gray-700"
+                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, coverImage: "" }))}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold leading-none"
+                    title="Remove image"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <div className="flex-shrink-0 w-20 h-24 rounded-xl border-2 border-dashed border-gray-700 flex items-center justify-center text-gray-600 text-xs text-center px-1">
+                  No image
+                </div>
+              )}
+
+              <div className="flex-1 flex flex-col gap-2">
+                {/* Upload button */}
+                <button
+                  type="button"
+                  onClick={openUploadWidget}
+                  disabled={uploading}
+                  className="w-full h-10 px-4 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition flex items-center justify-center gap-2"
+                >
+                  {uploading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Uploading…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                      Upload Image
+                    </>
+                  )}
+                </button>
+                {/* Manual URL input */}
+                <input
+                  type="text"
+                  value={form.coverImage}
+                  onChange={set("coverImage")}
+                  placeholder="Or paste image URL…"
+                  className="w-full h-10 px-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            </div>
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1.5">Category</label>
             <select
