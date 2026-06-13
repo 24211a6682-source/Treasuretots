@@ -123,9 +123,7 @@ export default function Home() {
           </div>
           <div className="relative">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500 border-8 border-white">
-              <AspectRatio ratio={4 / 3}>
-                <img src="/assets/images/customized story books/cover photo.jpg" alt="Featured Storybook" className="object-cover w-full h-full" />
-              </AspectRatio>
+              <img src="/assets/images/customized story books/cover photo.jpg" alt="Featured Storybook" className="w-full h-auto block" />
             </div>
             <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-xl overflow-hidden shadow-xl -rotate-6 border-4 border-white hidden md:block">
               <img src="/assets/images/customized story books/rama/Lord Rama1.jpg" alt="Lord Rama Book" className="object-cover w-full h-full" />
