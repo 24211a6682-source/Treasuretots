@@ -72,13 +72,16 @@ router.post("/v1/admin/products", requireAdmin, async (req, res) => {
   }
   try {
     const data = parse.data;
+    const imagesList = data.images && data.images.length > 0
+      ? data.images
+      : data.coverImage ? [data.coverImage] : [];
     const [product] = await db.insert(productsTable).values({
       name: data.name,
       description: data.description ?? null,
       price: data.price != null ? String(data.price) : null,
       stock: data.stock ?? 999,
       coverImage: data.coverImage,
-      images: data.images ?? [],
+      images: imagesList,
       category: data.category,
       subcategory: data.subcategory ?? null,
       slug: data.slug,
@@ -107,7 +110,13 @@ router.put("/v1/admin/products/:id", requireAdmin, async (req, res) => {
     if (data.price !== undefined) updateData.price = data.price != null ? String(data.price) : null;
     if (data.stock !== undefined) updateData.stock = data.stock;
     if (data.coverImage !== undefined) updateData.coverImage = data.coverImage;
-    if (data.images !== undefined) updateData.images = data.images;
+    if (data.images !== undefined) {
+      updateData.images = data.images.length > 0 ? data.images : (data.coverImage ? [data.coverImage] : data.images);
+    } else if (data.coverImage !== undefined) {
+      const [existing] = await db.select({ images: productsTable.images }).from(productsTable).where(eq(productsTable.id, id)).limit(1);
+      const existingImages = Array.isArray(existing?.images) ? existing.images as string[] : [];
+      if (existingImages.length === 0) updateData.images = [data.coverImage];
+    }
     if (data.category !== undefined) updateData.category = data.category;
     if (data.subcategory !== undefined) updateData.subcategory = data.subcategory;
     if (data.isBuyable !== undefined) updateData.isBuyable = data.isBuyable;

@@ -207,8 +207,8 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="px-8 md:px-16">
-            <BookCarousel3D books={storybookProducts} mini />
+          <div className="px-2 md:px-4">
+            <BookCarousel3D books={storybookProducts} />
           </div>
 
           <div className="text-center mt-8">
@@ -285,7 +285,7 @@ export default function Home() {
               {labelImages.map((img, i) => (
                 <div key={i}>
                   <AspectRatio ratio={4 / 3}>
-                    <img src={img} alt={`Label ${i + 1}`} className="w-full h-full object-cover rounded-2xl" />
+                    <img src={img} alt={`Label ${i + 1}`} className="w-full h-full object-contain rounded-2xl bg-white" />
                   </AspectRatio>
                 </div>
               ))}

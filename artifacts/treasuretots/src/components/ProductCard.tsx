@@ -13,7 +13,7 @@ export function ProductCard({ product }: { product: Product }) {
             <img
               src={product.coverImage}
               alt={product.name}
-              className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-105"
+              className="object-contain w-full h-full"
             />
           </AspectRatio>
         </div>

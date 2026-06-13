@@ -69,10 +69,10 @@ export function BookCarousel3D({ books, mini = false }: BookCarousel3DProps) {
     }
   };
 
-  const cardW = mini ? 180 : 280;
-  const cardH = mini ? 240 : 373;
-  const containerH = cardH + (mini ? 72 : 88);
-  const sideOffset = mini ? cardW * 0.72 : cardW * 0.82;
+  const cardW = mini ? 180 : 340;
+  const cardH = mini ? 240 : 453;
+  const containerH = cardH + (mini ? 72 : 100);
+  const sideOffset = mini ? cardW * 0.72 : cardW * 0.88;
 
   return (
     <div

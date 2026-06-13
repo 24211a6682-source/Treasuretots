@@ -238,7 +238,7 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
                     <img
                       src={URL.createObjectURL(file)}
                       alt={file.name}
-                      className={`w-20 h-24 object-cover rounded-xl border-2 transition ${
+                      className={`w-20 h-24 object-contain rounded-xl border-2 transition bg-gray-800 ${
                         coverIdx === i ? "border-orange-500" : "border-gray-700 opacity-70"
                       }`}
                     />
@@ -262,7 +262,7 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
               <div className="flex items-center gap-3 mb-3">
                 <div className="relative flex-shrink-0">
                   <img src={form.coverImage} alt="Current cover"
-                    className="w-20 h-24 object-cover rounded-xl border-2 border-orange-500"
+                    className="w-20 h-24 object-contain rounded-xl border-2 border-orange-500 bg-gray-800"
                     onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                   <span className="absolute top-1 left-1 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-tight">COVER</span>
                   <button type="button"

@@ -1,0 +1,132 @@
+TREASURETOTS CREATIONS – FIX THESE ISSUES BEFORE RAZORPAY
+
+Do NOT work on Razorpay integration yet.
+
+First audit and fix the following issues.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ISSUE 1 – STORYBOOK CAROUSEL TOO SMALL
+
+Current Problem:
+
+The Storybook Carousel on the homepage appears too small, especially on laptop screens.
+
+Observed Issues:
+
+* Carousel occupies only a small portion of the page.
+* Too much empty space around it.
+* Storybook covers are difficult to see.
+* The showcase section does not feel prominent.
+
+Required Outcome:
+
+* Increase the overall size of the Storybook Carousel.
+* Increase the size of the center card.
+* Improve visibility of storybook covers.
+* Reduce unnecessary whitespace.
+* Check responsiveness on laptop, desktop, tablet, and mobile.
+* Ensure the carousel remains visually attractive across all screen sizes.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ISSUE 2 – HANUMAN TELUGU IMAGE ORDER
+
+Current Problem:
+
+The Hanuman Telugu product images are displayed in the wrong order.
+
+Fix:
+
+I have already reorganized the images correctly inside the folder.
+
+When I provide the updated folder:
+
+* Re-read the folder.
+* Rebuild the gallery sequence.
+* Ensure thumbnails appear in the correct order.
+* Ensure the detail page slideshow follows the correct sequence.
+
+Do not use the previous image mapping.
+
+Use the new folder order as the source of truth.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ISSUE 3 – IMAGE CROPPING / ZOOMING BUG
+
+Current Problem:
+
+Many images throughout the website appear zoomed in and cropped.
+
+Observed Issues:
+
+* Product titles are cut off.
+* Book covers are partially hidden.
+* Flash card text becomes unreadable.
+* Hero images lose important content.
+* Only the center portion of some images is visible.
+
+Required Outcome:
+
+* Display complete images whenever possible.
+* Preserve all text visible on images.
+* Avoid aggressive cropping.
+* Ensure book titles and flash card content remain readable.
+
+Audit all image displays including:
+
+* Homepage hero section
+* Product cards
+* Product detail pages
+* Storybook carousel
+* Flash cards
+* Learning products
+* Admin image previews
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ISSUE 4 – ADMIN PRODUCTS NOT APPEARING ON USER WEBSITE
+
+Current Problem:
+
+Products added through the Admin Dashboard do not appear correctly on the user-facing website.
+
+Expected Behavior:
+
+Admin adds product
+↓
+Product saved to database
+↓
+Frontend reads database
+↓
+Product appears automatically
+
+Investigate and fix the root cause.
+
+Required Outcome:
+
+* Products displayed on the website must come directly from the database.
+* Newly added products should automatically appear everywhere.
+* No hardcoded product source should override database products.
+
+Verify product visibility in:
+
+* Homepage
+* Learning section
+* Flash Cards section
+* Product search
+* Product detail pages
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TASK
+
+1. Audit all four issues.
+2. Identify the exact root cause of each issue.
+3. Identify affected files.
+4. Recommend the best fix.
+5. Implement the fixes.
+6. Verify the fixes on desktop and mobile.
+
+Do not proceed to Razorpay integration until these issues are resolved.
