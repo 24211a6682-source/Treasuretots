@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { allBuyableProducts } from "@/lib/products";
 import { useToast } from "@/hooks/use-toast";
+import { MapPin, Loader2 } from "lucide-react";
 
 declare global {
   interface Window {
@@ -22,7 +22,7 @@ export default function Checkout() {
   const { cart, clearLocalCart, refetch } = useCart();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const [step, setStep] = useState<1 | 2>(1);
   const [address, setAddress] = useState<AddressInput>({
     fullName: user?.name || "",
@@ -33,11 +33,12 @@ export default function Checkout() {
     state: "",
     pincode: "",
   });
+  const [isGeoLoading, setIsGeoLoading] = useState(false);
+  const [geoNote, setGeoNote] = useState<string | null>(null);
 
   const initOrder = useInitializeOrder();
   const verifyPayment = useVerifyPayment();
 
-  // If not authed, the route should redirect (handled in Cart or App, but safe guard here)
   if (!isAuthenticated && typeof window !== "undefined") {
     setLocation("/login?returnUrl=/checkout");
     return null;
@@ -48,6 +49,52 @@ export default function Checkout() {
     return null;
   }
 
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) {
+      setGeoNote("Geolocation is not supported by your browser. Please fill in your address manually.");
+      return;
+    }
+    setIsGeoLoading(true);
+    setGeoNote(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const data = await response.json();
+          const addr = data.address || {};
+
+          setAddress(prev => ({
+            ...prev,
+            houseNo: addr.house_number || prev.houseNo,
+            street: addr.road || addr.neighbourhood || addr.suburb || prev.street,
+            city: addr.city || addr.town || addr.village || addr.county || prev.city,
+            state: addr.state || prev.state,
+            pincode: addr.postcode || prev.pincode,
+          }));
+          setGeoNote("We've filled in your address. Please review and correct if needed.");
+        } catch {
+          setGeoNote("Couldn't fetch your address details. Please fill in manually.");
+        } finally {
+          setIsGeoLoading(false);
+        }
+      },
+      (error) => {
+        setIsGeoLoading(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setGeoNote("Location access was denied. Please fill in your address manually.");
+        } else {
+          setGeoNote("Could not get your location. Please fill in your address manually.");
+        }
+      },
+      { timeout: 10000 }
+    );
+  };
+
   const handleAddressSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setStep(2);
@@ -57,7 +104,7 @@ export default function Checkout() {
     try {
       const items = cart.items.map(i => ({ productId: i.productId, quantity: i.quantity }));
       const hasCustomName = cart.items.find(i => i.childName);
-      
+
       const orderData = await initOrder.mutateAsync({
         data: {
           items,
@@ -66,7 +113,6 @@ export default function Checkout() {
         }
       });
 
-      // If Razorpay is not configured (no key), we might simulate success or show message
       if (!orderData.key) {
         toast({ title: "Payment gateway not configured", description: "Order simulated success for testing", variant: "default" });
         clearLocalCart();
@@ -96,7 +142,7 @@ export default function Checkout() {
             clearLocalCart();
             refetch();
             setLocation("/order-success");
-          } catch (e) {
+          } catch {
             toast({ title: "Payment verification failed", variant: "destructive" });
           }
         },
@@ -110,12 +156,12 @@ export default function Checkout() {
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response: any){
+      rzp.on('payment.failed', function (response: any) {
         toast({ title: "Payment failed", description: response.error.description, variant: "destructive" });
       });
       rzp.open();
-      
-    } catch (e) {
+
+    } catch {
       toast({ title: "Failed to initialize order", variant: "destructive" });
     }
   };
@@ -123,7 +169,7 @@ export default function Checkout() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-      
+
       <div className="flex gap-4 mb-8">
         <div className={`flex-1 pb-4 border-b-2 ${step === 1 ? 'border-primary text-primary font-bold' : 'border-muted text-muted-foreground'}`}>
           1. Delivery Address
@@ -141,6 +187,28 @@ export default function Checkout() {
                 <CardTitle>Shipping Details</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Use My Location button */}
+                <div className="mb-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-11 gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
+                    onClick={handleUseLocation}
+                    disabled={isGeoLoading}
+                  >
+                    {isGeoLoading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Detecting location...</>
+                    ) : (
+                      <><MapPin className="w-4 h-4" /> Use My Location</>
+                    )}
+                  </Button>
+                  {geoNote && (
+                    <p className={`text-xs mt-2 px-1 ${geoNote.includes("denied") || geoNote.includes("Couldn't") || geoNote.includes("Could not") ? "text-destructive" : "text-green-600"}`}>
+                      {geoNote}
+                    </p>
+                  )}
+                </div>
+
                 <form onSubmit={handleAddressSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -199,10 +267,10 @@ export default function Checkout() {
                   <p className="text-muted-foreground">{address.city}, {address.state} {address.pincode}</p>
                   <p className="text-muted-foreground">Phone: {address.phone}</p>
                 </div>
-                
-                <Button 
-                  size="lg" 
-                  className="w-full h-14 text-lg" 
+
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg"
                   onClick={handlePayment}
                   disabled={initOrder.isPending || verifyPayment.isPending}
                 >
@@ -212,7 +280,7 @@ export default function Checkout() {
             </Card>
           )}
         </div>
-        
+
         <div>
           <Card className="sticky top-24">
             <CardHeader className="pb-4">
@@ -221,21 +289,21 @@ export default function Checkout() {
             <CardContent>
               <div className="space-y-4 mb-6">
                 {cart.items.map(item => {
-                  const product = item.product || allBuyableProducts.find(p => p.id === item.productId);
+                  const product = item.product;
                   if (!product) return null;
                   return (
                     <div key={item.productId} className="flex gap-3 text-sm">
-                      <img src={product.coverImage} className="w-12 h-12 object-contain bg-muted/20 rounded" />
+                      <img src={product.coverImage} className="w-12 h-12 object-contain bg-white rounded border" />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{product.name}</p>
                         <p className="text-muted-foreground">Qty: {item.quantity}</p>
                       </div>
-                      <div className="font-semibold">₹{product.price! * item.quantity}</div>
+                      <div className="font-semibold">₹{(product.price ?? 0) * item.quantity}</div>
                     </div>
                   );
                 })}
               </div>
-              
+
               <div className="space-y-2 text-sm border-t pt-4 mb-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Items Total</span>
@@ -246,7 +314,7 @@ export default function Checkout() {
                   <span className="text-green-600 font-medium">Free</span>
                 </div>
               </div>
-              
+
               <div className="flex justify-between items-end border-t pt-4">
                 <span className="font-bold">Total</span>
                 <span className="font-bold text-xl text-primary">₹{cart.total}</span>

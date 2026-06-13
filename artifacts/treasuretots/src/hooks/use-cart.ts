@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useGetCart, useAddToCart, useUpdateCartItem, useRemoveFromCart, Cart, CartItem } from '@workspace/api-client-react';
+import { useGetCart, useAddToCart, useUpdateCartItem, useRemoveFromCart, useListProducts, Cart, CartItem } from '@workspace/api-client-react';
 import { useAuth } from './use-auth';
-import { allBuyableProducts } from '../lib/products';
 import { useToast } from './use-toast';
 
 export interface LocalCartItem {
@@ -13,7 +12,7 @@ export interface LocalCartItem {
 export function useCart() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-  
+
   const [localCart, setLocalCart] = useState<LocalCartItem[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('tt_cart');
@@ -26,6 +25,11 @@ export function useCart() {
     query: { queryKey: ["getCart"], enabled: isAuthenticated }
   });
 
+  const { data: allProductsData } = useListProducts({ per_page: 100 }, {
+    query: { queryKey: ["listProducts", "all"], enabled: !isAuthenticated && localCart.length > 0 }
+  });
+  const allProducts = allProductsData?.products ?? [];
+
   const addToServerCart = useAddToCart();
   const updateServerCartItem = useUpdateCartItem();
   const removeFromServerCart = useRemoveFromCart();
@@ -34,7 +38,6 @@ export function useCart() {
     localStorage.setItem('tt_cart', JSON.stringify(localCart));
   }, [localCart]);
 
-  // Sync local cart to server on login
   useEffect(() => {
     if (isAuthenticated && localCart.length > 0) {
       const syncCart = async () => {
@@ -91,16 +94,15 @@ export function useCart() {
 
   const clearLocalCart = () => {
     setLocalCart([]);
-  }
+  };
 
-  // Derive cart items and totals for local cart
   const localCartPopulated: CartItem[] = localCart.map(item => {
-    const product = allBuyableProducts.find(p => p.id === item.productId);
+    const product = allProducts.find(p => p.id === item.productId);
     return {
       productId: item.productId,
       quantity: item.quantity,
       childName: item.childName,
-      product: product as any // Best effort mock
+      product: product as any,
     };
   }).filter(item => item.product);
 

@@ -29,17 +29,14 @@ export function BookCarousel3D({ books, mini = false }: BookCarousel3DProps) {
   const prev = useCallback(() => setCurrent(c => (c - 1 + count) % count), [count]);
   const next = useCallback(() => setCurrent(c => (c + 1) % count), [count]);
 
-  // Reset on book list change (filter)
   useEffect(() => { setCurrent(0); }, [books]);
 
-  // Auto-advance every 5s
   useEffect(() => {
     if (isPaused || count <= 1) return;
     const id = setInterval(next, 5000);
     return () => clearInterval(id);
   }, [isPaused, next, count]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName === "INPUT") return;
@@ -72,10 +69,9 @@ export function BookCarousel3D({ books, mini = false }: BookCarousel3DProps) {
     }
   };
 
-  const cardW = mini ? 160 : 240;
-  const cardH = mini ? 213 : 320;
+  const cardW = mini ? 180 : 280;
+  const cardH = mini ? 240 : 373;
   const containerH = cardH + (mini ? 72 : 88);
-  // Horizontal offset for side cards from center
   const sideOffset = mini ? cardW * 0.72 : cardW * 0.82;
 
   return (
@@ -86,7 +82,6 @@ export function BookCarousel3D({ books, mini = false }: BookCarousel3DProps) {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      {/* 3D Stage */}
       <div
         className="relative mx-auto overflow-visible"
         style={{
@@ -119,13 +114,12 @@ export function BookCarousel3D({ books, mini = false }: BookCarousel3DProps) {
                 opacity,
                 zIndex,
                 transition: "all 0.4s ease",
-                cursor: isCenter ? "pointer" : "pointer",
+                cursor: "pointer",
                 transformOrigin: "center center",
               }}
             >
-              {/* Book card */}
               <div
-                className={`rounded-2xl overflow-hidden ${
+                className={`rounded-2xl overflow-hidden bg-white ${
                   isCenter
                     ? "shadow-2xl shadow-orange-200/60 ring-1 ring-orange-100"
                     : "shadow-lg"
@@ -135,11 +129,10 @@ export function BookCarousel3D({ books, mini = false }: BookCarousel3DProps) {
                   src={book.coverImage}
                   alt={book.name}
                   draggable={false}
-                  style={{ width: `${cardW}px`, height: `${cardH}px`, objectFit: "cover", display: "block" }}
+                  style={{ width: `${cardW}px`, height: `${cardH}px`, objectFit: "contain", display: "block" }}
                 />
               </div>
 
-              {/* Book info below */}
               <div className="mt-2 px-1 text-center">
                 <Badge
                   variant="secondary"
@@ -147,11 +140,7 @@ export function BookCarousel3D({ books, mini = false }: BookCarousel3DProps) {
                 >
                   {book.storyCategory}
                 </Badge>
-                <p
-                  className={`font-semibold leading-tight text-gray-900 ${
-                    mini ? "text-xs" : "text-sm"
-                  }`}
-                >
+                <p className={`font-semibold leading-tight text-gray-900 ${mini ? "text-xs" : "text-sm"}`}>
                   {book.name}
                 </p>
               </div>
@@ -160,11 +149,10 @@ export function BookCarousel3D({ books, mini = false }: BookCarousel3DProps) {
         })}
       </div>
 
-      {/* Arrow buttons */}
       <button
         onClick={prev}
         aria-label="Previous"
-        className="absolute left-0 top-0 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all z-20 border border-gray-100"
+        className="absolute left-0 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all z-20 border border-gray-100"
         style={{ top: `${(containerH - 80) / 2}px` }}
       >
         <ChevronLeft className="w-5 h-5 text-gray-700" />
@@ -178,7 +166,6 @@ export function BookCarousel3D({ books, mini = false }: BookCarousel3DProps) {
         <ChevronRight className="w-5 h-5 text-gray-700" />
       </button>
 
-      {/* Dot indicators */}
       {!mini && (
         <div className="flex justify-center gap-1.5 mt-4">
           {books.map((_, i) => (

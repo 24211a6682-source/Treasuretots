@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
+import { useListProducts, Product } from "@workspace/api-client-react";
 import {
-  learningProducts, flashcardProducts, storybookProducts,
-  wallpaperProducts, labelProducts, reviews,
+  storybookProducts, wallpaperProducts, reviews,
   PHONE, INSTAGRAM_URL, EMAIL, WHATSAPP_URL
 } from "@/lib/products";
 import { ProductCard } from "@/components/ProductCard";
@@ -13,10 +13,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Star, MessageCircle, Phone, Instagram, Mail, ChevronLeft, ChevronRight } from "lucide-react";
 
-// All wallpaper + frame images
-const WALLPAPER_IMAGES = [
-  ...wallpaperProducts.flatMap(p => p.images),
-];
+const WALLPAPER_IMAGES = wallpaperProducts.flatMap(p => p.images);
 
 function AutoCarousel({ children, interval = 4000, className = "" }: {
   children: React.ReactNode[];
@@ -69,7 +66,36 @@ function AutoCarousel({ children, interval = 4000, className = "" }: {
   );
 }
 
+function ProductSkeleton() {
+  return (
+    <div className="animate-pulse rounded-2xl overflow-hidden shadow-md bg-white">
+      <div className="aspect-[3/4] bg-gray-100" />
+      <div className="p-4 space-y-2">
+        <div className="h-4 bg-gray-100 rounded w-3/4" />
+        <div className="h-4 bg-gray-100 rounded w-1/2" />
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
+  const { data: learningData, isLoading: loadingLearning } = useListProducts({ category: "learning", per_page: 20 });
+  const { data: flashcardsData, isLoading: loadingFlashcards } = useListProducts({ category: "flashcards", per_page: 20 });
+  const { data: labelsData, isLoading: loadingLabels } = useListProducts({ category: "labels", per_page: 20 });
+
+  const learningProducts = learningData?.products ?? [];
+  const flashcardProducts = flashcardsData?.products ?? [];
+  const labelProducts = labelsData?.products ?? [];
+
+  // Build 2-page chunks of 3 for the learning carousel
+  const learningPages: Product[][] = [];
+  for (let i = 0; i < learningProducts.length; i += 3) {
+    learningPages.push(learningProducts.slice(i, i + 3));
+  }
+  if (learningPages.length === 0) learningPages.push([]);
+
+  const labelImages = labelProducts.flatMap(p => p.images);
+
   return (
     <div className="flex flex-col w-full">
       {/* Hero Banner */}
@@ -120,15 +146,21 @@ export default function Home() {
           </Button>
         </div>
         <div className="relative">
-          <AutoCarousel interval={4000} className="rounded-2xl">
-            {[0, 1].map(page => (
-              <div key={page} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6 px-1">
-                {learningProducts.slice(page * 3, page * 3 + 3).map(product => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ))}
-          </AutoCarousel>
+          {loadingLearning ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 px-1">
+              {[...Array(3)].map((_, i) => <ProductSkeleton key={i} />)}
+            </div>
+          ) : (
+            <AutoCarousel interval={4000} className="rounded-2xl">
+              {learningPages.map((page, pageIdx) => (
+                <div key={pageIdx} className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 px-1">
+                  {page.map(product => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              ))}
+            </AutoCarousel>
+          )}
         </div>
         <div className="mt-8 text-center md:hidden">
           <Button asChild variant="outline" className="w-full">
@@ -150,9 +182,12 @@ export default function Home() {
             </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {flashcardProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {loadingFlashcards
+              ? [...Array(3)].map((_, i) => <ProductSkeleton key={i} />)
+              : flashcardProducts.map(product => (
+                  <ProductCard key={product.id} product={product} />
+                ))
+            }
           </div>
           <div className="mt-8 text-center md:hidden">
             <Button asChild variant="outline" className="w-full">
@@ -162,7 +197,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Section 3: Customized Story Books — mini 3D carousel */}
+      {/* Section 3: Customized Story Books */}
       <section className="py-16 md:py-20 bg-orange-50/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
@@ -243,17 +278,21 @@ export default function Home() {
             </Button>
           </div>
 
-          <AutoCarousel interval={4500} className="rounded-2xl max-w-xl mx-auto">
-            {labelProducts.flatMap(p => p.images).map((img, i) => (
-              <div key={i}>
-                <AspectRatio ratio={4 / 3}>
-                  <img src={img} alt={`Label ${i + 1}`} className="w-full h-full object-cover rounded-2xl" />
-                </AspectRatio>
-              </div>
-            ))}
-          </AutoCarousel>
+          {loadingLabels ? (
+            <div className="max-w-xl mx-auto aspect-[4/3] bg-gray-100 animate-pulse rounded-2xl" />
+          ) : labelImages.length > 0 ? (
+            <AutoCarousel interval={4500} className="rounded-2xl max-w-xl mx-auto">
+              {labelImages.map((img, i) => (
+                <div key={i}>
+                  <AspectRatio ratio={4 / 3}>
+                    <img src={img} alt={`Label ${i + 1}`} className="w-full h-full object-cover rounded-2xl" />
+                  </AspectRatio>
+                </div>
+              ))}
+            </AutoCarousel>
+          ) : null}
 
-          <div className="mt-8 flex justify-center gap-4">
+          <div className="mt-8 flex justify-center gap-4 flex-wrap">
             {labelProducts.map(p => (
               <Button key={p.id} asChild size="lg" className="rounded-full font-semibold">
                 <Link href={`/labels/${p.slug}`}>Buy Now — ₹{p.price}</Link>

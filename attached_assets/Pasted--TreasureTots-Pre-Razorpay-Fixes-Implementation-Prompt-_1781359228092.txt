@@ -1,0 +1,277 @@
+# TreasureTots — Pre-Razorpay Fixes Implementation Prompt
+
+Read this entire prompt before touching any file. There are four independent issues
+to fix. Work through them in the priority order listed below. Do not begin Razorpay
+integration until all four are complete.
+
+---
+
+## Context
+
+- Frontend: React + Vite + Tailwind CSS (Wouter routing)
+- Backend: Node.js + Express + Drizzle ORM
+- Database: Supabase PostgreSQL
+- Image storage: Cloudinary
+- Current state: user-facing pages read from a hardcoded `products.ts` file.
+  The admin dashboard reads/writes to the database. These two are completely
+  disconnected — admins can add/edit products but customers never see the changes.
+
+---
+
+## PRIORITY 1 — Connect frontend to database (Issue 2)
+
+### Root cause
+`src/lib/products.ts` is a static TypeScript file that is imported directly into
+every page component (`home.tsx`, `learning.tsx`, `flashcards.tsx`, `labels.tsx`,
+etc.). It never fetches from the API. The admin panel saves to PostgreSQL but the
+storefront ignores the database entirely.
+
+### What to do
+
+**Step A — Seed the database from products.ts**
+
+Write a one-time seed script (`api-server/src/seed.ts` or similar) that reads
+every product from `products.ts` and inserts it into the `products` table via
+Drizzle. Run it once. Confirm all rows are present in the database before
+continuing.
+
+**Step B — Add/verify public product API endpoints**
+
+Ensure these REST endpoints exist and are publicly accessible (no auth required):
+
+```
+GET  /v1/products                    → paginated list, supports ?category=learning|flashcards|labels|storybooks|wallpapers
+GET  /v1/products/:slug              → single product by slug
+GET  /v1/products/featured           → products marked featured=true (for homepage sections)
+```
+
+Each product response must include: `id`, `slug`, `name`, `price`, `category`,
+`subcategory`, `description`, `coverImage`, `images` (array), `stock`, `isBuyable`,
+`isFeatured`.
+
+**Step C — Replace static imports with API calls on the frontend**
+
+For every page that currently imports from `products.ts`, replace it with a
+`useQuery` (TanStack React Query) call to the appropriate API endpoint.
+
+Pages to update:
+- `home.tsx` — fetch featured products per category for each homepage section
+- `learning.tsx` — fetch `?category=learning`
+- `learning-detail.tsx` — fetch by slug
+- `flashcards.tsx` — fetch `?category=flashcards`
+- `flashcards-detail.tsx` — fetch by slug
+- `labels.tsx` — fetch `?category=labels`
+- `label-detail.tsx` — fetch by slug
+- `storybooks.tsx` — fetch `?category=storybooks`
+- `storybook-detail.tsx` — fetch by slug
+- `wallpapers.tsx` — fetch `?category=wallpapers`
+
+Show a loading skeleton while data is fetching. Show a friendly error message if
+the API call fails — do not crash the page.
+
+**Step D — Keep products.ts as a type reference only**
+
+Do not delete `products.ts` immediately — it can remain as the TypeScript type
+definitions and constants (PHONE, WHATSAPP_URL, EMAIL, etc.) but remove all the
+hardcoded product arrays. All product data must now come from the database.
+
+---
+
+## PRIORITY 2 — Fix product image display (Issue 1)
+
+### Root cause
+Most image containers use `object-fit: cover` with a fixed aspect ratio. This
+crops images to fill the container from the center, cutting off titles and text
+printed on book covers and flash cards.
+
+### What to do
+
+**Product cards (all categories)**
+- Change image containers to use `object-fit: contain` with a white or very light
+  background (`bg-white` or `bg-gray-50`).
+- Do not use a hard fixed aspect ratio. Use `aspect-[3/4]` for books and
+  `aspect-square` for flash cards but ensure `object-fit: contain` so the full
+  image is always visible.
+
+**Product detail pages (learning, flashcards, labels)**
+- Main image: use `object-fit: contain`, full width, no cropping.
+- Thumbnails: `object-fit: contain` with neutral background.
+- Image zoom: if a lightbox or zoom exists, it must also show the full image.
+
+**3D Storybook carousel (BookCarousel3D component)**
+- Book covers must show the full cover with no cropping.
+- Use `object-fit: contain` inside each carousel card.
+- On the homepage storybook section specifically, the book cards are too small
+  on desktop. Increase the carousel height and book card width so books are
+  visually prominent. On mobile, verify swipe works and cards are readable.
+
+**Admin product preview images**
+- Thumbnails in the admin product form must also use `object-fit: contain`.
+
+**Hero banners**
+- Hero/banner images may keep `object-fit: cover` since they are decorative
+  backgrounds where cropping is acceptable. Do not change these.
+
+---
+
+## PRIORITY 3 — Fix Hanuman Telugu image order (Issue 3)
+
+### What happened
+The Hanuman Telugu product previously had images in the wrong order. The correct
+image sequence has been provided in the uploaded zip file.
+
+### Uploaded zip contains
+```
+hanuman telugu/
+  hanuman3.jpg   ← position 1 (cover / first image)
+  hanuman4.jpg   ← position 2
+  hanuman5.jpg   ← position 3
+```
+
+### What to do
+
+1. Copy these three files into:
+   `public/assets/images/hanuman-telugu/`
+   replacing whatever was there before.
+
+2. In `products.ts` (and in the database after the seed from Priority 1), update
+   the Hanuman Telugu product's `images` array to:
+   ```
+   [
+     "/assets/images/hanuman-telugu/hanuman3.jpg",
+     "/assets/images/hanuman-telugu/hanuman4.jpg",
+     "/assets/images/hanuman-telugu/hanuman5.jpg"
+   ]
+   ```
+   The first image in the array is the cover shown on product cards.
+
+3. Confirm the detail page slideshow follows this order exactly.
+
+---
+
+## PRIORITY 4 — Improve address entry at checkout (Issue 4)
+
+### Approach: Hybrid — "Use My Location" button + standard manual fields
+
+This is the best balance between speed, reliability, and implementation simplicity
+for mobile parents ordering on their phone.
+
+### What to build
+
+The checkout address form must have:
+
+**Standard manual fields (always present)**
+- Full Name
+- Phone Number
+- House / Flat Number
+- Street / Area
+- City
+- State
+- Pincode
+
+**"Use My Location" button** — placed above the manual fields
+
+```
+[ 📍 Use My Location ]
+```
+
+**Flow when button is clicked:**
+
+1. Browser requests geolocation permission (`navigator.geolocation.getCurrentPosition`).
+2. If permission is denied, show a friendly message:
+   > "Location access was denied. Please fill in your address manually."
+3. If permission is granted, call a free reverse-geocoding API to convert
+   lat/lng into address components. Use the `nominatim.openstreetmap.org`
+   reverse geocoding API (free, no API key required):
+   ```
+   GET https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lng}&format=json
+   ```
+4. Map the response fields to the form:
+   - `address.house_number` → House / Flat Number
+   - `address.road` → Street / Area
+   - `address.city` or `address.town` or `address.village` → City
+   - `address.state` → State
+   - `address.postcode` → Pincode
+5. Auto-fill the form fields.
+6. Show the user a note:
+   > "We've filled in your address. Please review and correct if needed."
+7. All fields remain editable — the user must always be able to correct the
+   auto-filled values.
+
+**While location is loading**, show a spinner inside the button and disable it.
+Do not block the rest of the form during this time.
+
+**Do not use Google Places Autocomplete** — it requires a paid API key and billing
+setup which is not available right now. Nominatim is free and sufficient.
+
+**Do not use any paid geocoding service.** Nominatim is the correct choice here.
+
+---
+
+## PRIORITY 5 — Fix the two critical payment bugs (do after above, before Razorpay goes live)
+
+Even though full Razorpay integration is not the focus right now, fix these two
+bugs in the existing payment code so they do not cause real money errors when
+payments go live:
+
+### Bug A — Amount is sent in rupees instead of paise
+Razorpay requires the amount in **paise** (1 rupee = 100 paise).
+
+Find where the Razorpay order is created (likely `POST /v1/orders/initialize`) and
+ensure:
+```js
+// WRONG
+amount: totalRupees
+
+// CORRECT
+amount: Math.round(totalRupees * 100)
+```
+
+Also verify the same in the frontend Razorpay options object if `amount` is set
+there as well.
+
+### Bug B — Stock is never decremented after payment
+In the order verification route (`POST /v1/orders/verify` or equivalent), after
+confirming the HMAC signature and marking the order as `paid`, add a step that
+decrements the `stock` field for each product in the order:
+
+```js
+for (const item of order.items) {
+  await db.update(products)
+    .set({ stock: sql`stock - ${item.quantity}` })
+    .where(and(eq(products.id, item.productId), gte(products.stock, item.quantity)));
+}
+```
+
+If stock would go negative, do not decrement below zero. Log a warning instead.
+
+---
+
+## Summary of changes by file
+
+| File / Area | Change |
+|---|---|
+| `api-server/src/seed.ts` | New — seeds all products to DB |
+| `api-server/src/routes/products.ts` | Ensure public list + slug endpoints exist |
+| `api-server/src/routes/orders.ts` | Fix paise bug + add stock decrement |
+| `src/lib/products.ts` | Remove hardcoded arrays, keep types + constants |
+| `src/pages/home.tsx` | Replace static imports with useQuery |
+| `src/pages/learning.tsx` + detail | Replace static imports with useQuery |
+| `src/pages/flashcards.tsx` + detail | Replace static imports with useQuery |
+| `src/pages/labels.tsx` + detail | Replace static imports with useQuery |
+| `src/pages/storybooks.tsx` + detail | Replace static imports with useQuery |
+| `src/pages/wallpapers.tsx` | Replace static imports with useQuery |
+| `src/components/ProductCard.tsx` | object-fit: contain on all cards |
+| `src/components/BookCarousel3D.tsx` | object-fit: contain, increase size on desktop |
+| `src/pages/checkout.tsx` | Add "Use My Location" + Nominatim geocoding |
+| `public/assets/images/hanuman-telugu/` | Replace with 3 images from uploaded zip |
+
+---
+
+## Do not do
+
+- Do not start Razorpay checkout UI flow changes yet.
+- Do not change the storybooks, wallpapers, or photo frames to purchasable.
+- Do not restructure the database schema.
+- Do not change admin dashboard UI.
+- Do not delete the `products.ts` file entirely — keep it for types and constants.

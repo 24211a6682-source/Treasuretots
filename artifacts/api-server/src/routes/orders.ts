@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, ordersTable, orderItemsTable, productsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gte, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { InitializeOrderBody, VerifyPaymentBody } from "@workspace/api-zod";
 import crypto from "crypto";
@@ -186,6 +186,18 @@ router.post("/v1/orders/verify", requireAuth, async (req, res) => {
     if (!order) {
       res.status(404).json({ error: "Order not found" });
       return;
+    }
+
+    // Decrement stock for each product in the order
+    const orderItems = await db.select().from(orderItemsTable).where(eq(orderItemsTable.orderId, order.id));
+    for (const item of orderItems) {
+      const updated = await db.update(productsTable)
+        .set({ stock: sql`stock - ${item.quantity}` })
+        .where(and(eq(productsTable.id, item.productId!), gte(productsTable.stock, item.quantity)))
+        .returning();
+      if (updated.length === 0) {
+        req.log.warn({ productId: item.productId, quantity: item.quantity }, "Insufficient stock for decrement — skipped");
+      }
     }
 
     res.json(await formatOrder(order));
