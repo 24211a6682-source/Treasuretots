@@ -227,17 +227,3 @@ export async function seedProducts() {
     }
   }
 }
-
-async function seed() {
-  console.log("Seeding products...");
-  try {
-    await seedProducts();
-    console.log("Seeding complete!");
-  } catch (err) {
-    console.error("Seed failed:", err);
-    process.exit(1);
-  }
-  process.exit(0);
-}
-
-seed();
