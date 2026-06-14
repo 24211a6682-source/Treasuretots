@@ -94,5 +94,5 @@ export async function migrate() {
 
   logger.info("Seeding products...");
   await seedProducts();
-  logger.info("Seeding complete");
+  logger.info("Products seeded");
 }
