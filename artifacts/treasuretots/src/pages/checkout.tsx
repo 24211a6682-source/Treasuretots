@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
-import { useInitializeOrder, useVerifyPayment, AddressInput } from "@workspace/api-client-react";
+import { useInitializeOrder, useVerifyPayment, useCreateAddress, useListAddresses, AddressInput } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,11 +33,14 @@ export default function Checkout() {
     state: "",
     pincode: "",
   });
+  const [saveAddress, setSaveAddress] = useState(false);
   const [isGeoLoading, setIsGeoLoading] = useState(false);
   const [geoNote, setGeoNote] = useState<string | null>(null);
 
   const initOrder = useInitializeOrder();
   const verifyPayment = useVerifyPayment();
+  const createAddress = useCreateAddress();
+  const { data: addressesData } = useListAddresses({ query: { queryKey: ["listAddresses"], enabled: !!user } });
 
   if (!isAuthenticated && typeof window !== "undefined") {
     setLocation("/login?returnUrl=/checkout");
@@ -95,8 +98,15 @@ export default function Checkout() {
     );
   };
 
-  const handleAddressSubmit = (e: React.FormEvent) => {
+  const handleAddressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saveAddress) {
+      try {
+        await createAddress.mutateAsync({ data: { ...address, isDefault: !addressesData?.length } });
+      } catch {
+        // non-blocking — continue to payment even if save fails
+      }
+    }
     setStep(2);
   };
 
@@ -243,12 +253,18 @@ export default function Checkout() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox id="saveAddress" onCheckedChange={(checked) => setAddress({...address, isDefault: !!checked})} />
+                    <Checkbox
+                      id="saveAddress"
+                      checked={saveAddress}
+                      onCheckedChange={(checked) => setSaveAddress(!!checked)}
+                    />
                     <label htmlFor="saveAddress" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                       Save this address for future orders
                     </label>
                   </div>
-                  <Button type="submit" className="w-full mt-6">Continue to Payment</Button>
+                  <Button type="submit" className="w-full mt-6" disabled={createAddress.isPending}>
+                    {createAddress.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving address...</> : "Continue to Payment"}
+                  </Button>
                 </form>
               </CardContent>
             </Card>

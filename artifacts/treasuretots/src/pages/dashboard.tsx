@@ -1,17 +1,39 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useListOrders, useListAddresses, useUpdateProfile } from "@workspace/api-client-react";
+import {
+  useListOrders, useListAddresses, useUpdateProfile, useCreateAddress, AddressInput
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogOut, Package, MapPin, User, Heart } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { LogOut, Package, MapPin, User, Plus, X, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+
+const emptyAddress: AddressInput = {
+  fullName: "",
+  phone: "",
+  houseNo: "",
+  street: "",
+  city: "",
+  state: "",
+  pincode: "",
+  isDefault: false,
+};
 
 export default function Dashboard() {
   const { user, logout, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newAddress, setNewAddress] = useState<AddressInput>({ ...emptyAddress });
 
   if (!isAuthenticated && typeof window !== "undefined") {
     setLocation("/login");
@@ -19,11 +41,25 @@ export default function Dashboard() {
   }
 
   const { data: ordersData } = useListOrders({ query: { queryKey: ["listOrders"], enabled: !!user } });
-  const { data: addressesData } = useListAddresses({ query: { queryKey: ["listAddresses"], enabled: !!user } });
+  const { data: addressesData, refetch: refetchAddresses } = useListAddresses({ query: { queryKey: ["listAddresses"], enabled: !!user } });
+  const createAddress = useCreateAddress();
 
   const handleLogout = () => {
     logout();
     setLocation("/");
+  };
+
+  const handleAddAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createAddress.mutateAsync({ data: newAddress });
+      toast({ title: "Address saved!", description: "Your address has been added." });
+      setNewAddress({ ...emptyAddress });
+      setShowAddForm(false);
+      refetchAddresses();
+    } catch {
+      toast({ title: "Failed to save address", variant: "destructive" });
+    }
   };
 
   return (
@@ -134,14 +170,80 @@ export default function Dashboard() {
                 <div>
                   <CardTitle>Saved Addresses</CardTitle>
                 </div>
-                <Button size="sm">Add New</Button>
+                <Button
+                  size="sm"
+                  onClick={() => { setShowAddForm(v => !v); setNewAddress({ ...emptyAddress }); }}
+                  variant={showAddForm ? "outline" : "default"}
+                >
+                  {showAddForm ? <><X className="w-4 h-4 mr-1" /> Cancel</> : <><Plus className="w-4 h-4 mr-1" /> Add New</>}
+                </Button>
               </CardHeader>
-              <CardContent>
-                {!addressesData?.length ? (
-                  <div className="text-center py-10 text-muted-foreground">No saved addresses.</div>
+              <CardContent className="space-y-6">
+                {showAddForm && (
+                  <form onSubmit={handleAddAddress} className="border rounded-lg p-5 bg-muted/20 space-y-4">
+                    <h3 className="font-semibold text-sm">New Address</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="a-fullName">Full Name</Label>
+                        <Input id="a-fullName" required value={newAddress.fullName}
+                          onChange={e => setNewAddress({ ...newAddress, fullName: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="a-phone">Phone Number</Label>
+                        <Input id="a-phone" required value={newAddress.phone}
+                          onChange={e => setNewAddress({ ...newAddress, phone: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="a-houseNo">House No. / Flat / Building</Label>
+                      <Input id="a-houseNo" required value={newAddress.houseNo}
+                        onChange={e => setNewAddress({ ...newAddress, houseNo: e.target.value })} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="a-street">Street / Area / Locality</Label>
+                      <Input id="a-street" required value={newAddress.street}
+                        onChange={e => setNewAddress({ ...newAddress, street: e.target.value })} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="a-pincode">Pincode</Label>
+                        <Input id="a-pincode" required value={newAddress.pincode}
+                          onChange={e => setNewAddress({ ...newAddress, pincode: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="a-city">City</Label>
+                        <Input id="a-city" required value={newAddress.city}
+                          onChange={e => setNewAddress({ ...newAddress, city: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="a-state">State</Label>
+                        <Input id="a-state" required value={newAddress.state}
+                          onChange={e => setNewAddress({ ...newAddress, state: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Checkbox
+                        id="a-isDefault"
+                        checked={!!newAddress.isDefault}
+                        onCheckedChange={(checked) => setNewAddress({ ...newAddress, isDefault: !!checked })}
+                      />
+                      <label htmlFor="a-isDefault" className="text-sm font-medium">Set as default address</label>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={createAddress.isPending}>
+                      {createAddress.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : "Save Address"}
+                    </Button>
+                  </form>
+                )}
+
+                {!addressesData?.length && !showAddForm ? (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <MapPin className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                    <p>No saved addresses yet.</p>
+                    <p className="text-sm mt-1">Click "Add New" to save your delivery address.</p>
+                  </div>
                 ) : (
                   <div className="grid sm:grid-cols-2 gap-4">
-                    {addressesData.map((address: any) => (
+                    {addressesData?.map((address: any) => (
                       <div key={address.id} className="border rounded-lg p-4 relative">
                         {address.isDefault && (
                           <span className="absolute top-4 right-4 bg-primary/10 text-primary text-xs px-2 py-1 rounded font-medium">Default</span>
