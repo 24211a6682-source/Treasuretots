@@ -64,12 +64,12 @@ export default function LabelDetail() {
 
       <div className="grid md:grid-cols-12 gap-10">
         <div className="md:col-span-7 flex flex-col gap-4">
-          <div className="relative overflow-hidden bg-white rounded-xl border">
+          <div className="relative overflow-hidden bg-gray-50 rounded-xl border">
             <AspectRatio ratio={1}>
               <img
                 src={product.images[activeImage] ?? product.coverImage}
                 alt={product.name}
-                className="w-full h-full object-contain transition-all duration-300 hover:scale-105 origin-center p-2"
+                className="w-full h-full object-contain transition-all duration-300 hover:scale-105 origin-center p-4"
               />
             </AspectRatio>
             <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur px-3 py-1 rounded-full text-sm font-medium border shadow-sm">

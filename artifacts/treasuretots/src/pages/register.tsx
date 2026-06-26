@@ -40,6 +40,7 @@ export default function Register() {
       <Card className="w-full max-w-md shadow-xl border-orange-100 rounded-3xl overflow-hidden">
         <div className="h-2 bg-primary w-full"></div>
         <CardHeader className="text-center pt-8">
+          <img src="/assets/images/logo.png" alt="Logo" className="h-12 mx-auto mb-4 object-contain" />
           <CardTitle className="text-2xl">Create Account</CardTitle>
           <CardDescription>Join our magical community</CardDescription>
         </CardHeader>
