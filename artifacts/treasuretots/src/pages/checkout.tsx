@@ -36,7 +36,6 @@ export default function Checkout() {
   const [saveAddress, setSaveAddress] = useState(false);
   const [isGeoLoading, setIsGeoLoading] = useState(false);
   const [geoNote, setGeoNote] = useState<string | null>(null);
-  const [upiId, setUpiId] = useState("");
 
   const initOrder = useInitializeOrder();
   const verifyPayment = useVerifyPayment();
@@ -160,11 +159,26 @@ export default function Checkout() {
         prefill: {
           name: address.fullName,
           contact: address.phone,
-          ...(upiId.trim() ? { vpa: upiId.trim() } : {}),
         },
         theme: {
           color: "#FF7A00"
-        }
+        },
+        config: {
+          display: {
+            blocks: {
+              upi_collect: {
+                name: "Pay via UPI ID",
+                instruments: [{ method: "upi", flows: ["collect"] }],
+              },
+              upi_qr: {
+                name: "Scan QR Code",
+                instruments: [{ method: "upi", flows: ["qr"] }],
+              },
+            },
+            sequence: ["block.upi_collect", "block.upi_qr"],
+            preferences: { show_default_blocks: true },
+          },
+        },
       };
 
       const rzp = new window.Razorpay(options);
@@ -284,20 +298,6 @@ export default function Checkout() {
                   <p className="text-muted-foreground">{address.houseNo}, {address.street}</p>
                   <p className="text-muted-foreground">{address.city}, {address.state} {address.pincode}</p>
                   <p className="text-muted-foreground">Phone: {address.phone}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="upiId">UPI ID <span className="text-muted-foreground font-normal text-xs">(optional — e.g. name@upi)</span></Label>
-                  <Input
-                    id="upiId"
-                    placeholder="yourname@okhdfcbank"
-                    value={upiId}
-                    onChange={e => setUpiId(e.target.value)}
-                    autoComplete="off"
-                  />
-                  {upiId.trim() && (
-                    <p className="text-xs text-muted-foreground">Razorpay will open directly in your UPI app for {upiId.trim()}</p>
-                  )}
                 </div>
 
                 <Button
