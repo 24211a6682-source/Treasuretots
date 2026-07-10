@@ -114,9 +114,12 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
         if (response.ok) {
           const rzpOrder = await response.json() as { id: string };
           razorpayOrderId = rzpOrder.id;
+        } else {
+          const errBody = await response.text();
+          req.log.error({ status: response.status, body: errBody }, "Razorpay order creation HTTP error");
         }
-      } catch {
-        // Continue with fallback ID
+      } catch (rzpErr) {
+        req.log.error({ err: rzpErr }, "Razorpay order creation failed — using fallback ID");
       }
     }
 
