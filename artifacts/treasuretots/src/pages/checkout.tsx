@@ -37,6 +37,8 @@ export default function Checkout() {
   const [isGeoLoading, setIsGeoLoading] = useState(false);
   const [geoNote, setGeoNote] = useState<string | null>(null);
 
+  const [showQr, setShowQr] = useState(false);
+
   const initOrder = useInitializeOrder();
   const verifyPayment = useVerifyPayment();
   const createAddress = useCreateAddress();
@@ -192,6 +194,21 @@ export default function Checkout() {
     }
   };
 
+  const handleManualUpiPayment = async () => {
+    try {
+      const items = cart.items.map(i => ({ productId: i.productId, quantity: i.quantity }));
+      const hasCustomName = cart.items.find(i => i.childName);
+      await initOrder.mutateAsync({
+        data: { items, childName: hasCustomName?.childName || null, address }
+      });
+      clearLocalCart();
+      refetch();
+      setLocation("/order-success");
+    } catch {
+      toast({ title: "Failed to place order", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
@@ -308,6 +325,43 @@ export default function Checkout() {
                 >
                   {initOrder.isPending ? "Initializing..." : verifyPayment.isPending ? "Verifying..." : "Proceed to Pay securely"}
                 </Button>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted-foreground">or pay directly via UPI</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+
+                {!showQr ? (
+                  <Button
+                    variant="outline"
+                    className="w-full border-dashed"
+                    onClick={() => setShowQr(true)}
+                  >
+                    Show UPI QR Code
+                  </Button>
+                ) : (
+                  <div className="flex flex-col items-center gap-4">
+                    <img
+                      src="/assets/images/upi-qr.jpeg"
+                      alt="UPI QR Code — Scan & Pay"
+                      className="w-56 h-auto rounded-lg border shadow-sm"
+                    />
+                    <p className="text-xs text-center text-muted-foreground">
+                      Scan with Google Pay, PhonePe, Paytm or any UPI app.<br />
+                      Once payment is done, tap the button below.
+                    </p>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full border-green-500 text-green-700 hover:bg-green-50"
+                      onClick={handleManualUpiPayment}
+                      disabled={initOrder.isPending}
+                    >
+                      {initOrder.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Placing order...</> : "I've paid — Place my order"}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
