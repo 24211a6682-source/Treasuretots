@@ -163,6 +163,7 @@ export default function Checkout() {
         theme: {
           color: "#FF7A00"
         },
+        config_id: "config_TD38W2uDdzVRG4",
       };
 
       const rzp = new window.Razorpay(options);
