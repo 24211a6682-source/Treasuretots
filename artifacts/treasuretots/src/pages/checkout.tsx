@@ -163,22 +163,6 @@ export default function Checkout() {
         theme: {
           color: "#FF7A00"
         },
-        config: {
-          display: {
-            blocks: {
-              upi_collect: {
-                name: "Pay via UPI ID",
-                instruments: [{ method: "upi", flows: ["collect"] }],
-              },
-              upi_qr: {
-                name: "Scan QR Code",
-                instruments: [{ method: "upi", flows: ["qr"] }],
-              },
-            },
-            sequence: ["block.upi_collect", "block.upi_qr"],
-            preferences: { show_default_blocks: true },
-          },
-        },
       };
 
       const rzp = new window.Razorpay(options);
