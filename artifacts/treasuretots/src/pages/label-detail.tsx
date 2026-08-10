@@ -57,7 +57,7 @@ export default function LabelDetail() {
       <div className="flex items-center text-sm text-muted-foreground mb-6">
         <Link href="/" className="hover:text-primary">Home</Link>
         <span className="mx-2">/</span>
-        <Link href="/labels" className="hover:text-primary">Labels & Stickers</Link>
+        <Link href="/labels" className="hover:text-primary">Name Tags</Link>
         <span className="mx-2">/</span>
         <span className="text-foreground font-medium truncate">{product.name}</span>
       </div>
@@ -92,7 +92,7 @@ export default function LabelDetail() {
 
         <div className="md:col-span-5 flex flex-col">
           <div className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 w-fit">
-            Labels & Stickers
+            Name Tags
           </div>
 
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>

@@ -17,7 +17,7 @@ export function Navbar() {
     { label: "Learning", href: "/learning" },
     { label: "Flash Cards", href: "/flashcards" },
     { label: "Wallpapers", href: "/wallpapers" },
-    { label: "Labels", href: "/labels" },
+    { label: "Name Tags", href: "/labels" },
   ];
 
   return (
