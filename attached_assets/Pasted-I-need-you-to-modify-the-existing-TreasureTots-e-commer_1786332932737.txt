@@ -1,0 +1,86 @@
+I need you to modify the existing TreasureTots e-commerce app. This is a targeted update, not a rebuild.
+
+Hard constraints — do not violate these:
+
+Do NOT rebuild or redesign the app.
+Do NOT change the color scheme, logo, product cards, or overall navigation structure.
+Do NOT remove any functionality unrelated to what's listed below.
+Do NOT introduce a new payment provider — this stays on Razorpay.
+Do NOT touch FAQ content, Labels & Stickers functionality, or Contact Us.
+Before writing any code, first inspect and report back on: the current checkout component, the Razorpay integration (client + server), the shipping calculation (if any), the order creation route, the DB order schema, the Shipping Policy page, the Returns/Refunds pages, and the Footer/Nav links. Show me what you find before making changes.
+1. Razorpay — restrict to UPI + Cards only
+
+Currently the checkout shows Netbanking, Wallets, EMI, Pay Later, and other methods. I only want:
+
+UPI — all supported UPI apps (Google Pay, PhonePe, Paytm, BHIM, CRED, etc.), not just one app. Use Razorpay's current supported UPI flow (Intent on mobile, QR/collect on desktop as Razorpay handles automatically). Do NOT use the deprecated manual VPA/UPI Collect flow.
+Cards — all credit and debit cards, all supported networks.
+
+Implement this using Razorpay Checkout's config.display.blocks configuration (the current, non-deprecated method for controlling which payment method blocks appear), with preferences.show_default_blocks: false and a sequence containing only the UPI and card blocks. Do not use a fake custom payment method UI — this must be real Razorpay Checkout with the block config restricting the display, so real payment processing is preserved.
+
+Do not hardcode PhonePe as the only UPI option — all UPI apps supported by Razorpay must remain selectable.
+
+2. Flat ₹70 shipping on every order, all of India
+Add a flat ₹70 shipping charge to every order, no location-based logic.
+Backend must be the source of truth. Recalculate the order subtotal server-side from the cart items and DB prices — do not trust any subtotal, shipping, or total value sent from the client. Add ₹70 to that recalculated subtotal to get the final amount, and use that final amount for both the Razorpay order creation and the amount saved to the database.
+Check the order DB schema for an existing shipping/shipping_amount column. If one exists, populate it with 70 on every order. If none exists, add a minimal schema field for it (and let me know if a migration step is needed given this is Drizzle).
+On the frontend, add a "Shipping ₹70" line to the checkout/cart summary between subtotal and total, so it's clearly visible before the customer pays. This is just a display line — the backend number is authoritative.
+
+Example the customer should see:
+
+Subtotal   ₹270
+Shipping    ₹70
+-----------------
+Total      ₹340
+3. Shipping Policy page
+
+Update the existing Shipping Policy page content to state:
+
+Shipping is available across India.
+A flat ₹70 shipping fee applies to every order.
+Remove any outdated/incorrect shipping info (zones, thresholds, timelines that no longer apply).
+Do not add return/refund content to this page.
+Keep a clear Contact Us section/link on this page.
+4. Remove Returns & Refunds (customer-facing)
+Remove the Returns and Refunds page(s)/content from customer-facing parts of the site.
+Remove all links to these pages — check Footer, Navbar, checkout screens, and order confirmation/detail pages, not just the obvious nav spots.
+Do not leave any broken/dead links.
+Do not invent a new return/refund policy — just remove the existing customer-facing content.
+5. Contact Us — keep as-is
+
+Make sure Contact Us is untouched and still fully functional after your Returns/Refunds link cleanup (don't let a broad find-and-replace catch it too).
+
+6. FAQ — no changes
+
+Leave the FAQ section and its content exactly as is. I'll update it separately later.
+
+7. Labels & Stickers — no changes
+
+Leave this category, its page, and its products exactly as is unless you find an actual bug while working on something above.
+
+8. Mobile responsiveness
+
+Check mobile layout after every change above, specifically: the checkout summary with the new shipping line, footer after removing Returns/Refunds links, and that the Razorpay checkout still renders and functions correctly on mobile.
+
+Validation checklist — run through this before you tell me you're done
+ Add to cart / cart still works normally
+ Checkout works end to end
+ Shipping is exactly ₹70 and visible in checkout summary
+ Backend independently calculates/validates the ₹70 shipping (not trusting client input)
+ Razorpay receives the correct final amount (subtotal + 70)
+ Razorpay checkout shows only UPI and Cards
+ Multiple UPI apps are selectable, not just PhonePe
+ Netbanking, Wallets, EMI, Pay Later are all hidden
+ Successful test payment creates an order with the correct stored amount and shipping value
+ Shipping Policy page shows ₹70 flat rate + pan-India + Contact Us, no returns/refunds content
+ Returns/Refunds content and all links to it are gone, no broken links
+ Contact Us still works
+ FAQ untouched and working
+ Labels & Stickers untouched and working
+ Mobile and desktop layouts both still responsive
+ No unrelated functionality broken
+When you're done, give me:
+Files/components you changed
+What you changed in the Razorpay checkout config
+What you changed in the shipping calculation (frontend + backend)
+What you changed in policy pages and navigation/footer links
+Any issues, limitations, or things you couldn't fully verify (e.g. if you can't test live Razorpay UPI apps in this environment, tell me what you could and couldn't confirm)
