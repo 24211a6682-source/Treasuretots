@@ -45,4 +45,4 @@ VITE_CLOUDINARY_CLOUD_NAME = "dnionnijz"
 VITE_CLOUDINARY_UPLOAD_PRESET = "treasuretots_unsigned"
 
 [userenv.production]
-ALLOWED_ORIGIN = "https://TreasureTots.replit.app"
+ALLOWED_ORIGIN = "https://treasuretots.replit.app"
