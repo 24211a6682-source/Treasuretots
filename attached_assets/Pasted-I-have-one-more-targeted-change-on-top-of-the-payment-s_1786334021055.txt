@@ -1,0 +1,50 @@
+I have one more targeted change on top of the payment/shipping work you just finished. This is separate — same rules apply: no rebuild, no unrelated redesign, don't touch anything outside this scope (FAQ, Contact Us, storybooks, flash cards, learning products, wallpapers, Razorpay/shipping changes you just made).
+
+Before touching anything, inspect and report back on:
+
+Where the "Labels" nav item and category are defined (Navbar.tsx, mobile nav menu, category page component/route, and the category field/value used in the products table or products.ts).
+The actual product rows for "Labels & Stickers" (₹150) and "Customised Name Tags" (₹150) — confirm both are DB-seeded (per replit.md, buyable products live in Postgres, not products.ts), and show me their current DB records including any id, category, and whether there's an isActive/isVisible-style column already.
+Whether any past orders reference "Labels & Stickers" by product ID (check order_items or equivalent) — this determines whether a hard delete is safe or whether we need to deactivate instead.
+
+Report this before making any changes.
+
+1. Rename "Labels" nav/category to "Name Tags" — desktop and mobile
+
+Update the nav label text everywhere it appears (desktop Navbar, mobile nav menu) from "Labels" to "Name Tags".
+
+Decision point — confirm with me before changing the URL: does the current route path change too (e.g. /labels → /name-tags), or does only the display text change while the route/slug stays as-is? If the route changes, make sure to add a redirect from the old path so any existing bookmarks/links don't 404. Tell me which one you're doing and why before proceeding, since this affects existing links.
+
+2. Rename the "Labels & Stickers" category/page to "Name Tags"
+
+This is the page heading/title ("Customized Labels" / whatever the current H1 and subtext are), not a product name. Update the page copy so it reads as a Name Tags category page (e.g. heading, description like "Personalize your child's school supplies and belongings" can stay if still accurate, just update any "Labels" wording to "Name Tags").
+
+3. Remove the "Labels & Stickers" product (₹150) properly — not a CSS hide
+
+This must be a real data-layer removal, not a frontend filter:
+
+If a soft-delete/visibility flag (e.g. isActive) already exists on the products table, set it to false/inactive for this specific product row so it's excluded from all queries that filter on it — but you must then also update every query that lists products (category listing, search, related products, homepage sections) to actually filter on that flag if they don't already, otherwise an inactive flag alone won't remove it from view.
+If no such flag exists and there are no past order references to this product ID, hard-delete the row instead.
+If there ARE past order references to this product ID, do NOT hard-delete (it would break order history / foreign keys) — add an isActive column if one doesn't exist, set it false for this product, and make sure every listing/search/related-products query excludes inactive products.
+Confirm after the change that the product cannot be reached via: the Name Tags category page, site search (if one exists), related-products sections on other product pages, or a direct API call to its old product ID/slug (a direct API request for a deactivated product should return 404/not-found, not the product data).
+4. Keep "Customised Name Tags" (₹150) exactly as is
+
+Do not modify this product's data, price, or listing — it should remain the sole product shown in the renamed Name Tags category.
+
+Validation checklist
+ Desktop nav shows "Name Tags", not "Labels"
+ Mobile nav shows "Name Tags", not "Labels"
+ Category page heading says "Name Tags", not "Labels & Stickers" / "Customized Labels"
+ "Labels & Stickers" product is gone from the category listing
+ "Labels & Stickers" product does not appear in search (if search exists)
+ "Labels & Stickers" product does not appear in related-products sections elsewhere
+ Direct API/URL access to the old "Labels & Stickers" product returns not-found, not the product
+ "Customised Name Tags" (₹150) still shows correctly, still purchasable, price unchanged
+ No other products, categories, or unrelated functionality affected
+ Payment/shipping/checkout flow from the previous change still works (quick smoke test)
+ Desktop and mobile layouts both still look correct on the renamed page
+When done, report:
+What you found in the inspection (DB records, whether past orders referenced the product)
+Whether you hard-deleted or deactivated the "Labels & Stickers" product, and why
+Whether the URL/route changed or only the display label, and why
+Files/components changed
+Any issues or things you couldn't fully verify
