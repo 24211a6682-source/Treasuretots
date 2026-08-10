@@ -163,7 +163,22 @@ export default function Checkout() {
         theme: {
           color: "#FF7A00"
         },
-        config_id: "config_TD38W2uDdzVRG4",
+        config: {
+          display: {
+            blocks: {
+              upi_block: {
+                name: "UPI",
+                instruments: [{ method: "upi", flows: ["intent", "qr"] }],
+              },
+              card_block: {
+                name: "Cards",
+                instruments: [{ method: "card" }],
+              },
+            },
+            sequence: ["block.upi_block", "block.card_block"],
+            preferences: { show_default_blocks: false },
+          },
+        },
       };
 
       const rzp = new window.Razorpay(options);
@@ -329,13 +344,13 @@ export default function Checkout() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span className="text-green-600 font-medium">Free</span>
+                  <span>₹70</span>
                 </div>
               </div>
 
               <div className="flex justify-between items-end border-t pt-4">
                 <span className="font-bold">Total</span>
-                <span className="font-bold text-xl text-primary">₹{cart.total}</span>
+                <span className="font-bold text-xl text-primary">₹{cart.total + 70}</span>
               </div>
             </CardContent>
           </Card>

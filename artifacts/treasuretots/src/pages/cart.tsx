@@ -113,14 +113,14 @@ export default function Cart() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span className="font-medium text-green-600">Free</span>
+                  <span className="font-medium">₹70</span>
                 </div>
               </div>
 
               <div className="border-t pt-4 mb-8">
                 <div className="flex justify-between items-end">
                   <span className="font-bold">Total</span>
-                  <span className="font-bold text-2xl text-primary">₹{cart.total}</span>
+                  <span className="font-bold text-2xl text-primary">₹{cart.total + 70}</span>
                 </div>
                 <p className="text-xs text-muted-foreground text-right mt-1">Inclusive of all taxes</p>
               </div>

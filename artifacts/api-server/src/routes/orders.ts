@@ -9,6 +9,7 @@ const router = Router();
 
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID ?? "";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET ?? "";
+const SHIPPING_AMOUNT = 70; // flat rate, pan-India, authoritative server value
 
 async function formatOrder(order: typeof ordersTable.$inferSelect) {
   const items = await db.select({
@@ -94,6 +95,9 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
       orderItemData.push({ productId: item.productId, quantity: item.quantity, price });
     }
 
+    // Add flat shipping — server is the authoritative source; never trust client values
+    const finalAmount = totalAmount + SHIPPING_AMOUNT;
+
     // Create Razorpay order if key available
     let razorpayOrderId = `tt_${Date.now()}`;
     if (RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET) {
@@ -105,7 +109,7 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
             "Authorization": `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")}`,
           },
           body: JSON.stringify({
-            amount: Math.round(totalAmount * 100),
+            amount: Math.round(finalAmount * 100),
             currency: "INR",
             receipt: `tt_${Date.now()}`,
             payment_capture: 1,
@@ -123,10 +127,11 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
       }
     }
 
-    // Create order in DB
+    // Create order in DB — store subtotal, shipping, and final total separately
     const [order] = await db.insert(ordersTable).values({
       userId: req.user!.userId,
-      totalAmount: totalAmount.toFixed(2),
+      totalAmount: finalAmount.toFixed(2),
+      shippingAmount: SHIPPING_AMOUNT.toFixed(2),
       paymentStatus: "pending",
       orderStatus: "order_received",
       childName: childName ?? null,
@@ -147,7 +152,7 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
     res.status(201).json({
       orderId: order.id,
       razorpayOrderId,
-      amount: totalAmount,
+      amount: finalAmount,
       key: RAZORPAY_KEY_ID,
     });
   } catch (err) {

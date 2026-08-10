@@ -24,6 +24,7 @@ import Admin from "@/pages/admin";
 import AdminLogin from "@/pages/admin-login";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ShippingPolicy from "@/pages/shipping";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ function UserRouter() {
         <Route path="/checkout" component={Checkout} />
         <Route path="/order-success" component={OrderSuccess} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/shipping" component={ShippingPolicy} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route component={NotFound} />

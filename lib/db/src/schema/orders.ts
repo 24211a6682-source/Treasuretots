@@ -12,6 +12,7 @@ export const ordersTable = pgTable("orders", {
   orderStatus: varchar("order_status", { length: 50 }).notNull().default("order_received"),
   childName: varchar("child_name", { length: 100 }),
   shippingAddress: jsonb("shipping_address").notNull(),
+  shippingAmount: numeric("shipping_amount", { precision: 10, scale: 2 }).notNull().default("0"),
   razorpayOrderId: text("razorpay_order_id"),
   razorpayPaymentId: text("razorpay_payment_id"),
   razorpaySignature: text("razorpay_signature"),

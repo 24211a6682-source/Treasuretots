@@ -40,7 +40,6 @@ export function Footer() {
             <ul className="flex flex-col gap-3 text-sm text-muted-foreground">
               <li><Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
               <li><Link href="/shipping" className="hover:text-primary transition-colors">Shipping Policy</Link></li>
-              <li><Link href="/returns" className="hover:text-primary transition-colors">Returns & Refunds</Link></li>
               <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
             </ul>
           </div>
