@@ -65,11 +65,10 @@ export default function Checkout() {
         try {
           const { latitude, longitude } = position.coords;
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            { headers: { "Accept-Language": "en" } }
+            `${import.meta.env.BASE_URL}api/v1/geocode/reverse?lat=${latitude}&lon=${longitude}`,
           );
           if (!response.ok) {
-            throw new Error(`Nominatim returned HTTP ${response.status}`);
+            throw new Error(`Geocode proxy returned HTTP ${response.status}`);
           }
           const data = await response.json();
           const addr = data.address || {};

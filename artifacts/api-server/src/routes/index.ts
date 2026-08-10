@@ -6,6 +6,7 @@ import cartRouter from "./cart";
 import ordersRouter from "./orders";
 import usersRouter from "./users";
 import adminRouter from "./admin";
+import geocodeRouter from "./geocode";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(cartRouter);
 router.use(ordersRouter);
 router.use(usersRouter);
 router.use(adminRouter);
+router.use(geocodeRouter);
 
 export default router;
