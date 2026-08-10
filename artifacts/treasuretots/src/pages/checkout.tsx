@@ -68,6 +68,9 @@ export default function Checkout() {
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
             { headers: { "Accept-Language": "en" } }
           );
+          if (!response.ok) {
+            throw new Error(`Nominatim returned HTTP ${response.status}`);
+          }
           const data = await response.json();
           const addr = data.address || {};
 
@@ -80,7 +83,8 @@ export default function Checkout() {
             pincode: addr.postcode || prev.pincode,
           }));
           setGeoNote("We've filled in your address. Please review and correct if needed.");
-        } catch {
+        } catch (err) {
+          console.error("[UseMyLocation] Nominatim fetch failed:", err);
           setGeoNote("Couldn't fetch your address details. Please fill in manually.");
         } finally {
           setIsGeoLoading(false);
