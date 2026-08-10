@@ -56,7 +56,7 @@ export default function ProductDetail() {
   const categoryLabel = product.category === "flashcards"
     ? "Flash Cards"
     : product.category === "labels"
-    ? "Labels & Stickers"
+    ? "Name Tags"
     : "Learning & Devotion";
 
   return (

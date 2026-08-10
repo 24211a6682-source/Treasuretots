@@ -263,13 +263,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Section 5: Labels & Stickers */}
+      {/* Section 5: Name Tags */}
       <section className="py-16 md:py-20 bg-amber-50/50">
         <div className="container mx-auto px-4">
           <div className="flex items-end justify-between mb-10">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Labels & Stickers</h2>
-              <p className="text-gray-600">Personalized name tags and stickers — ₹150 per set.</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Name Tags</h2>
+              <p className="text-gray-600">Personalized name tags for school supplies — ₹150 per set.</p>
             </div>
             <Button asChild variant="ghost" className="text-primary hover:text-primary/80 hidden md:flex">
               <Link href="/labels">View All →</Link>
