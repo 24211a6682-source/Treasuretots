@@ -169,12 +169,13 @@ router.post("/v1/orders/verify", requireAuth, async (req, res) => {
   }
   const { razorpayPaymentId, razorpayOrderId, razorpaySignature, orderId } = parse.data;
   try {
-    let paymentValid = true;
-    if (RAZORPAY_KEY_SECRET) {
-      const msg = `${razorpayOrderId}|${razorpayPaymentId}`;
-      const expected = crypto.createHmac("sha256", RAZORPAY_KEY_SECRET).update(msg).digest("hex");
-      paymentValid = crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(razorpaySignature));
+    if (!RAZORPAY_KEY_SECRET) {
+      res.status(503).json({ error: "Payment verification unavailable: server not configured for payments" });
+      return;
     }
+    const msg = `${razorpayOrderId}|${razorpayPaymentId}`;
+    const expected = crypto.createHmac("sha256", RAZORPAY_KEY_SECRET).update(msg).digest("hex");
+    const paymentValid = crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(razorpaySignature));
 
     if (!paymentValid) {
       res.status(400).json({ error: "Payment verification failed" });
