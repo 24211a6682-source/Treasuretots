@@ -12,8 +12,10 @@ export interface JwtPayload {
   role: string;
 }
 
+// Token lifetime is intentionally short (7 days) to limit the exposure window
+// if a localStorage-stored token is ever exfiltrated via XSS.
 export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "30d" });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): JwtPayload {

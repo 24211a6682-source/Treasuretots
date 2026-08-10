@@ -1,10 +1,67 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import rateLimit from "express-rate-limit";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+
+// ---------------------------------------------------------------------------
+// CORS — restrict to the explicitly configured frontend origin(s).
+// Set ALLOWED_ORIGIN to a comma-separated list of permitted origins.
+// In development with no env var set, the server falls back to the Replit
+// dev-domain pattern so the preview pane keeps working.
+// ---------------------------------------------------------------------------
+const rawAllowedOrigins = process.env.ALLOWED_ORIGIN ?? "";
+const allowedOrigins: Set<string> = new Set(
+  rawAllowedOrigins
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Same-origin requests (e.g. curl, server-to-server) have no Origin header.
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.size === 0) {
+        // No allow-list configured: permit *.replit.dev in development only.
+        if (
+          process.env.NODE_ENV !== "production" &&
+          /^https:\/\/[^.]+\.replit\.dev(:\d+)?$/.test(origin)
+        ) {
+          return callback(null, true);
+        }
+        logger.warn({ origin }, "CORS request rejected — ALLOWED_ORIGIN not configured");
+        return callback(new Error("CORS: origin not allowed"));
+      }
+
+      if (allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+
+      logger.warn({ origin }, "CORS request rejected — origin not in allowlist");
+      return callback(new Error("CORS: origin not allowed"));
+    },
+    credentials: true,
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// Rate limiting — applied only to authentication endpoints to prevent
+// brute-force and credential-stuffing attacks.
+// ---------------------------------------------------------------------------
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15-minute window
+  max: 20,                   // max 20 attempts per IP per window
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+  skipSuccessfulRequests: false,
+});
 
 app.use(
   pinoHttp({
@@ -25,9 +82,12 @@ app.use(
     },
   }),
 );
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Apply rate limiter to auth endpoints before the main router.
+app.use("/api/v1/auth/login", authRateLimiter);
+app.use("/api/v1/auth/register", authRateLimiter);
 
 app.use("/api", router);
 

@@ -23,7 +23,8 @@ router.post("/v1/auth/register", async (req, res) => {
       email ? eq(usersTable.email, email) : eq(usersTable.phone, phone!)
     ).limit(1);
     if (existing.length > 0) {
-      res.status(400).json({ error: "User already exists with this email or phone" });
+      // Use a generic message to prevent user-enumeration via the register endpoint.
+      res.status(400).json({ error: "Registration failed. Please check your details and try again." });
       return;
     }
     const passwordHash = await hashPassword(password);
