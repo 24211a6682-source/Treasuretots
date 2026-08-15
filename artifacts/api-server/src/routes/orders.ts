@@ -43,6 +43,9 @@ async function formatOrder(order: typeof ordersTable.$inferSelect) {
     childName: order.childName ?? null,
     shippingAddress: order.shippingAddress,
     razorpayOrderId: order.razorpayOrderId ?? null,
+    razorpayPaymentId: order.razorpayPaymentId ?? null,
+    paymentMethod: order.paymentMethod ?? null,
+    paidAt: order.paidAt ?? null,
     createdAt: order.createdAt,
     items: items.map(item => ({
       id: item.id,

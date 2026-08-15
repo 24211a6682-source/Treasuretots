@@ -15,11 +15,12 @@ export interface JwtPayload {
 // Token lifetime is intentionally short (7 days) to limit the exposure window
 // if a localStorage-stored token is ever exfiltrated via XSS.
 export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  // JWT_SECRET is guaranteed non-null by the module-level guard above
+  return jwt.sign(payload, JWT_SECRET!, { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): JwtPayload {
-  return jwt.verify(token, JWT_SECRET) as JwtPayload;
+  return jwt.verify(token, JWT_SECRET!) as unknown as JwtPayload;
 }
 
 export async function hashPassword(password: string): Promise<string> {

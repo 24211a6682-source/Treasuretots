@@ -6,6 +6,7 @@
     "types": ["node"]
   },
   "include": ["src"],
+  "exclude": ["src/scripts/supabase-setup.ts"],
   "references": [
     {
       "path": "../../lib/db"
