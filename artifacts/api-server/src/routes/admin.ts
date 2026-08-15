@@ -171,9 +171,14 @@ router.get("/v1/admin/orders", requireAdmin, async (req, res) => {
 
       return {
         id: order.id, totalAmount: Number(order.totalAmount),
+        shippingAmount: Number(order.shippingAmount),
         paymentStatus: order.paymentStatus, orderStatus: order.orderStatus,
         childName: order.childName ?? null, shippingAddress: order.shippingAddress,
-        razorpayOrderId: order.razorpayOrderId ?? null, createdAt: order.createdAt,
+        razorpayOrderId: order.razorpayOrderId ?? null,
+        razorpayPaymentId: order.razorpayPaymentId ?? null,
+        paymentMethod: order.paymentMethod ?? null,
+        paidAt: order.paidAt ? order.paidAt.toISOString() : null,
+        createdAt: order.createdAt,
         user: user[0] ?? null,
         items: items.map(item => ({
           id: item.id, productId: item.productId!, quantity: item.quantity, price: Number(item.price),
@@ -206,8 +211,15 @@ router.patch("/v1/admin/orders/:id/status", requireAdmin, async (req, res) => {
     }
     const items = await db.select({ id: orderItemsTable.id, productId: orderItemsTable.productId, quantity: orderItemsTable.quantity, price: orderItemsTable.price, product: { id: productsTable.id, name: productsTable.name, coverImage: productsTable.coverImage, images: productsTable.images, category: productsTable.category, subcategory: productsTable.subcategory, slug: productsTable.slug, isBuyable: productsTable.isBuyable, isActive: productsTable.isActive, description: productsTable.description, stock: productsTable.stock, price: productsTable.price } }).from(orderItemsTable).leftJoin(productsTable, eq(orderItemsTable.productId, productsTable.id)).where(eq(orderItemsTable.orderId, order.id));
     res.json({
-      id: order.id, totalAmount: Number(order.totalAmount), paymentStatus: order.paymentStatus, orderStatus: order.orderStatus,
-      childName: order.childName ?? null, shippingAddress: order.shippingAddress, razorpayOrderId: order.razorpayOrderId ?? null, createdAt: order.createdAt,
+      id: order.id, totalAmount: Number(order.totalAmount),
+      shippingAmount: Number(order.shippingAmount),
+      paymentStatus: order.paymentStatus, orderStatus: order.orderStatus,
+      childName: order.childName ?? null, shippingAddress: order.shippingAddress,
+      razorpayOrderId: order.razorpayOrderId ?? null,
+      razorpayPaymentId: order.razorpayPaymentId ?? null,
+      paymentMethod: order.paymentMethod ?? null,
+      paidAt: order.paidAt ? order.paidAt.toISOString() : null,
+      createdAt: order.createdAt,
       items: items.map(item => ({ id: item.id, productId: item.productId!, quantity: item.quantity, price: Number(item.price), product: item.product ? { ...item.product, price: item.product.price ? Number(item.product.price) : null, images: Array.isArray(item.product.images) ? item.product.images : [] } : undefined })),
     });
   } catch (err) {

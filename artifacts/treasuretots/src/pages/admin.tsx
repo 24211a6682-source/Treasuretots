@@ -537,15 +537,33 @@ function OrdersSection({ orders, loadingOrders, onUpdateStatus }: any) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [payFilter, setPayFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
-  const filtered = (orders ?? []).filter((o: any) =>
-    (payFilter === "all" || o.paymentStatus === payFilter) &&
-    (statusFilter === "all" || o.orderStatus === statusFilter)
-  );
+  const filtered = (orders ?? []).filter((o: any) => {
+    const q = search.toLowerCase();
+    const matchSearch = !q ||
+      String(o.id).includes(q) ||
+      o.user?.name?.toLowerCase().includes(q) ||
+      o.user?.email?.toLowerCase().includes(q) ||
+      o.user?.phone?.includes(q) ||
+      o.childName?.toLowerCase().includes(q) ||
+      o.razorpayPaymentId?.toLowerCase().includes(q) ||
+      o.razorpayOrderId?.toLowerCase().includes(q);
+    return matchSearch &&
+      (payFilter === "all" || o.paymentStatus === payFilter) &&
+      (statusFilter === "all" || o.orderStatus === statusFilter);
+  });
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap items-center">
+        <input
+          type="text"
+          placeholder="Search by order ID, name, email, Razorpay ID…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="h-10 px-4 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 w-80"
+        />
         <select value={payFilter} onChange={e => setPayFilter(e.target.value)} className="h-10 px-4 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
           <option value="all">All Payment</option>
           {["pending", "paid", "failed", "refunded"].map(s => <option key={s}>{s}</option>)}
@@ -554,7 +572,7 @@ function OrdersSection({ orders, loadingOrders, onUpdateStatus }: any) {
           <option value="all">All Status</option>
           {ORDER_STATUSES.map(s => <option key={s}>{s.replace(/_/g, " ")}</option>)}
         </select>
-        <span className="flex items-center text-gray-400 text-sm ml-1">{filtered.length} orders</span>
+        <span className="flex items-center text-gray-400 text-sm">{filtered.length} orders</span>
       </div>
 
       <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
@@ -572,13 +590,23 @@ function OrdersSection({ orders, loadingOrders, onUpdateStatus }: any) {
                 onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
                 className="hover:bg-gray-800/40 transition-colors cursor-pointer"
               >
-                <td className="px-5 py-3 text-gray-300 font-mono text-xs">#{order.id}</td>
+                <td className="px-5 py-3">
+                  <p className="text-gray-300 font-mono text-xs">#{order.id}</p>
+                  {order.razorpayPaymentId && (
+                    <p className="text-gray-600 font-mono text-[10px] mt-0.5 truncate max-w-[90px]" title={order.razorpayPaymentId}>{order.razorpayPaymentId}</p>
+                  )}
+                </td>
                 <td className="px-5 py-3">
                   <p className="text-white font-semibold">{order.user?.name ?? "Guest"}</p>
                   <p className="text-gray-500 text-xs">{order.user?.phone ?? order.user?.email ?? ""}</p>
                 </td>
                 <td className="px-5 py-3 text-gray-400">{order.items?.length ?? 0}</td>
-                <td className="px-5 py-3 text-orange-400 font-bold">₹{order.totalAmount}</td>
+                <td className="px-5 py-3">
+                  <p className="text-orange-400 font-bold">₹{order.totalAmount}</p>
+                  {order.shippingAmount > 0 && (
+                    <p className="text-gray-600 text-[10px]">+₹{order.shippingAmount} shipping</p>
+                  )}
+                </td>
                 <td className="px-5 py-3"><StatusBadge status={order.paymentStatus} /></td>
                 <td className="px-5 py-3"><StatusBadge status={order.orderStatus} /></td>
                 <td className="px-5 py-3 text-gray-500 text-xs whitespace-nowrap">
@@ -597,7 +625,8 @@ function OrdersSection({ orders, loadingOrders, onUpdateStatus }: any) {
               expandedId === order.id && (
                 <tr key={`${order.id}-expanded`} className="bg-gray-800/30">
                   <td colSpan={8} className="px-8 py-5">
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-3 gap-6">
+                      {/* Shipping address */}
                       <div>
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Shipping Address</p>
                         {order.shippingAddress ? (
@@ -608,8 +637,50 @@ function OrdersSection({ orders, loadingOrders, onUpdateStatus }: any) {
                             <p className="text-gray-500">{order.shippingAddress.phone}</p>
                           </div>
                         ) : <p className="text-gray-500 text-sm">No address</p>}
-                        {order.childName && <p className="mt-2 text-sm text-orange-400">Child Name: <span className="font-bold">{order.childName}</span></p>}
+                        {order.childName && <p className="mt-2 text-sm text-orange-400">Child: <span className="font-bold">{order.childName}</span></p>}
+                        {order.user?.email && <p className="mt-1 text-xs text-gray-500">{order.user.email}</p>}
                       </div>
+
+                      {/* Payment details */}
+                      <div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Payment Details</p>
+                        <dl className="space-y-1.5 text-sm">
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-gray-500 text-xs">Method</dt>
+                            <dd className="text-gray-300 text-xs font-medium capitalize">{order.paymentMethod ?? "—"}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-gray-500 text-xs">Paid at</dt>
+                            <dd className="text-gray-300 text-xs">{order.paidAt ? format(new Date(order.paidAt), "dd MMM yy, HH:mm") : "—"}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-gray-500 text-xs">Subtotal</dt>
+                            <dd className="text-gray-300 text-xs">₹{(order.totalAmount - (order.shippingAmount ?? 0)).toFixed(2)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-gray-500 text-xs">Shipping</dt>
+                            <dd className="text-gray-300 text-xs">₹{(order.shippingAmount ?? 0).toFixed(2)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4 border-t border-gray-700 pt-1.5">
+                            <dt className="text-gray-400 text-xs font-semibold">Total</dt>
+                            <dd className="text-orange-400 text-xs font-bold">₹{order.totalAmount}</dd>
+                          </div>
+                          {order.razorpayOrderId && (
+                            <div className="pt-1.5 border-t border-gray-700">
+                              <p className="text-gray-500 text-[10px] mb-0.5">Razorpay Order ID</p>
+                              <p className="text-gray-400 font-mono text-[10px] break-all">{order.razorpayOrderId}</p>
+                            </div>
+                          )}
+                          {order.razorpayPaymentId && (
+                            <div>
+                              <p className="text-gray-500 text-[10px] mb-0.5">Razorpay Payment ID</p>
+                              <p className="text-gray-400 font-mono text-[10px] break-all">{order.razorpayPaymentId}</p>
+                            </div>
+                          )}
+                        </dl>
+                      </div>
+
+                      {/* Items ordered */}
                       <div>
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Items Ordered</p>
                         <div className="space-y-2">

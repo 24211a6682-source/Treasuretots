@@ -685,6 +685,7 @@ export const AdminListOrdersQueryParams = zod.object({
 export const AdminListOrdersResponseItem = zod.object({
   "id": zod.number(),
   "totalAmount": zod.number(),
+  "shippingAmount": zod.number(),
   "paymentStatus": zod.string(),
   "orderStatus": zod.string(),
   "childName": zod.string().nullish(),
@@ -700,6 +701,14 @@ export const AdminListOrdersResponseItem = zod.object({
   "isDefault": zod.boolean().optional()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
+  "razorpayPaymentId": zod.string().nullish(),
+  "paymentMethod": zod.string().nullish(),
+  "paidAt": zod.string().nullish(),
+  "user": zod.object({
+  "name": zod.string(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish()
+}).nullish(),
   "items": zod.array(zod.object({
   "id": zod.number(),
   "productId": zod.number(),
@@ -740,6 +749,7 @@ export const AdminUpdateOrderStatusBody = zod.object({
 export const AdminUpdateOrderStatusResponse = zod.object({
   "id": zod.number(),
   "totalAmount": zod.number(),
+  "shippingAmount": zod.number(),
   "paymentStatus": zod.string(),
   "orderStatus": zod.string(),
   "childName": zod.string().nullish(),
@@ -755,6 +765,9 @@ export const AdminUpdateOrderStatusResponse = zod.object({
   "isDefault": zod.boolean().optional()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
+  "razorpayPaymentId": zod.string().nullish(),
+  "paymentMethod": zod.string().nullish(),
+  "paidAt": zod.string().nullish(),
   "items": zod.array(zod.object({
   "id": zod.number(),
   "productId": zod.number(),
