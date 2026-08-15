@@ -43,6 +43,7 @@ channel = "stable-25_05"
 [userenv.shared]
 VITE_CLOUDINARY_CLOUD_NAME = "dnionnijz"
 VITE_CLOUDINARY_UPLOAD_PRESET = "treasuretots_unsigned"
+ADMIN_EMAIL = "treasuretots2025@gmail.com"
 
 [userenv.production]
 ALLOWED_ORIGIN = "https://treasuretots.replit.app"

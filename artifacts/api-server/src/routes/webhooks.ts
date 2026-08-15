@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, ordersTable, orderItemsTable, productsTable } from "@workspace/db";
 import { eq, and, gte, sql, inArray } from "drizzle-orm";
 import crypto from "crypto";
+import { sendOrderConfirmation } from "../lib/email";
 
 const router = Router();
 
@@ -147,6 +148,12 @@ router.post("/v1/webhooks/razorpay", async (req, res) => {
       }
 
       req.log.info({ orderId: order.id, razorpayPaymentId, eventType }, "Webhook: order marked paid");
+
+      // Send order confirmation email — fire-and-forget so the webhook response
+      // is not delayed by the email provider. Errors are logged but do not fail the webhook.
+      sendOrderConfirmation(order.id, req.log).catch((err) => {
+        req.log.error({ err, orderId: order.id }, "sendOrderConfirmation threw unexpectedly");
+      });
 
     } else if (eventType === "payment.failed") {
       const razorpayOrderId: string | undefined = paymentEntity?.order_id;

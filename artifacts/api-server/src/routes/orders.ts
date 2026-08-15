@@ -4,6 +4,7 @@ import { eq, and, gte, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { InitializeOrderBody, VerifyPaymentBody } from "@workspace/api-zod";
 import crypto from "crypto";
+import { sendOrderConfirmation } from "../lib/email";
 
 const router = Router();
 
@@ -236,6 +237,12 @@ router.post("/v1/orders/verify", requireAuth, async (req, res) => {
         req.log.warn({ productId: item.productId, quantity: item.quantity }, "Insufficient stock for decrement — skipped");
       }
     }
+
+    // Send order confirmation email — fire-and-forget so the verify response
+    // is not delayed by the email provider. Errors are logged but do not fail the request.
+    sendOrderConfirmation(order.id, req.log).catch((err) => {
+      req.log.error({ err, orderId: order.id }, "sendOrderConfirmation threw unexpectedly");
+    });
 
     res.json(await formatOrder(order));
   } catch (err) {
