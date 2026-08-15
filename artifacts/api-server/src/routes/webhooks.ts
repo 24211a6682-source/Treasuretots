@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, ordersTable, orderItemsTable, productsTable } from "@workspace/db";
-import { eq, and, gte, sql } from "drizzle-orm";
+import { eq, and, gte, sql, inArray } from "drizzle-orm";
 import crypto from "crypto";
 
 const router = Router();
@@ -92,8 +92,12 @@ router.post("/v1/webhooks/razorpay", async (req, res) => {
         return;
       }
 
-      // Atomic update: WHERE paymentStatus = 'pending' prevents double-processing
-      // if verify and webhook race. Only the first UPDATE matches and returns a row.
+      // Atomic update: WHERE paymentStatus IN ('pending','failed') prevents
+      // double-processing while still allowing the legitimate retry path:
+      // Razorpay permits multiple payment attempts per order_id, so a
+      // payment.captured event can validly arrive for an order currently marked
+      // "failed" (first attempt declined, customer retried and succeeded).
+      // The early "paid" guard above already blocks re-processing a paid order.
       const [updated] = await db
         .update(ordersTable)
         .set({
@@ -105,7 +109,7 @@ router.post("/v1/webhooks/razorpay", async (req, res) => {
         .where(
           and(
             eq(ordersTable.id, order.id),
-            eq(ordersTable.paymentStatus, "pending"),
+            inArray(ordersTable.paymentStatus, ["pending", "failed"]),
           ),
         )
         .returning();

@@ -1,0 +1,59 @@
+Good work — the implementation matches the plan. One real bug to fix, then a
+verification pass before this is production-ready.
+
+FIX REQUIRED — webhook idempotency gap (failed → paid transition)
+
+In artifacts/api-server/src/routes/webhooks.ts, the payment.captured /
+order.paid handler currently updates the order with:
+
+  WHERE paymentStatus = "pending"
+
+This correctly blocks re-processing an already-"paid" order. But it also
+silently blocks the legitimate case where a customer's first payment attempt
+failed (order marked "failed" by an earlier payment.failed webhook), then
+they retried and succeeded. Razorpay allows multiple payment attempts against
+the same order_id — a payment.captured webhook can legitimately arrive for an
+order currently marked "failed". Right now that UPDATE matches zero rows, so
+the order is stuck "failed" forever even though Razorpay actually captured
+the money and stock is never decremented for a paid order.
+
+Fix: widen the WHERE clause to accept either "pending" or "failed":
+
+  .where(and(
+    eq(ordersTable.razorpayOrderId, razorpayOrderId),
+    inArray(ordersTable.paymentStatus, ["pending", "failed"])
+  ))
+
+Keep the existing behavior of skipping the update (and the stock decrement)
+whenever the order is already "paid" — that part is correct and must not
+change. Apply the same reasoning to the payment.failed handler: it should
+only be allowed to move "pending" -> "failed", never touch an order that's
+already "paid" (your current logic already does this correctly — just
+confirm it after the change above).
+
+AFTER THE FIX — run this test checklist in Razorpay Test Mode and report
+pass/fail for each:
+
+1. Successful payment -> order flips to "paid", stock decrements exactly once
+2. Failed payment (declined test card) -> order stays "failed", no stock change
+3. Retry after a failure succeeds -> order correctly ends up "paid" (this is
+   the case the fix above addresses — test it specifically)
+4. Duplicate /v1/orders/verify call (simulate double-click or a retried
+   request) -> confirm no double stock decrement, no error on the second call
+5. Replay the same webhook event twice (Razorpay does this on delivery
+   retries) -> confirm no double effect
+6. Tampered/fake razorpay_signature sent to /verify -> rejected, order stays
+   unpaid
+7. Tamper with the amount in the frontend before opening Checkout (devtools)
+   -> confirm the backend-computed price is what's actually charged, not the
+   tampered value
+
+ALSO CONFIRM (operational, not code):
+- RAZORPAY_WEBHOOK_SECRET is actually set in Replit's Secrets — not just
+  documented in replit.md
+- The webhook URL is registered in Razorpay Dashboard -> Webhooks, pointing
+  at /api/v1/webhooks/razorpay, with payment.captured, payment.failed, and
+  order.paid events enabled
+
+Report back with: the diff for the fix, and pass/fail for each of the 7
+test cases above. Do not mark this task complete until all 7 pass.
