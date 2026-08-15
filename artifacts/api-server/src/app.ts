@@ -41,7 +41,7 @@ app.use(
         // No allow-list configured: permit *.replit.dev in development only.
         if (
           process.env.NODE_ENV !== "production" &&
-          /^https:\/\/[^.]+\.replit\.dev(:\d+)?$/.test(origin)
+          /^https:\/\/[^/]+\.replit\.dev(:\d+)?$/.test(origin)
         ) {
           return callback(null, true);
         }
