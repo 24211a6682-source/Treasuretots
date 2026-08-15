@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LogOut, Package, MapPin, User, Plus, X, Loader2 } from "lucide-react";
+import { LogOut, Package, MapPin, User, Plus, X, Loader2, ChevronDown, ChevronUp, CreditCard, Truck } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,183 @@ const emptyAddress: AddressInput = {
   isDefault: false,
 };
 
+type PaymentStatus = "pending" | "paid" | "failed" | string;
+type OrderStatus = "processing" | "dispatched" | "delivered" | "cancelled" | "completed" | string;
+
+function paymentStatusBadge(status: PaymentStatus) {
+  const map: Record<string, string> = {
+    paid: "bg-green-100 text-green-800",
+    pending: "bg-yellow-100 text-yellow-800",
+    failed: "bg-red-100 text-red-800",
+  };
+  return map[status] ?? "bg-gray-100 text-gray-700";
+}
+
+function orderStatusBadge(status: OrderStatus) {
+  const map: Record<string, string> = {
+    completed: "bg-green-100 text-green-800",
+    delivered: "bg-green-100 text-green-800",
+    dispatched: "bg-blue-100 text-blue-800",
+    processing: "bg-orange-100 text-orange-800",
+    cancelled: "bg-red-100 text-red-800",
+  };
+  return map[status] ?? "bg-orange-100 text-orange-800";
+}
+
+function OrderRow({ order }: { order: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const addr = order.shippingAddress as any;
+
+  return (
+    <div className="border rounded-lg overflow-hidden">
+      {/* Summary row — always visible */}
+      <button
+        type="button"
+        className="w-full text-left p-5 hover:bg-muted/30 transition-colors"
+        onClick={() => setExpanded(v => !v)}
+        aria-expanded={expanded}
+      >
+        <div className="flex flex-wrap justify-between gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Order ID</p>
+            <p className="font-semibold">#{order.id.toString().padStart(6, "0")}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Date</p>
+            <p className="font-semibold">{format(new Date(order.createdAt), "MMM dd, yyyy")}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Total</p>
+            <p className="font-semibold text-primary">₹{order.totalAmount}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Payment</p>
+            <span className={`inline-flex px-2 py-1 rounded text-xs font-bold capitalize ${paymentStatusBadge(order.paymentStatus)}`}>
+              {order.paymentStatus}
+            </span>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Status</p>
+            <span className={`inline-flex px-2 py-1 rounded text-xs font-bold capitalize ${orderStatusBadge(order.orderStatus)}`}>
+              {order.orderStatus}
+            </span>
+          </div>
+          <div className="flex items-center self-center text-muted-foreground">
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
+        </div>
+
+        {/* Item thumbnails preview when collapsed */}
+        {!expanded && order.items?.length > 0 && (
+          <div className="flex gap-2 mt-3 flex-wrap">
+            {order.items.slice(0, 4).map((item: any) => (
+              <div key={item.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                {item.product?.coverImage ? (
+                  <img
+                    src={item.product.coverImage}
+                    alt={item.product.name ?? "Product"}
+                    className="w-8 h-8 rounded object-cover bg-muted"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-muted" />
+                )}
+                <span className="max-w-[120px] truncate">{item.product?.name ?? `Product #${item.productId}`}</span>
+                <span>×{item.quantity}</span>
+              </div>
+            ))}
+            {order.items.length > 4 && (
+              <span className="text-xs text-muted-foreground self-center">+{order.items.length - 4} more</span>
+            )}
+          </div>
+        )}
+      </button>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div className="border-t bg-muted/10 p-5 space-y-6">
+          {/* Items */}
+          <div>
+            <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Package className="w-4 h-4" /> Items Ordered
+            </h4>
+            <div className="space-y-3">
+              {order.items.map((item: any) => (
+                <div key={item.id} className="flex items-center gap-3 text-sm">
+                  {item.product?.coverImage ? (
+                    <img
+                      src={item.product.coverImage}
+                      alt={item.product.name ?? "Product"}
+                      className="w-12 h-12 rounded object-cover bg-muted flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded bg-muted flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{item.product?.name ?? `Product #${item.productId}`}</p>
+                    {item.product?.category && (
+                      <p className="text-xs text-muted-foreground capitalize">{item.product.category}</p>
+                    )}
+                    <p className="text-muted-foreground text-xs">Qty: {item.quantity}</p>
+                  </div>
+                  <p className="font-semibold flex-shrink-0">₹{item.price}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Shipping address */}
+          {addr && (
+            <div>
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Truck className="w-4 h-4" /> Shipping Address
+              </h4>
+              <div className="text-sm text-muted-foreground space-y-0.5">
+                <p className="font-medium text-foreground">{addr.fullName}</p>
+                <p>{addr.houseNo}, {addr.street}</p>
+                <p>{addr.city}, {addr.state} – {addr.pincode}</p>
+                {addr.phone && <p>Ph: {addr.phone}</p>}
+              </div>
+            </div>
+          )}
+
+          {/* Payment info */}
+          <div>
+            <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+              <CreditCard className="w-4 h-4" /> Payment Info
+            </h4>
+            <div className="text-sm space-y-1">
+              <div className="flex gap-2">
+                <span className="text-muted-foreground w-36">Payment Status</span>
+                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold capitalize ${paymentStatusBadge(order.paymentStatus)}`}>
+                  {order.paymentStatus}
+                </span>
+              </div>
+              {order.razorpayOrderId && (
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground w-36">Razorpay Order ID</span>
+                  <span className="font-mono text-xs break-all">{order.razorpayOrderId}</span>
+                </div>
+              )}
+              {order.razorpayPaymentId && (
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground w-36">Payment ID</span>
+                  <span className="font-mono text-xs break-all">{order.razorpayPaymentId}</span>
+                </div>
+              )}
+              {order.paidAt && (
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground w-36">Paid At</span>
+                  <span>{format(new Date(order.paidAt), "MMM dd, yyyy h:mm a")}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { user, logout, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
@@ -40,8 +217,18 @@ export default function Dashboard() {
     return null;
   }
 
-  const { data: ordersData } = useListOrders({ query: { queryKey: ["listOrders"], enabled: !!user } });
-  const { data: addressesData, refetch: refetchAddresses } = useListAddresses({ query: { queryKey: ["listAddresses"], enabled: !!user } });
+  // Poll every 30 seconds so status updates (dispatched, delivered) appear without a page refresh
+  const { data: ordersData, isLoading: ordersLoading } = useListOrders({
+    query: {
+      queryKey: ["listOrders"],
+      enabled: !!user,
+      refetchInterval: 30_000,
+      refetchIntervalInBackground: false,
+    },
+  });
+  const { data: addressesData, refetch: refetchAddresses } = useListAddresses({
+    query: { queryKey: ["listAddresses"], enabled: !!user },
+  });
   const createAddress = useCreateAddress();
 
   const handleLogout = () => {
@@ -92,47 +279,22 @@ export default function Dashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Order History</CardTitle>
-                <CardDescription>Track and view your recent orders</CardDescription>
+                <CardDescription>Track and view your recent orders · updates every 30 seconds</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {!ordersData?.length ? (
-                  <div className="text-center py-10 text-muted-foreground">No orders found.</div>
+              <CardContent className="space-y-4">
+                {ordersLoading ? (
+                  <div className="flex justify-center py-10">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : !ordersData?.length ? (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="font-medium">No orders yet</p>
+                    <p className="text-sm mt-1">Your orders will appear here after you make a purchase.</p>
+                  </div>
                 ) : (
                   ordersData.map((order: any) => (
-                    <div key={order.id} className="border rounded-lg p-5">
-                      <div className="flex flex-wrap justify-between gap-4 mb-4 border-b pb-4">
-                        <div>
-                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Order ID</p>
-                          <p className="font-semibold">#{order.id.toString().padStart(6, '0')}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Date</p>
-                          <p className="font-semibold">{format(new Date(order.createdAt), 'MMM dd, yyyy')}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Total Amount</p>
-                          <p className="font-semibold text-primary">₹{order.totalAmount}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Status</p>
-                          <span className={`inline-flex px-2 py-1 rounded text-xs font-bold capitalize ${order.orderStatus === 'completed' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
-                            {order.orderStatus}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        {order.items.map((item: any) => (
-                          <div key={item.id} className="flex items-center gap-3 text-sm">
-                            <div className="w-10 h-10 bg-muted rounded"></div>
-                            <div className="flex-1">
-                              <p className="font-medium">Product #{item.productId}</p>
-                              <p className="text-muted-foreground">Qty: {item.quantity}</p>
-                            </div>
-                            <p className="font-semibold">₹{item.price}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <OrderRow key={order.id} order={order} />
                   ))
                 )}
               </CardContent>
