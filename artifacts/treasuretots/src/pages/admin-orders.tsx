@@ -248,6 +248,87 @@ function Row({
   );
 }
 
+// ── CSV Export ─────────────────────────────────────────────────────────────────
+
+function escapeCsvCell(value: unknown): string {
+  if (value == null) return "";
+  let str = String(value);
+  // Neutralize spreadsheet formula injection: prefix dangerous leading characters
+  if (str.length > 0 && ["=", "+", "-", "@", "\t", "\r"].includes(str[0])) {
+    str = "'" + str;
+  }
+  // Quote cells that contain commas, double-quotes, or newlines
+  if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+function exportOrdersToCSV(orders: any[]) {
+  const headers = [
+    "Order ID",
+    "Date",
+    "Customer Name",
+    "Phone",
+    "Email",
+    "Child Name",
+    "Items",
+    "Total Amount (₹)",
+    "Shipping Amount (₹)",
+    "Payment Status",
+    "Order Status",
+    "Razorpay Payment ID",
+    "Shipping Address",
+  ];
+
+  const rows = orders.map((o: any) => {
+    const addr = o.shippingAddress;
+    const addressParts = addr
+      ? [
+          addr.fullName,
+          addr.houseNo,
+          addr.street,
+          addr.city,
+          addr.state,
+          addr.pincode,
+          addr.phone ? `Phone: ${addr.phone}` : "",
+          addr.landmark ? `Landmark: ${addr.landmark}` : "",
+        ]
+          .filter(Boolean)
+          .join(", ")
+      : "";
+
+    const itemsSummary = (o.items ?? [])
+      .map((item: any) => `${item.product?.name ?? "Product"} x${item.quantity}`)
+      .join("; ");
+
+    return [
+      o.id,
+      o.createdAt ? format(new Date(o.createdAt), "dd MMM yyyy HH:mm") : "",
+      o.user?.name ?? "Guest",
+      o.user?.phone ?? "",
+      o.user?.email ?? "",
+      o.childName ?? "",
+      itemsSummary,
+      Number(o.totalAmount ?? 0).toFixed(2),
+      o.shippingAmount != null ? Number(o.shippingAmount).toFixed(2) : "",
+      o.paymentStatus ?? "",
+      o.orderStatus ?? "",
+      o.razorpayPaymentId ?? "",
+      addressParts,
+    ].map(escapeCsvCell).join(",");
+  });
+
+  const csv = [headers.map(escapeCsvCell).join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `orders-${format(new Date(), "yyyy-MM-dd")}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── Main Page ──────────────────────────────────────────────────────────────────
 
 export default function AdminOrders() {
@@ -477,6 +558,14 @@ export default function AdminOrders() {
             <span className="text-gray-500 text-sm ml-auto">
               {filtered.length} of {allOrders.length} orders
             </span>
+            <button
+              onClick={() => exportOrdersToCSV(allOrders)}
+              disabled={allOrders.length === 0}
+              className="h-10 px-4 flex items-center gap-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-700 rounded-xl text-sm text-gray-300 hover:text-white font-medium transition"
+              title={`Export all ${allOrders.length} order${allOrders.length !== 1 ? "s" : ""} to CSV`}
+            >
+              <span>⬇️</span> Export CSV
+            </button>
           </div>
 
           {/* Pending payment highlight */}
