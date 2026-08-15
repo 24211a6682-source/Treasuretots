@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -59,10 +59,10 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function Sidebar({ active, setActive, onLogout }: { active: Section; setActive: (s: Section) => void; onLogout: () => void }) {
-  const navItems: { id: Section; label: string; icon: string }[] = [
+  const [, setLocation] = useLocation();
+  const sectionItems: { id: Section; label: string; icon: string }[] = [
     { id: "analytics", label: "Analytics", icon: "📊" },
     { id: "products", label: "Products", icon: "📦" },
-    { id: "orders", label: "Orders", icon: "📋" },
     { id: "users", label: "Users", icon: "👥" },
   ];
   return (
@@ -82,7 +82,7 @@ function Sidebar({ active, setActive, onLogout }: { active: Section; setActive: 
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map(item => (
+        {sectionItems.map(item => (
           <button
             key={item.id}
             onClick={() => setActive(item.id)}
@@ -96,6 +96,15 @@ function Sidebar({ active, setActive, onLogout }: { active: Section; setActive: 
             {item.label}
           </button>
         ))}
+
+        {/* Orders — dedicated page */}
+        <button
+          onClick={() => setLocation("/admin/orders")}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-gray-400 hover:text-white hover:bg-gray-800"
+        >
+          <span className="text-base">📋</span>
+          Orders
+        </button>
       </nav>
 
       {/* Logout */}

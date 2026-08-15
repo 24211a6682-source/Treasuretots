@@ -21,6 +21,7 @@ import Checkout from "@/pages/checkout";
 import OrderSuccess from "@/pages/order-success";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
+import AdminOrders from "@/pages/admin-orders";
 import AdminLogin from "@/pages/admin-login";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -77,6 +78,7 @@ function App() {
           <Switch>
             {/* Admin routes — completely separate UI, no user layout */}
             <Route path="/admin/login" component={AdminLogin} />
+            <Route path="/admin/orders" component={AdminOrders} />
             <Route path="/admin" component={Admin} />
             {/* All user-facing routes wrapped in UserLayout */}
             <Route component={UserRouter} />
