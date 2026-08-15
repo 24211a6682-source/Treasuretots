@@ -47,6 +47,7 @@ India's personalized children's books and learning products e-commerce store. Pa
 - Cart is stored in `localStorage` for guests, synced to DB on login.
 - Auth token stored in `localStorage` as `tt_token` (JWT, 30-day expiry).
 - Razorpay integration is in place; requires `VITE_RAZORPAY_KEY_ID` + `RAZORPAY_KEY_ID` + `RAZORPAY_KEY_SECRET` env vars.
+- `RAZORPAY_WEBHOOK_SECRET` — secret for verifying incoming Razorpay webhook signatures. Get it from Razorpay Dashboard → Webhooks → (your webhook) → Webhook Secret.
 
 ## Product
 

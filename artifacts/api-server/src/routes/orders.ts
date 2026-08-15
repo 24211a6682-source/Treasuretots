@@ -98,8 +98,11 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
     // Add flat shipping — server is the authoritative source; never trust client values
     const finalAmount = totalAmount + SHIPPING_AMOUNT;
 
-    // Create Razorpay order if key available
-    let razorpayOrderId = `tt_${Date.now()}`;
+    // Create Razorpay order if keys are configured.
+    // When keys are present but the API call fails, we return 503 rather than
+    // silently falling back to a fake ID — a fake ID would cause the frontend to
+    // open a live Checkout modal against an order Razorpay has never seen.
+    let razorpayOrderId: string | null = null;
     if (RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET) {
       try {
         const response = await fetch("https://api.razorpay.com/v1/orders", {
@@ -121,9 +124,13 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
         } else {
           const errBody = await response.text();
           req.log.error({ status: response.status, body: errBody }, "Razorpay order creation HTTP error");
+          res.status(503).json({ error: "Payment service unavailable — please try again" });
+          return;
         }
       } catch (rzpErr) {
-        req.log.error({ err: rzpErr }, "Razorpay order creation failed — using fallback ID");
+        req.log.error({ err: rzpErr }, "Razorpay order creation failed");
+        res.status(503).json({ error: "Payment service unavailable — please try again" });
+        return;
       }
     }
 
@@ -179,6 +186,24 @@ router.post("/v1/orders/verify", requireAuth, async (req, res) => {
 
     if (!paymentValid) {
       res.status(400).json({ error: "Payment verification failed" });
+      return;
+    }
+
+    // Idempotency guard: if this order is already paid (e.g. the webhook landed
+    // first, or the user double-submitted), short-circuit and return current state.
+    const [existingOrder] = await db
+      .select()
+      .from(ordersTable)
+      .where(and(eq(ordersTable.id, orderId), eq(ordersTable.userId, req.user!.userId)))
+      .limit(1);
+
+    if (!existingOrder) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+
+    if (existingOrder.paymentStatus === "paid") {
+      res.json(await formatOrder(existingOrder));
       return;
     }
 

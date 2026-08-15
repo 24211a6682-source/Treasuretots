@@ -1,4 +1,14 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request } from "express";
+
+// Extend Express Request to carry the raw body buffer needed for webhook
+// signature verification (populated by the express.json verify callback below).
+declare global {
+  namespace Express {
+    interface Request {
+      rawBody?: Buffer;
+    }
+  }
+}
 import cors from "cors";
 import pinoHttp from "pino-http";
 import rateLimit from "express-rate-limit";
@@ -82,7 +92,11 @@ app.use(
     },
   }),
 );
-app.use(express.json());
+app.use(express.json({
+  verify(req: Request, _res, buf) {
+    req.rawBody = buf;
+  },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Apply rate limiter to auth endpoints before the main router.

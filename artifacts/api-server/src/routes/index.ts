@@ -7,6 +7,7 @@ import ordersRouter from "./orders";
 import usersRouter from "./users";
 import adminRouter from "./admin";
 import geocodeRouter from "./geocode";
+import webhooksRouter from "./webhooks";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(ordersRouter);
 router.use(usersRouter);
 router.use(adminRouter);
 router.use(geocodeRouter);
+router.use(webhooksRouter);
 
 export default router;
