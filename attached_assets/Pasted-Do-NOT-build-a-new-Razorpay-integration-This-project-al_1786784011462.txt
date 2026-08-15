@@ -1,0 +1,78 @@
+Do NOT build a new Razorpay integration. This project already has one —
+verify and wire it up correctly instead.
+
+=== TEST CREDENTIALS ===
+RAZORPAY_KEY_ID=rzp_test_TPzBOY3SOg93OZ
+RAZORPAY_KEY_SECRET=dvE5Epz6sw3t2yL6uBU8LrKC
+
+=== WHERE THEY GO ===
+This project does NOT use a .env file — there is no dotenv dependency
+installed, and nothing in the codebase reads from one. Do not create one.
+
+Add these as Replit Secrets (the Secrets panel, not a file):
+- RAZORPAY_KEY_ID
+- RAZORPAY_KEY_SECRET
+- RAZORPAY_WEBHOOK_SECRET (get this from Razorpay Dashboard -> Webhooks ->
+  your registered endpoint -> Webhook Secret. If no webhook is registered
+  in Test mode yet, register one pointing at /api/v1/webhooks/razorpay for
+  events: payment.captured, payment.failed, order.paid — then copy the
+  secret it generates.)
+
+Do NOT install the `razorpay` npm package. The existing backend calls the
+Razorpay REST API directly via fetch() in
+artifacts/api-server/src/routes/orders.ts — keep that pattern, don't add
+the SDK as an unused dependency.
+
+=== WHAT ALREADY EXISTS — DO NOT DUPLICATE ===
+- POST /api/v1/orders/initialize — creates the internal order + Razorpay
+  order, backend computes the amount (never trusts the client)
+- POST /api/v1/orders/verify — verifies razorpay_signature via
+  HMAC-SHA256(order_id|payment_id, secret), idempotent (short-circuits if
+  already paid)
+- POST /api/v1/webhooks/razorpay — verifies X-Razorpay-Signature over the
+  raw body, reconciles payment.captured / payment.failed / order.paid
+- Frontend checkout flow in artifacts/treasuretots/src/pages/checkout.tsx —
+  already opens Razorpay Standard Checkout with UPI Intent/QR + Cards, no
+  UPI Collect / manual VPA field
+
+Do not create /api/create-order, /api/verify-payment, or any parallel
+routes. Do not touch checkout.tsx's UI or payment method configuration.
+
+=== TASK ===
+1. Add the three secrets above to Replit Secrets
+2. Restart the app and confirm it boots with no missing-env warnings
+3. Walk through the full flow in Razorpay Test Mode:
+   - Add an item to cart -> checkout -> fill address -> Pay
+   - Complete payment with a Razorpay test card or test UPI VPA
+   - Confirm the order lands as "paid" in the DB (payment_status,
+     razorpay_payment_id, payment_method, paid_at all populated)
+   - Confirm stock decremented exactly once
+4. Trigger a test webhook delivery from the Razorpay Dashboard (Webhooks ->
+   your endpoint -> Test) and confirm it's accepted (200) and signature
+   verification passes
+5. Run through this checklist and report pass/fail for each:
+   - Successful payment -> order "paid", stock -1 exactly once
+   - Failed payment (Razorpay test failure card) -> order "failed", no
+     stock change
+   - Retry after a failure succeeds -> order correctly ends up "paid"
+     (this exercises the failed->paid webhook fix from before — confirm
+     it's actually in the code)
+   - Duplicate /verify call -> no double stock decrement
+   - Same webhook event delivered twice -> no double effect
+   - Fake/tampered signature sent to /verify -> rejected, order stays
+     unpaid
+   - Tamper with the frontend amount via devtools before paying -> backend
+     price still wins
+
+=== IF YOU FIND A GAP ===
+If any of the above already-built pieces are missing, incomplete, or don't
+match this description, stop and report exactly what's missing before
+writing new code — do not silently patch over it or rebuild it differently
+from what's described here.
+
+=== OUTPUT ===
+1. Confirm the three secrets are set
+2. Pass/fail for all 7 checklist items
+3. Any gap found vs. the "what already exists" description above
+4. Any manual step still needed before this is ready for real (live-mode)
+   traffic
