@@ -48,4 +48,3 @@ VITE_CLOUDINARY_UPLOAD_PRESET = "treasuretots_unsigned"
 ALLOWED_ORIGIN = "https://treasuretots.replit.app"
 
 [userenv.development]
-RAZORPAY_WEBHOOK_SECRET = "test_wh_secret_tt_2026"
