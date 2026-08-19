@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthLink, getSafeReturnUrl } from "@/lib/auth-navigation";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ export default function Login() {
   const loginMutation = useLogin();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const returnUrl = getSafeReturnUrl(window.location.search);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +27,6 @@ export default function Login() {
       login(res.token);
       toast({ title: "Welcome back!", description: "Successfully logged in." });
       
-      const searchParams = new URLSearchParams(window.location.search);
-      const returnUrl = searchParams.get('returnUrl') || '/dashboard';
       setLocation(returnUrl);
     } catch (err: any) {
       toast({ 
@@ -53,6 +53,7 @@ export default function Login() {
               <Input 
                 id="email" 
                 type="email" 
+                autoComplete="email"
                 placeholder="name@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -63,10 +64,14 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="password">Password</Label>
+                <Link href="/forgot-password" className="text-xs text-primary font-semibold hover:underline">
+                  Forgot password?
+                </Link>
               </div>
               <Input 
                 id="password" 
                 type="password" 
+                autoComplete="current-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
@@ -84,7 +89,7 @@ export default function Login() {
           
           <div className="mt-8 text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Link href="/register" className="text-primary font-bold hover:underline">
+            <Link href={getAuthLink("/register", returnUrl)} className="text-primary font-bold hover:underline">
               Create one
             </Link>
           </div>

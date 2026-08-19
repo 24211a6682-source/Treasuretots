@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
-import { useInitializeOrder, useVerifyPayment, useCreateAddress, useListAddresses, AddressInput } from "@workspace/api-client-react";
+import { useInitializeOrder, useVerifyPayment, useCreateAddress, useListAddresses, Address, AddressInput } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,9 +17,21 @@ declare global {
   }
 }
 
+function toAddressInput(address: Address): AddressInput {
+  return {
+    fullName: address.fullName,
+    phone: address.phone,
+    houseNo: address.houseNo,
+    street: address.street,
+    city: address.city,
+    state: address.state,
+    pincode: address.pincode,
+  };
+}
+
 export default function Checkout() {
-  const { isAuthenticated, user } = useAuth();
-  const { cart, clearLocalCart, refetch } = useCart();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
+  const { cart, clearLocalCart, isLoading: isCartLoading, refetch } = useCart();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -34,22 +46,50 @@ export default function Checkout() {
     pincode: "",
   });
   const [saveAddress, setSaveAddress] = useState(false);
+  const [addressMode, setAddressMode] = useState<"saved" | "new">("new");
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [isGeoLoading, setIsGeoLoading] = useState(false);
   const [geoNote, setGeoNote] = useState<string | null>(null);
 
   const initOrder = useInitializeOrder();
   const verifyPayment = useVerifyPayment();
   const createAddress = useCreateAddress();
-  const { data: addressesData } = useListAddresses({ query: { queryKey: ["listAddresses"], enabled: !!user } });
+  const {
+    data: addressesData,
+    isLoading: areAddressesLoading,
+    refetch: refetchAddresses,
+  } = useListAddresses({ query: { queryKey: ["listAddresses"], enabled: !!user } });
+  const savedAddresses = useMemo(
+    () => [...(addressesData ?? [])].sort((a, b) => Number(Boolean(b.isDefault)) - Number(Boolean(a.isDefault))),
+    [addressesData],
+  );
 
-  if (!isAuthenticated && typeof window !== "undefined") {
-    setLocation("/login?returnUrl=/checkout");
-    return null;
-  }
+  useEffect(() => {
+    if (selectedAddressId !== null || savedAddresses.length === 0) return;
+    const preferredAddress = savedAddresses[0];
+    setSelectedAddressId(preferredAddress.id);
+    setAddress(toAddressInput(preferredAddress));
+    setAddressMode("saved");
+  }, [savedAddresses, selectedAddressId]);
 
-  if (!cart || cart.items.length === 0) {
-    setLocation("/cart");
-    return null;
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (!isAuthenticated) {
+      setLocation("/login?returnUrl=/checkout");
+      return;
+    }
+    if (!isCartLoading && cart.items.length === 0) {
+      setLocation("/cart");
+    }
+  }, [cart.items.length, isAuthenticated, isAuthLoading, isCartLoading, setLocation]);
+
+  if (isAuthLoading || !isAuthenticated || isCartLoading || cart.items.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Preparing checkout...
+      </div>
+    );
   }
 
   const handleUseLocation = () => {
@@ -106,11 +146,34 @@ export default function Checkout() {
     if (saveAddress) {
       try {
         await createAddress.mutateAsync({ data: { ...address, isDefault: !addressesData?.length } });
+        await refetchAddresses();
       } catch {
         // non-blocking — continue to payment even if save fails
       }
     }
     setStep(2);
+  };
+
+  const handleSelectSavedAddress = (savedAddress: Address) => {
+    setSelectedAddressId(savedAddress.id);
+    setAddress(toAddressInput(savedAddress));
+    setAddressMode("saved");
+    setGeoNote(null);
+  };
+
+  const handleUseDifferentAddress = () => {
+    setAddressMode("new");
+    setAddress({
+      fullName: user?.name || "",
+      phone: user?.phone || "",
+      houseNo: "",
+      street: "",
+      city: "",
+      state: "",
+      pincode: "",
+    });
+    setSaveAddress(false);
+    setGeoNote(null);
   };
 
   const handlePayment = async () => {
@@ -216,75 +279,138 @@ export default function Checkout() {
                 <CardTitle>Shipping Details</CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Use My Location button */}
-                <div className="mb-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-11 gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
-                    onClick={handleUseLocation}
-                    disabled={isGeoLoading}
-                  >
-                    {isGeoLoading ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> Detecting location...</>
-                    ) : (
-                      <><MapPin className="w-4 h-4" /> Use My Location</>
+                {areAddressesLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading saved addresses...
+                  </div>
+                ) : (
+                  <>
+                    {savedAddresses.length > 0 && (
+                      <div className="mb-6 space-y-3">
+                        <p className="text-sm font-semibold">Choose a saved address</p>
+                        {savedAddresses.map((savedAddress, index) => {
+                          const isSelected = addressMode === "saved" && selectedAddressId === savedAddress.id;
+                          return (
+                            <button
+                              key={savedAddress.id}
+                              type="button"
+                              onClick={() => handleSelectSavedAddress(savedAddress)}
+                              className={`w-full rounded-xl border p-4 text-left transition-colors ${
+                                isSelected
+                                  ? "border-primary bg-orange-50 ring-1 ring-primary/20"
+                                  : "border-border hover:border-primary/50"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="font-semibold">{savedAddress.fullName}</p>
+                                  <p className="mt-1 text-sm text-muted-foreground">
+                                    {savedAddress.houseNo}, {savedAddress.street}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {savedAddress.city}, {savedAddress.state} {savedAddress.pincode}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">{savedAddress.phone}</p>
+                                </div>
+                                {(savedAddress.isDefault || index === 0) && (
+                                  <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                        <Button
+                          type="button"
+                          variant={addressMode === "new" ? "default" : "outline"}
+                          className="w-full"
+                          onClick={handleUseDifferentAddress}
+                        >
+                          Use a Different Address
+                        </Button>
+                      </div>
                     )}
-                  </Button>
-                  {geoNote && (
-                    <p className={`text-xs mt-2 px-1 ${geoNote.includes("denied") || geoNote.includes("Couldn't") || geoNote.includes("Could not") ? "text-destructive" : "text-green-600"}`}>
-                      {geoNote}
-                    </p>
-                  )}
-                </div>
 
-                <form onSubmit={handleAddressSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <Input id="fullName" required value={address.fullName} onChange={e => setAddress({...address, fullName: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input id="phone" required value={address.phone} onChange={e => setAddress({...address, phone: e.target.value})} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="houseNo">House No. / Flat / Building</Label>
-                    <Input id="houseNo" required value={address.houseNo} onChange={e => setAddress({...address, houseNo: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="street">Street / Area / Locality</Label>
-                    <Input id="street" required value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2 col-span-1">
-                      <Label htmlFor="pincode">Pincode</Label>
-                      <Input id="pincode" required value={address.pincode} onChange={e => setAddress({...address, pincode: e.target.value})} />
-                    </div>
-                    <div className="space-y-2 col-span-1">
-                      <Label htmlFor="city">City</Label>
-                      <Input id="city" required value={address.city} onChange={e => setAddress({...address, city: e.target.value})} />
-                    </div>
-                    <div className="space-y-2 col-span-1">
-                      <Label htmlFor="state">State</Label>
-                      <Input id="state" required value={address.state} onChange={e => setAddress({...address, state: e.target.value})} />
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox
-                      id="saveAddress"
-                      checked={saveAddress}
-                      onCheckedChange={(checked) => setSaveAddress(!!checked)}
-                    />
-                    <label htmlFor="saveAddress" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      Save this address for future orders
-                    </label>
-                  </div>
-                  <Button type="submit" className="w-full mt-6" disabled={createAddress.isPending}>
-                    {createAddress.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving address...</> : "Continue to Payment"}
-                  </Button>
-                </form>
+                    {addressMode === "saved" && savedAddresses.length > 0 ? (
+                      <Button type="button" className="w-full" onClick={() => setStep(2)}>
+                        Continue to Payment
+                      </Button>
+                    ) : (
+                      <>
+                        <div className="mb-6">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full h-11 gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
+                            onClick={handleUseLocation}
+                            disabled={isGeoLoading}
+                          >
+                            {isGeoLoading ? (
+                              <><Loader2 className="w-4 h-4 animate-spin" /> Detecting location...</>
+                            ) : (
+                              <><MapPin className="w-4 h-4" /> Use My Location</>
+                            )}
+                          </Button>
+                          {geoNote && (
+                            <p className={`text-xs mt-2 px-1 ${geoNote.includes("denied") || geoNote.includes("Couldn't") || geoNote.includes("Could not") ? "text-destructive" : "text-green-600"}`}>
+                              {geoNote}
+                            </p>
+                          )}
+                        </div>
+
+                        <form onSubmit={handleAddressSubmit} className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="fullName">Full Name</Label>
+                              <Input id="fullName" required value={address.fullName} onChange={e => setAddress({...address, fullName: e.target.value})} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="phone">Phone Number</Label>
+                              <Input id="phone" required value={address.phone} onChange={e => setAddress({...address, phone: e.target.value})} />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="houseNo">House No. / Flat / Building</Label>
+                            <Input id="houseNo" required value={address.houseNo} onChange={e => setAddress({...address, houseNo: e.target.value})} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="street">Street / Area / Locality</Label>
+                            <Input id="street" required value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
+                          </div>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2 col-span-1">
+                              <Label htmlFor="pincode">Pincode</Label>
+                              <Input id="pincode" required value={address.pincode} onChange={e => setAddress({...address, pincode: e.target.value})} />
+                            </div>
+                            <div className="space-y-2 col-span-1">
+                              <Label htmlFor="city">City</Label>
+                              <Input id="city" required value={address.city} onChange={e => setAddress({...address, city: e.target.value})} />
+                            </div>
+                            <div className="space-y-2 col-span-1">
+                              <Label htmlFor="state">State</Label>
+                              <Input id="state" required value={address.state} onChange={e => setAddress({...address, state: e.target.value})} />
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 pt-2">
+                            <Checkbox
+                              id="saveAddress"
+                              checked={saveAddress}
+                              onCheckedChange={(checked) => setSaveAddress(!!checked)}
+                            />
+                            <label htmlFor="saveAddress" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                              Save this address for future orders
+                            </label>
+                          </div>
+                          <Button type="submit" className="w-full mt-6" disabled={createAddress.isPending}>
+                            {createAddress.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving address...</> : "Continue to Payment"}
+                          </Button>
+                        </form>
+                      </>
+                    )}
+                  </>
+                )}
               </CardContent>
             </Card>
           ) : (

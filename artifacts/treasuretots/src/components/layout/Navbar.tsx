@@ -9,7 +9,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 export function Navbar() {
   const [location] = useLocation();
   const { cart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const firstName = user?.name.trim().split(/\s+/)[0];
 
   const navLinks = [
     { label: "Home", href: "/" },
@@ -33,6 +34,11 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col gap-4 mt-8">
+                {isAuthenticated && firstName && (
+                  <Link href="/dashboard" className="rounded-xl bg-orange-50 px-4 py-3 text-sm font-semibold text-primary">
+                    Welcome, {firstName}
+                  </Link>
+                )}
                 {navLinks.map((link) => (
                   <Link key={link.href} href={link.href} className={`text-lg font-medium transition-colors hover:text-primary ${location === link.href ? "text-primary" : "text-muted-foreground"}`}>
                     {link.label}
@@ -55,6 +61,11 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {isAuthenticated && firstName && (
+            <Link href="/dashboard" className="hidden lg:block text-sm font-semibold text-primary hover:underline">
+              Welcome, {firstName}
+            </Link>
+          )}
           <Button variant="ghost" size="icon" className="text-foreground">
             <Search className="h-5 w-5" />
             <span className="sr-only">Search</span>

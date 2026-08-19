@@ -15,6 +15,80 @@ function getResend(): Resend | null {
   return resend;
 }
 
+type EmailLogger = {
+  info: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
+};
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+export async function sendPasswordResetEmail(
+  input: { email: string; name: string; resetUrl: string },
+  logger?: EmailLogger,
+): Promise<boolean> {
+  const client = getResend();
+  if (!client) {
+    logger?.warn("RESEND_API_KEY not set — skipping password reset email");
+    return false;
+  }
+
+  const safeName = escapeHtml(input.name);
+  const safeResetUrl = escapeHtml(input.resetUrl);
+
+  try {
+    const result = await client.emails.send({
+      from: FROM_EMAIL,
+      to: input.email,
+      subject: "Reset your TreasureTots password",
+      text: `Hi ${input.name},\n\nUse this link to reset your TreasureTots password:\n${input.resetUrl}\n\nThis link expires in one hour and can only be used once. If you did not request this, you can ignore this email.`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head><meta charset="utf-8"><title>Reset your password</title></head>
+          <body style="margin:0;padding:0;background:#fff8f0;font-family:Arial,sans-serif;color:#3b2a14;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8f0;">
+              <tr><td align="center" style="padding:32px 16px;">
+                <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;">
+                  <tr><td style="background:#e8623a;padding:24px 32px;text-align:center;color:#ffffff;">
+                    <h1 style="margin:0;font-size:24px;">TreasureTots Creations</h1>
+                  </td></tr>
+                  <tr><td style="padding:32px;">
+                    <h2 style="margin:0 0 12px;color:#e8623a;">Reset your password</h2>
+                    <p style="line-height:1.6;">Hi ${safeName}, we received a request to reset your password.</p>
+                    <p style="margin:28px 0;text-align:center;">
+                      <a href="${safeResetUrl}" style="display:inline-block;background:#e8623a;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 24px;border-radius:8px;">Choose a new password</a>
+                    </p>
+                    <p style="font-size:13px;line-height:1.6;color:#666;">This link expires in one hour and can only be used once. If you did not request this, you can safely ignore this email.</p>
+                  </td></tr>
+                </table>
+              </td></tr>
+            </table>
+          </body>
+        </html>
+      `,
+    });
+
+    if ("error" in result && result.error) {
+      logger?.error({ error: result.error }, "Resend password reset email error");
+      return false;
+    }
+
+    logger?.info("Password reset email sent");
+    return true;
+  } catch (err) {
+    logger?.error({ err }, "Failed to send password reset email");
+    return false;
+  }
+}
+
 interface ShippingAddress {
   name?: string;
   line1?: string;
@@ -211,7 +285,7 @@ function buildAdminHtml(data: OrderEmailData): string {
  */
 export async function sendOrderConfirmation(
   orderId: number,
-  logger?: { info: (...args: unknown[]) => void; warn: (...args: unknown[]) => void; error: (...args: unknown[]) => void },
+  logger?: EmailLogger,
 ): Promise<void> {
   const client = getResend();
   if (!client) {

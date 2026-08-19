@@ -7,25 +7,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthLink, getSafeReturnUrl } from "@/lib/auth-navigation";
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const { login } = useAuth();
   const registerMutation = useRegister();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const returnUrl = getSafeReturnUrl(window.location.search);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+    setPasswordError(null);
     try {
       const res = await registerMutation.mutateAsync({
         data: { name, email, password }
       });
       login(res.token);
       toast({ title: "Account created!", description: "Welcome to TreasureTots Creations." });
-      setLocation("/dashboard");
+      setLocation(returnUrl);
     } catch (err: any) {
       toast({ 
         title: "Registration failed", 
@@ -50,6 +59,7 @@ export default function Register() {
               <Label htmlFor="name">Full Name</Label>
               <Input 
                 id="name" 
+                autoComplete="name"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
@@ -61,6 +71,7 @@ export default function Register() {
               <Input 
                 id="email" 
                 type="email" 
+                autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -72,11 +83,34 @@ export default function Register() {
               <Input 
                 id="password" 
                 type="password" 
+                autoComplete="new-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
                 className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-white transition-all"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={e => {
+                  setConfirmPassword(e.target.value);
+                  if (passwordError) setPasswordError(null);
+                }}
+                required
+                aria-invalid={passwordError ? "true" : "false"}
+                aria-describedby={passwordError ? "confirm-password-error" : undefined}
+                className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-white transition-all"
+              />
+              {passwordError && (
+                <p id="confirm-password-error" role="alert" className="text-sm text-destructive">
+                  {passwordError}
+                </p>
+              )}
             </div>
             <Button 
               type="submit" 
@@ -89,7 +123,7 @@ export default function Register() {
           
           <div className="mt-8 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary font-bold hover:underline">
+            <Link href={getAuthLink("/login", returnUrl)} className="text-primary font-bold hover:underline">
               Log in
             </Link>
           </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useGetCart, useAddToCart, useUpdateCartItem, useRemoveFromCart, useListProducts, Cart, CartItem } from '@workspace/api-client-react';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
+import { readBuyNowIntent } from '@/lib/buy-now';
 
 export interface LocalCartItem {
   productId: number;
@@ -40,6 +41,10 @@ export function useCart() {
 
   useEffect(() => {
     if (isAuthenticated && localCart.length > 0) {
+      if (readBuyNowIntent()) {
+        setLocalCart([]);
+        return;
+      }
       const syncCart = async () => {
         for (const item of localCart) {
           try {

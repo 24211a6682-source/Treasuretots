@@ -25,6 +25,9 @@ import AdminOrders from "@/pages/admin-orders";
 import AdminLogin from "@/pages/admin-login";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
+import BuyNow from "@/pages/buy-now";
 import ShippingPolicy from "@/pages/shipping";
 import NotFound from "@/pages/not-found";
 
@@ -64,6 +67,9 @@ function UserRouter() {
         <Route path="/shipping" component={ShippingPolicy} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
+        <Route path="/buy-now" component={BuyNow} />
         <Route component={NotFound} />
       </Switch>
     </UserLayout>

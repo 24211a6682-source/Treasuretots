@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { useGetProduct } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
@@ -7,6 +7,8 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Star, MessageCircle, Phone, Instagram, CheckCircle2, Truck, Gift } from "lucide-react";
 import { WHATSAPP_URL, PHONE, INSTAGRAM_URL } from "@/lib/products";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/use-auth";
+import { saveBuyNowIntent } from "@/lib/buy-now";
 
 function Skeleton() {
   return (
@@ -30,6 +32,8 @@ export default function FlashcardDetail() {
   const { slug } = useParams();
   const { data: product, isLoading, isError } = useGetProduct(slug ?? "");
   const { addItem } = useCart();
+  const { isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
@@ -41,6 +45,11 @@ export default function FlashcardDetail() {
 
   const handleAddToCart = () => {
     addItem(product.id, quantity);
+  };
+
+  const handleBuyNow = () => {
+    saveBuyNowIntent({ productId: product.id, quantity });
+    setLocation(isAuthenticated ? "/buy-now" : "/login?returnUrl=%2Fbuy-now");
   };
 
   return (
@@ -133,9 +142,12 @@ export default function FlashcardDetail() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 mb-8">
-            <Button size="lg" className="w-full text-lg h-14 rounded-xl shadow-sm" onClick={handleAddToCart}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+            <Button size="lg" variant="outline" className="w-full text-lg h-14 rounded-xl shadow-sm" onClick={handleAddToCart}>
               Add to Cart
+            </Button>
+            <Button size="lg" className="w-full text-lg h-14 rounded-xl shadow-sm" onClick={handleBuyNow}>
+              Buy Now
             </Button>
           </div>
 
@@ -201,9 +213,12 @@ export default function FlashcardDetail() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-4 md:hidden z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-        <div className="flex-1">
-          <Button className="w-full text-lg h-12 shadow-sm" onClick={handleAddToCart}>
+        <div className="flex-1 grid grid-cols-2 gap-3">
+          <Button variant="outline" className="w-full text-base h-12 shadow-sm" onClick={handleAddToCart}>
             Add to Cart
+          </Button>
+          <Button className="w-full text-base h-12 shadow-sm" onClick={handleBuyNow}>
+            Buy Now
           </Button>
         </div>
       </div>

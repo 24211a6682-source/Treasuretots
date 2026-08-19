@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db, cartItemsTable, productsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { AddToCartBody, UpdateCartItemBody } from "@workspace/api-zod";
 
 const router = Router();
+const CART_LOCK_NAMESPACE = 62144;
 
 async function buildCartResponse(userId: number) {
   const items = await db.select({
@@ -67,27 +68,73 @@ router.post("/v1/cart/items", requireAuth, async (req, res) => {
   }
   const { productId, quantity = 1, childName } = parse.data;
   try {
-    const existing = await db.select().from(cartItemsTable).where(
-      and(eq(cartItemsTable.userId, req.user!.userId), eq(cartItemsTable.productId, productId))
-    ).limit(1);
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_LOCK_NAMESPACE}, ${req.user!.userId})`);
+      const existing = await tx.select().from(cartItemsTable).where(
+        and(eq(cartItemsTable.userId, req.user!.userId), eq(cartItemsTable.productId, productId))
+      ).limit(1);
 
-    if (existing.length > 0) {
-      await db.update(cartItemsTable)
-        .set({ quantity: existing[0].quantity + quantity })
-        .where(eq(cartItemsTable.id, existing[0].id));
-    } else {
-      await db.insert(cartItemsTable).values({
-        userId: req.user!.userId,
-        productId,
-        quantity,
-        childName: childName ?? null,
-      });
-    }
+      if (existing.length > 0) {
+        await tx.update(cartItemsTable)
+          .set({ quantity: existing[0].quantity + quantity })
+          .where(eq(cartItemsTable.id, existing[0].id));
+      } else {
+        await tx.insert(cartItemsTable).values({
+          userId: req.user!.userId,
+          productId,
+          quantity,
+          childName: childName ?? null,
+        });
+      }
+    });
     const cart = await buildCartResponse(req.user!.userId);
     res.json(cart);
   } catch (err) {
     req.log.error({ err }, "Add to cart error");
     res.status(500).json({ error: "Failed to add to cart" });
+  }
+});
+
+router.post("/v1/cart/buy-now", requireAuth, async (req, res) => {
+  const parse = AddToCartBody.safeParse(req.body);
+  if (!parse.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+
+  const { productId, quantity = 1, childName } = parse.data;
+  try {
+    const [product] = await db
+      .select({
+        id: productsTable.id,
+        isActive: productsTable.isActive,
+        isBuyable: productsTable.isBuyable,
+      })
+      .from(productsTable)
+      .where(eq(productsTable.id, productId))
+      .limit(1);
+
+    if (!product?.isActive || !product.isBuyable) {
+      res.status(400).json({ error: "This product is not available for checkout" });
+      return;
+    }
+
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_LOCK_NAMESPACE}, ${req.user!.userId})`);
+      await tx.delete(cartItemsTable).where(eq(cartItemsTable.userId, req.user!.userId));
+      await tx.insert(cartItemsTable).values({
+        userId: req.user!.userId,
+        productId,
+        quantity,
+        childName: childName ?? null,
+      });
+    });
+
+    const cart = await buildCartResponse(req.user!.userId);
+    res.json(cart);
+  } catch (err) {
+    req.log.error({ err }, "Buy now cart replacement error");
+    res.status(500).json({ error: "Failed to prepare checkout" });
   }
 });
 
@@ -100,15 +147,18 @@ router.patch("/v1/cart/items/:productId", requireAuth, async (req, res) => {
   }
   const { quantity } = parse.data;
   try {
-    if (quantity <= 0) {
-      await db.delete(cartItemsTable).where(
-        and(eq(cartItemsTable.userId, req.user!.userId), eq(cartItemsTable.productId, productId))
-      );
-    } else {
-      await db.update(cartItemsTable)
-        .set({ quantity })
-        .where(and(eq(cartItemsTable.userId, req.user!.userId), eq(cartItemsTable.productId, productId)));
-    }
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_LOCK_NAMESPACE}, ${req.user!.userId})`);
+      if (quantity <= 0) {
+        await tx.delete(cartItemsTable).where(
+          and(eq(cartItemsTable.userId, req.user!.userId), eq(cartItemsTable.productId, productId))
+        );
+      } else {
+        await tx.update(cartItemsTable)
+          .set({ quantity })
+          .where(and(eq(cartItemsTable.userId, req.user!.userId), eq(cartItemsTable.productId, productId)));
+      }
+    });
     const cart = await buildCartResponse(req.user!.userId);
     res.json(cart);
   } catch (err) {
@@ -124,9 +174,12 @@ router.delete("/v1/cart/items/:productId", requireAuth, async (req, res) => {
     return;
   }
   try {
-    await db.delete(cartItemsTable).where(
-      and(eq(cartItemsTable.userId, req.user!.userId), eq(cartItemsTable.productId, productId))
-    );
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_LOCK_NAMESPACE}, ${req.user!.userId})`);
+      await tx.delete(cartItemsTable).where(
+        and(eq(cartItemsTable.userId, req.user!.userId), eq(cartItemsTable.productId, productId))
+      );
+    });
     const cart = await buildCartResponse(req.user!.userId);
     res.json(cart);
   } catch (err) {
@@ -137,7 +190,10 @@ router.delete("/v1/cart/items/:productId", requireAuth, async (req, res) => {
 
 router.delete("/v1/cart/clear", requireAuth, async (req, res) => {
   try {
-    await db.delete(cartItemsTable).where(eq(cartItemsTable.userId, req.user!.userId));
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_LOCK_NAMESPACE}, ${req.user!.userId})`);
+      await tx.delete(cartItemsTable).where(eq(cartItemsTable.userId, req.user!.userId));
+    });
     res.json({ items: [], total: 0, itemCount: 0 });
   } catch (err) {
     req.log.error({ err }, "Clear cart error");

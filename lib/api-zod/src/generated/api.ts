@@ -63,6 +63,37 @@ export const GetMeResponse = zod.object({
 
 
 /**
+ * @summary Request a password reset email
+ */
+export const RequestPasswordResetBody = zod.object({
+  "email": zod.string().email()
+})
+
+export const RequestPasswordResetResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Reset a password with a single-use token
+ */
+export const resetPasswordBodyTokenMin = 32;
+
+export const resetPasswordBodyPasswordMin = 8;
+
+
+
+export const ResetPasswordBody = zod.object({
+  "token": zod.string().min(resetPasswordBodyTokenMin),
+  "password": zod.string().min(resetPasswordBodyPasswordMin)
+})
+
+export const ResetPasswordResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
  * @summary List products
  */
 export const listProductsQueryPageDefault = 1;
@@ -181,6 +212,40 @@ export const AddToCartBody = zod.object({
 })
 
 export const AddToCartResponse = zod.object({
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "product": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "price": zod.number().nullish(),
+  "stock": zod.number().optional(),
+  "coverImage": zod.string(),
+  "images": zod.array(zod.string()),
+  "category": zod.string(),
+  "subcategory": zod.string().nullish(),
+  "slug": zod.string(),
+  "isBuyable": zod.boolean(),
+  "isActive": zod.boolean()
+}),
+  "quantity": zod.number(),
+  "childName": zod.string().nullish()
+})),
+  "total": zod.number(),
+  "itemCount": zod.number()
+})
+
+
+/**
+ * @summary Replace the cart with one direct-checkout item
+ */
+export const ReplaceCartForBuyNowBody = zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().optional(),
+  "childName": zod.string().nullish()
+})
+
+export const ReplaceCartForBuyNowResponse = zod.object({
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "product": zod.object({
@@ -685,7 +750,6 @@ export const AdminListOrdersQueryParams = zod.object({
 export const AdminListOrdersResponseItem = zod.object({
   "id": zod.number(),
   "totalAmount": zod.number(),
-  "shippingAmount": zod.number(),
   "paymentStatus": zod.string(),
   "orderStatus": zod.string(),
   "childName": zod.string().nullish(),
@@ -701,14 +765,6 @@ export const AdminListOrdersResponseItem = zod.object({
   "isDefault": zod.boolean().optional()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
-  "razorpayPaymentId": zod.string().nullish(),
-  "paymentMethod": zod.string().nullish(),
-  "paidAt": zod.string().nullish(),
-  "user": zod.object({
-  "name": zod.string(),
-  "email": zod.string().nullish(),
-  "phone": zod.string().nullish()
-}).nullish(),
   "items": zod.array(zod.object({
   "id": zod.number(),
   "productId": zod.number(),
@@ -749,7 +805,6 @@ export const AdminUpdateOrderStatusBody = zod.object({
 export const AdminUpdateOrderStatusResponse = zod.object({
   "id": zod.number(),
   "totalAmount": zod.number(),
-  "shippingAmount": zod.number(),
   "paymentStatus": zod.string(),
   "orderStatus": zod.string(),
   "childName": zod.string().nullish(),
@@ -765,9 +820,6 @@ export const AdminUpdateOrderStatusResponse = zod.object({
   "isDefault": zod.boolean().optional()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
-  "razorpayPaymentId": zod.string().nullish(),
-  "paymentMethod": zod.string().nullish(),
-  "paidAt": zod.string().nullish(),
   "items": zod.array(zod.object({
   "id": zod.number(),
   "productId": zod.number(),

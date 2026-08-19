@@ -16,6 +16,15 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash VARCHAR(64) NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS products (
   id SERIAL PRIMARY KEY,
   name VARCHAR(200) NOT NULL,
@@ -60,7 +69,8 @@ CREATE TABLE IF NOT EXISTS cart_items (
   product_id INTEGER NOT NULL REFERENCES products(id),
   quantity INTEGER NOT NULL DEFAULT 1,
   child_name VARCHAR(100),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT cart_items_user_product_unique UNIQUE (user_id, product_id)
 );
 
 CREATE TABLE IF NOT EXISTS addresses (

@@ -17,6 +17,10 @@ export interface SuccessResponse {
   success: boolean;
 }
 
+export interface MessageResponse {
+  message: string;
+}
+
 export interface User {
   id: number;
   name: string;
@@ -42,6 +46,17 @@ export interface LoginInput {
   email?: string | null;
   /** @nullable */
   phone?: string | null;
+  password: string;
+}
+
+export interface PasswordResetRequestInput {
+  email: string;
+}
+
+export interface PasswordResetInput {
+  /** @minLength 32 */
+  token: string;
+  /** @minLength 8 */
   password: string;
 }
 

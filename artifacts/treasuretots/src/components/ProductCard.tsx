@@ -27,7 +27,7 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="flex items-center justify-between mt-auto pt-1">
           <span className="font-bold text-lg text-primary">₹{product.price}</span>
           <Link href={`/${product.category}/${product.slug}`}>
-            <Button size="sm" variant="outline" className="font-semibold">Buy Now</Button>
+            <Button size="sm" variant="outline" className="font-semibold">View Details</Button>
           </Link>
         </div>
       </CardContent>

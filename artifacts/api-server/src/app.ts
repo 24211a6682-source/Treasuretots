@@ -16,6 +16,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+app.set("trust proxy", 1);
 
 // ---------------------------------------------------------------------------
 // CORS — restrict to the explicitly configured frontend origin(s).
@@ -100,8 +101,15 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: true }));
 
 // Apply rate limiter to auth endpoints before the main router.
-app.use("/api/v1/auth/login", authRateLimiter);
-app.use("/api/v1/auth/register", authRateLimiter);
+app.use(
+  [
+    "/api/v1/auth/login",
+    "/api/v1/auth/register",
+    "/api/v1/auth/password-reset/request",
+    "/api/v1/auth/password-reset",
+  ],
+  authRateLimiter,
+);
 
 app.use("/api", router);
 
