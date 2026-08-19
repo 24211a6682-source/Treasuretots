@@ -207,11 +207,20 @@ export type OrderInitInputItemsItem = {
   quantity: number;
 };
 
+export type OrderInitInputPurchaseMode = typeof OrderInitInputPurchaseMode[keyof typeof OrderInitInputPurchaseMode];
+
+
+export const OrderInitInputPurchaseMode = {
+  cart: 'cart',
+  buy_now: 'buy_now',
+} as const;
+
 export interface OrderInitInput {
   items: OrderInitInputItemsItem[];
   /** @nullable */
   childName?: string | null;
   address: AddressInput;
+  purchaseMode?: OrderInitInputPurchaseMode;
 }
 
 export interface OrderInitResponse {

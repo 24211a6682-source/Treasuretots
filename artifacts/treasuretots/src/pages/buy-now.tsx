@@ -1,9 +1,4 @@
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  getGetCartQueryKey,
-  useReplaceCartForBuyNow,
-} from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,8 +8,6 @@ import { clearBuyNowIntent, readBuyNowIntent } from "@/lib/buy-now";
 
 export default function BuyNow() {
   const { isAuthenticated, isLoading } = useAuth();
-  const replaceCart = useReplaceCartForBuyNow();
-  const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -33,35 +26,8 @@ export default function BuyNow() {
       return;
     }
 
-    let isActive = true;
     setError(null);
-
-    const completeBuyNow = async () => {
-      try {
-        const updatedCart = await replaceCart.mutateAsync({
-          data: {
-            productId: intent.productId,
-            quantity: intent.quantity,
-            childName: intent.childName,
-          },
-        });
-
-        if (!isActive) return;
-        localStorage.removeItem("tt_cart");
-        clearBuyNowIntent();
-        queryClient.setQueryData(getGetCartQueryKey(), updatedCart);
-        setLocation("/checkout");
-      } catch {
-        if (isActive) {
-          setError("We couldn't prepare this item for checkout. Please try again.");
-        }
-      }
-    };
-
-    void completeBuyNow();
-    return () => {
-      isActive = false;
-    };
+    setLocation("/checkout");
   }, [attempt, isAuthenticated, isLoading]);
 
   return (

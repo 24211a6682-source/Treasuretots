@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { db, ordersTable, orderItemsTable, productsTable } from "@workspace/db";
-import { eq, and, gte, sql, inArray } from "drizzle-orm";
+import { db, ordersTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
 import { sendOrderConfirmation } from "../lib/email";
+import { settlePaidOrder } from "../lib/payment-settlement";
 
 const router = Router();
 
@@ -86,74 +87,29 @@ router.post("/v1/webhooks/razorpay", async (req, res) => {
         return;
       }
 
-      // Idempotency guard — whichever processor (verify or webhook) lands first wins
-      if (order.paymentStatus === "paid") {
-        req.log.info({ orderId: order.id, eventType }, "Webhook: order already paid — skipping");
-        res.json({ ok: true });
-        return;
-      }
-
-      // Atomic update: WHERE paymentStatus IN ('pending','failed') prevents
-      // double-processing while still allowing the legitimate retry path:
-      // Razorpay permits multiple payment attempts per order_id, so a
-      // payment.captured event can validly arrive for an order currently marked
-      // "failed" (first attempt declined, customer retried and succeeded).
-      // The early "paid" guard above already blocks re-processing a paid order.
-      const [updated] = await db
-        .update(ordersTable)
-        .set({
-          paymentStatus: "paid",
-          razorpayPaymentId,
-          paymentMethod: paymentMethod ?? null,
-          paidAt: new Date(),
-        })
-        .where(
-          and(
-            eq(ordersTable.id, order.id),
-            inArray(ordersTable.paymentStatus, ["pending", "failed"]),
-          ),
-        )
-        .returning();
-
-      if (!updated) {
-        // Another processor beat us to it — no-op
-        req.log.info({ orderId: order.id, eventType }, "Webhook: order status changed before update — skipping");
-        res.json({ ok: true });
-        return;
-      }
-
-      // Decrement stock — only reached if this processor won the race
-      const orderItems = await db
-        .select()
-        .from(orderItemsTable)
-        .where(eq(orderItemsTable.orderId, order.id));
-
-      for (const item of orderItems) {
-        const decremented = await db
-          .update(productsTable)
-          .set({ stock: sql`stock - ${item.quantity}` })
-          .where(
-            and(
-              eq(productsTable.id, item.productId!),
-              gte(productsTable.stock, item.quantity),
-            ),
-          )
-          .returning();
-        if (decremented.length === 0) {
-          req.log.warn(
-            { productId: item.productId, quantity: item.quantity },
-            "Webhook: insufficient stock for decrement — skipped",
-          );
-        }
-      }
-
-      req.log.info({ orderId: order.id, razorpayPaymentId, eventType }, "Webhook: order marked paid");
-
-      // Send order confirmation email — fire-and-forget so the webhook response
-      // is not delayed by the email provider. Errors are logged but do not fail the webhook.
-      sendOrderConfirmation(order.id, req.log).catch((err) => {
-        req.log.error({ err, orderId: order.id }, "sendOrderConfirmation threw unexpectedly");
+      const settlement = await settlePaidOrder({
+        orderId: order.id,
+        razorpayPaymentId,
+        paymentMethod,
       });
+
+      if (!settlement.order) {
+        req.log.warn({ razorpayOrderId, eventType }, "Webhook: order disappeared during settlement");
+        res.json({ ok: true });
+        return;
+      }
+
+      req.log.info(
+        { orderId: order.id, razorpayPaymentId, eventType, newlyPaid: settlement.newlyPaid },
+        "Webhook: payment settlement completed",
+      );
+
+      if (settlement.newlyPaid) {
+        // Fire-and-forget so email provider latency does not delay the webhook.
+        sendOrderConfirmation(order.id, req.log).catch((err) => {
+          req.log.error({ err, orderId: order.id }, "sendOrderConfirmation threw unexpectedly");
+        });
+      }
 
     } else if (eventType === "payment.failed") {
       const razorpayOrderId: string | undefined = paymentEntity?.order_id;

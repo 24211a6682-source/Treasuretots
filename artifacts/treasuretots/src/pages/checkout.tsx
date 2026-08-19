@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
-import { useInitializeOrder, useVerifyPayment, useCreateAddress, useListAddresses, Address, AddressInput } from "@workspace/api-client-react";
+import { useInitializeOrder, useVerifyPayment, useCreateAddress, useListAddresses, useListProducts, Address, AddressInput } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Loader2 } from "lucide-react";
+import { BuyNowIntent, clearBuyNowIntent, readBuyNowIntent } from "@/lib/buy-now";
 
 declare global {
   interface Window {
@@ -36,6 +37,7 @@ export default function Checkout() {
   const { toast } = useToast();
 
   const [step, setStep] = useState<1 | 2>(1);
+  const [buyNowIntent] = useState<BuyNowIntent | null>(() => readBuyNowIntent());
   const [address, setAddress] = useState<AddressInput>({
     fullName: user?.name || "",
     phone: user?.phone || "",
@@ -55,6 +57,18 @@ export default function Checkout() {
   const verifyPayment = useVerifyPayment();
   const createAddress = useCreateAddress();
   const {
+    data: buyNowProductsData,
+    isLoading: areBuyNowProductsLoading,
+  } = useListProducts(
+    { per_page: 100 },
+    {
+      query: {
+        queryKey: ["listProducts", "buy-now"],
+        enabled: Boolean(buyNowIntent),
+      },
+    },
+  );
+  const {
     data: addressesData,
     isLoading: areAddressesLoading,
     refetch: refetchAddresses,
@@ -62,6 +76,29 @@ export default function Checkout() {
   const savedAddresses = useMemo(
     () => [...(addressesData ?? [])].sort((a, b) => Number(Boolean(b.isDefault)) - Number(Boolean(a.isDefault))),
     [addressesData],
+  );
+  const buyNowProduct = useMemo(
+    () => buyNowProductsData?.products.find((product) => product.id === buyNowIntent?.productId),
+    [buyNowIntent?.productId, buyNowProductsData],
+  );
+  const isDirectPurchase = Boolean(buyNowIntent);
+  const checkoutItems = useMemo(() => {
+    if (buyNowIntent && buyNowProduct) {
+      return [{
+        productId: buyNowIntent.productId,
+        quantity: buyNowIntent.quantity,
+        childName: buyNowIntent.childName ?? null,
+        product: buyNowProduct,
+      }];
+    }
+    return cart.items;
+  }, [buyNowIntent, buyNowProduct, cart.items]);
+  const checkoutTotal = useMemo(
+    () => checkoutItems.reduce(
+      (total, item) => total + (item.product?.price ?? 0) * item.quantity,
+      0,
+    ),
+    [checkoutItems],
   );
 
   useEffect(() => {
@@ -78,12 +115,29 @@ export default function Checkout() {
       setLocation("/login?returnUrl=/checkout");
       return;
     }
-    if (!isCartLoading && cart.items.length === 0) {
+    if (!isCartLoading && !isDirectPurchase && cart.items.length === 0) {
       setLocation("/cart");
     }
-  }, [cart.items.length, isAuthenticated, isAuthLoading, isCartLoading, setLocation]);
+  }, [cart.items.length, isAuthenticated, isAuthLoading, isCartLoading, isDirectPurchase, setLocation]);
 
-  if (isAuthLoading || !isAuthenticated || isCartLoading || cart.items.length === 0) {
+  useEffect(() => {
+    if (!buyNowIntent || areBuyNowProductsLoading || buyNowProduct) return;
+    clearBuyNowIntent();
+    toast({
+      title: "Buy Now item unavailable",
+      description: "Please choose an available product before checking out.",
+      variant: "destructive",
+    });
+    setLocation("/");
+  }, [areBuyNowProductsLoading, buyNowIntent, buyNowProduct, setLocation, toast]);
+
+  if (
+    isAuthLoading ||
+    !isAuthenticated ||
+    isCartLoading ||
+    (isDirectPurchase && (areBuyNowProductsLoading || !buyNowProduct)) ||
+    (!isDirectPurchase && cart.items.length === 0)
+  ) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
@@ -178,24 +232,17 @@ export default function Checkout() {
 
   const handlePayment = async () => {
     try {
-      const items = cart.items.map(i => ({ productId: i.productId, quantity: i.quantity }));
-      const hasCustomName = cart.items.find(i => i.childName);
+      const items = checkoutItems.map(i => ({ productId: i.productId, quantity: i.quantity }));
+      const hasCustomName = checkoutItems.find(i => i.childName);
 
       const orderData = await initOrder.mutateAsync({
         data: {
           items,
           childName: hasCustomName?.childName || null,
-          address
+          address,
+          purchaseMode: isDirectPurchase ? "buy_now" : "cart",
         }
       });
-
-      if (!orderData.key) {
-        toast({ title: "Payment gateway not configured", description: "Order simulated success for testing", variant: "default" });
-        clearLocalCart();
-        refetch();
-        setLocation("/order-success");
-        return;
-      }
 
       const options = {
         key: orderData.key,
@@ -215,8 +262,12 @@ export default function Checkout() {
                 orderId: orderData.orderId
               }
             });
-            clearLocalCart();
-            refetch();
+            if (isDirectPurchase) {
+              clearBuyNowIntent();
+            } else {
+              clearLocalCart();
+            }
+            await refetch();
             setLocation("/order-success");
           } catch {
             toast({ title: "Payment verification failed", variant: "destructive" });
@@ -450,7 +501,7 @@ export default function Checkout() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4 mb-6">
-                {cart.items.map(item => {
+                {checkoutItems.map(item => {
                   const product = item.product;
                   if (!product) return null;
                   return (
@@ -469,7 +520,7 @@ export default function Checkout() {
               <div className="space-y-2 text-sm border-t pt-4 mb-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Items Total</span>
-                  <span>₹{cart.total}</span>
+                  <span>₹{checkoutTotal}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
@@ -479,7 +530,7 @@ export default function Checkout() {
 
               <div className="flex justify-between items-end border-t pt-4">
                 <span className="font-bold">Total</span>
-                <span className="font-bold text-xl text-primary">₹{cart.total + 70}</span>
+                <span className="font-bold text-xl text-primary">₹{checkoutTotal + 70}</span>
               </div>
             </CardContent>
           </Card>

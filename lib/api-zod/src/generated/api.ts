@@ -237,40 +237,6 @@ export const AddToCartResponse = zod.object({
 
 
 /**
- * @summary Replace the cart with one direct-checkout item
- */
-export const ReplaceCartForBuyNowBody = zod.object({
-  "productId": zod.number(),
-  "quantity": zod.number().optional(),
-  "childName": zod.string().nullish()
-})
-
-export const ReplaceCartForBuyNowResponse = zod.object({
-  "items": zod.array(zod.object({
-  "productId": zod.number(),
-  "product": zod.object({
-  "id": zod.number(),
-  "name": zod.string(),
-  "description": zod.string().nullish(),
-  "price": zod.number().nullish(),
-  "stock": zod.number().optional(),
-  "coverImage": zod.string(),
-  "images": zod.array(zod.string()),
-  "category": zod.string(),
-  "subcategory": zod.string().nullish(),
-  "slug": zod.string(),
-  "isBuyable": zod.boolean(),
-  "isActive": zod.boolean()
-}),
-  "quantity": zod.number(),
-  "childName": zod.string().nullish()
-})),
-  "total": zod.number(),
-  "itemCount": zod.number()
-})
-
-
-/**
  * @summary Update cart item quantity
  */
 export const UpdateCartItemParams = zod.object({
@@ -415,6 +381,8 @@ export const ListOrdersResponse = zod.array(ListOrdersResponseItem)
 /**
  * @summary Initialize order and create Razorpay order
  */
+export const initializeOrderBodyPurchaseModeDefault = `cart`;
+
 export const InitializeOrderBody = zod.object({
   "items": zod.array(zod.object({
   "productId": zod.number(),
@@ -430,7 +398,8 @@ export const InitializeOrderBody = zod.object({
   "state": zod.string(),
   "pincode": zod.string(),
   "isDefault": zod.boolean().optional()
-})
+}),
+  "purchaseMode": zod.enum(['cart', 'buy_now']).default(initializeOrderBodyPurchaseModeDefault)
 })
 
 

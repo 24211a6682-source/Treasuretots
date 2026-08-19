@@ -266,31 +266,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Cart"
 
-  /v1/cart/buy-now:
-    post:
-      operationId: replaceCartForBuyNow
-      tags: [cart]
-      summary: Replace the cart with one direct-checkout item
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CartItemInput"
-      responses:
-        "200":
-          description: Cart replaced
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Cart"
-        "400":
-          description: Invalid or unavailable product
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
   /v1/cart/items/{productId}:
     patch:
       operationId: updateCartItem
@@ -1035,6 +1010,10 @@ components:
           type: ["string", "null"]
         address:
           $ref: "#/components/schemas/AddressInput"
+        purchaseMode:
+          type: string
+          enum: [cart, buy_now]
+          default: cart
       required: [items, address]
 
     OrderInitResponse:

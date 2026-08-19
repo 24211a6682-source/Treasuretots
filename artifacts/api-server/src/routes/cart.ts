@@ -95,49 +95,6 @@ router.post("/v1/cart/items", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/v1/cart/buy-now", requireAuth, async (req, res) => {
-  const parse = AddToCartBody.safeParse(req.body);
-  if (!parse.success) {
-    res.status(400).json({ error: "Invalid input" });
-    return;
-  }
-
-  const { productId, quantity = 1, childName } = parse.data;
-  try {
-    const [product] = await db
-      .select({
-        id: productsTable.id,
-        isActive: productsTable.isActive,
-        isBuyable: productsTable.isBuyable,
-      })
-      .from(productsTable)
-      .where(eq(productsTable.id, productId))
-      .limit(1);
-
-    if (!product?.isActive || !product.isBuyable) {
-      res.status(400).json({ error: "This product is not available for checkout" });
-      return;
-    }
-
-    await db.transaction(async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_LOCK_NAMESPACE}, ${req.user!.userId})`);
-      await tx.delete(cartItemsTable).where(eq(cartItemsTable.userId, req.user!.userId));
-      await tx.insert(cartItemsTable).values({
-        userId: req.user!.userId,
-        productId,
-        quantity,
-        childName: childName ?? null,
-      });
-    });
-
-    const cart = await buildCartResponse(req.user!.userId);
-    res.json(cart);
-  } catch (err) {
-    req.log.error({ err }, "Buy now cart replacement error");
-    res.status(500).json({ error: "Failed to prepare checkout" });
-  }
-});
-
 router.patch("/v1/cart/items/:productId", requireAuth, async (req, res) => {
   const productId = parseInt(String(req.params.productId));
   const parse = UpdateCartItemBody.safeParse(req.body);

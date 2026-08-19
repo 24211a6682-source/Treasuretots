@@ -1,0 +1,341 @@
+# Cart Clearing After Successful Payment
+
+Add this as a critical requirement to the existing authentication, cart, checkout, and Razorpay flow.
+
+## Requirement
+
+When a customer adds products to their cart and successfully purchases those products, the purchased cart items must be removed from the cart after the payment is **successfully verified**.
+
+The cart must NOT be cleared simply because:
+
+* The customer clicks Checkout
+* The customer clicks Pay
+* Razorpay Checkout opens
+* The customer enters payment details
+* The frontend receives a payment-success callback
+
+The cart should be cleared only after the backend has confirmed that the payment was genuinely successful.
+
+---
+
+## Expected Flow
+
+Example:
+
+```text
+Product A
+    ↓
+Add to Cart
+    ↓
+Product B
+    ↓
+Add to Cart
+    ↓
+Cart
+    ↓
+A + B
+    ↓
+Proceed to Checkout
+    ↓
+Razorpay Payment
+    ↓
+Payment successful
+    ↓
+Backend verifies Razorpay payment
+    ↓
+Order marked PAID
+    ↓
+Purchased cart items removed
+    ↓
+Cart becomes empty
+    ↓
+Order Confirmation
+```
+
+After successful payment:
+
+```text
+Cart
+----------------
+Your cart is empty
+```
+
+The customer should not see the previously purchased products still sitting in the cart.
+
+---
+
+# IMPORTANT: CLEAR ONLY AFTER VERIFIED PAYMENT
+
+The backend should be the source of truth.
+
+The correct conceptual order is:
+
+```text
+1. Customer initiates payment
+2. Razorpay processes payment
+3. Razorpay returns payment information
+4. Backend verifies Razorpay signature
+5. Backend confirms payment/order
+6. Backend marks order as PAID
+7. Backend clears/removes the purchased cart items
+8. Customer receives order confirmation
+```
+
+Do NOT do:
+
+```text
+Checkout
+→ Clear cart
+→ Payment
+```
+
+because if payment fails or the customer cancels, their products would incorrectly disappear.
+
+---
+
+# PAYMENT FAILURE
+
+If payment fails:
+
+```text
+Cart
+   ↓
+Checkout
+   ↓
+Payment fails
+   ↓
+Return to checkout/cart
+   ↓
+Cart items remain
+```
+
+The customer should be able to retry payment.
+
+---
+
+# PAYMENT CANCELLATION
+
+If the customer opens Razorpay Checkout and closes it:
+
+```text
+Cart
+   ↓
+Checkout
+   ↓
+Razorpay opens
+   ↓
+Customer cancels
+   ↓
+Payment not completed
+   ↓
+Cart remains unchanged
+```
+
+Do NOT clear the cart.
+
+---
+
+# DUPLICATE / RETRY PROTECTION
+
+The cart-clearing operation must be idempotent.
+
+If the same successful payment callback/webhook is processed more than once, the system must not:
+
+* Create duplicate orders
+* Remove unrelated cart items
+* Corrupt the cart
+* Produce inconsistent order/payment states
+
+The backend should identify exactly which cart items belong to the successfully purchased order.
+
+---
+
+# IMPORTANT FOR PARTIAL CART PURCHASES
+
+Do not automatically empty the customer's **entire cart** if the customer only purchased some items.
+
+For example:
+
+```text
+Cart:
+
+Product A
+Product B
+Product C
+```
+
+If the customer purchases only:
+
+```text
+Product A
+Product B
+```
+
+then after successful payment:
+
+```text
+Cart:
+
+Product C
+```
+
+Only the products included in the successfully paid order should be removed.
+
+If the existing Buy Now implementation does not use the normal cart and instead creates a direct order for a single product, do not accidentally clear the customer's unrelated cart items.
+
+---
+
+# FULL CUSTOMER FLOW
+
+The final behavior should be:
+
+### Add to Cart
+
+```text
+Product
+↓
+Add to Cart
+↓
+"Added to Cart"
+↓
+Continue Shopping
+```
+
+### Cart Purchase
+
+```text
+Cart
+↓
+Proceed to Checkout
+↓
+Address
+↓
+Razorpay
+↓
+Payment
+↓
+Backend Verification
+↓
+Order = PAID
+↓
+Purchased items removed from Cart
+↓
+Order Confirmation
+```
+
+### Failed Payment
+
+```text
+Razorpay
+↓
+Payment Failed
+↓
+Order NOT marked PAID
+↓
+Cart items remain
+↓
+Customer can retry
+```
+
+### Cancelled Payment
+
+```text
+Razorpay
+↓
+Customer cancels
+↓
+Cart items remain
+```
+
+---
+
+# DATABASE / TRANSACTION CONSIDERATION
+
+Inspect the existing order and cart schema before implementing this.
+
+Ideally, the successful-payment processing should make the following state transition safely:
+
+```text
+Payment verified
+        ↓
+Order marked PAID
+        ↓
+Purchased cart items removed
+```
+
+Use the database's transaction capabilities where appropriate so that the order and cart state cannot easily become inconsistent.
+
+For example, avoid a situation where:
+
+```text
+Order = PAID
+Cart = still contains purchased items
+```
+
+or:
+
+```text
+Order = NOT PAID
+Cart = already cleared
+```
+
+If the architecture uses asynchronous Razorpay webhooks, make the webhook processing idempotent as well.
+
+---
+
+# ACCEPTANCE TEST
+
+Test this exact scenario:
+
+1. Log in.
+2. Add Product A to cart.
+3. Add Product B to cart.
+4. Open cart.
+5. Confirm A and B are present.
+6. Proceed to checkout.
+7. Complete a successful Razorpay test payment.
+8. Confirm the order is marked as PAID.
+9. Open the cart again.
+10. Confirm A and B are no longer present.
+11. Confirm the cart displays as empty.
+
+Then test:
+
+### Failed payment
+
+1. Add Product A.
+2. Go to checkout.
+3. Make payment fail/cancel.
+4. Return to cart.
+5. Product A must still be present.
+
+### Partial purchase
+
+1. Add A, B, C.
+2. Purchase only A and B if the current architecture supports partial-cart checkout.
+3. After successful payment:
+
+   * A removed
+   * B removed
+   * C remains
+
+### Duplicate callback
+
+Process the same successful payment event twice.
+
+Expected:
+
+```text
+One order
+One successful payment state
+Purchased items removed once
+No data corruption
+```
+
+---
+
+## Core Rule
+
+**A cart represents items that have not yet been successfully purchased.**
+
+Once an item's order has been successfully paid and verified, that item should no longer remain in the customer's active cart.

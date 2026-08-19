@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db, ordersTable, orderItemsTable, productsTable } from "@workspace/db";
-import { eq, and, gte, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { InitializeOrderBody, VerifyPaymentBody } from "@workspace/api-zod";
 import crypto from "crypto";
 import { sendOrderConfirmation } from "../lib/email";
+import { settlePaidOrder } from "../lib/payment-settlement";
 
 const router = Router();
 
@@ -81,7 +82,7 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
     res.status(400).json({ error: "Invalid input" });
     return;
   }
-  const { items, childName, address } = parse.data;
+  const { items, childName, address, purchaseMode = "cart" } = parse.data;
   try {
     // Validate products and calculate total
     let totalAmount = 0;
@@ -102,40 +103,42 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
     // Add flat shipping — server is the authoritative source; never trust client values
     const finalAmount = totalAmount + SHIPPING_AMOUNT;
 
-    // Create Razorpay order if keys are configured.
-    // When keys are present but the API call fails, we return 503 rather than
-    // silently falling back to a fake ID — a fake ID would cause the frontend to
-    // open a live Checkout modal against an order Razorpay has never seen.
+    // A checkout cannot succeed unless the server can create a real Razorpay
+    // order. Never create a pending order or clear a cart as a simulated
+    // fallback when payment credentials are unavailable.
     let razorpayOrderId: string | null = null;
-    if (RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET) {
-      try {
-        const response = await fetch("https://api.razorpay.com/v1/orders", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")}`,
-          },
-          body: JSON.stringify({
-            amount: Math.round(finalAmount * 100),
-            currency: "INR",
-            receipt: `tt_${Date.now()}`,
-            payment_capture: 1,
-          }),
-        });
-        if (response.ok) {
-          const rzpOrder = await response.json() as { id: string };
-          razorpayOrderId = rzpOrder.id;
-        } else {
-          const errBody = await response.text();
-          req.log.error({ status: response.status, body: errBody }, "Razorpay order creation HTTP error");
-          res.status(503).json({ error: "Payment service unavailable — please try again" });
-          return;
-        }
-      } catch (rzpErr) {
-        req.log.error({ err: rzpErr }, "Razorpay order creation failed");
+    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+      req.log.error("Razorpay credentials are not configured");
+      res.status(503).json({ error: "Payment service unavailable — please try again" });
+      return;
+    }
+    try {
+      const response = await fetch("https://api.razorpay.com/v1/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")}`,
+        },
+        body: JSON.stringify({
+          amount: Math.round(finalAmount * 100),
+          currency: "INR",
+          receipt: `tt_${Date.now()}`,
+          payment_capture: 1,
+        }),
+      });
+      if (response.ok) {
+        const rzpOrder = await response.json() as { id: string };
+        razorpayOrderId = rzpOrder.id;
+      } else {
+        const errBody = await response.text();
+        req.log.error({ status: response.status, body: errBody }, "Razorpay order creation HTTP error");
         res.status(503).json({ error: "Payment service unavailable — please try again" });
         return;
       }
+    } catch (rzpErr) {
+      req.log.error({ err: rzpErr }, "Razorpay order creation failed");
+      res.status(503).json({ error: "Payment service unavailable — please try again" });
+      return;
     }
 
     // Create order in DB — store subtotal, shipping, and final total separately
@@ -145,6 +148,7 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
       shippingAmount: SHIPPING_AMOUNT.toFixed(2),
       paymentStatus: "pending",
       orderStatus: "order_received",
+      purchaseMode,
       childName: childName ?? null,
       shippingAddress: address,
       razorpayOrderId,
@@ -206,45 +210,30 @@ router.post("/v1/orders/verify", requireAuth, async (req, res) => {
       return;
     }
 
-    if (existingOrder.paymentStatus === "paid") {
-      res.json(await formatOrder(existingOrder));
+    if (existingOrder.razorpayOrderId !== razorpayOrderId) {
+      res.status(400).json({ error: "Payment verification failed" });
       return;
     }
 
-    const [order] = await db.update(ordersTable)
-      .set({
-        paymentStatus: "paid",
-        orderStatus: "order_received",
-        razorpayPaymentId,
-        razorpaySignature,
-      })
-      .where(and(eq(ordersTable.id, orderId), eq(ordersTable.userId, req.user!.userId)))
-      .returning();
+    const settlement = await settlePaidOrder({
+      orderId,
+      razorpayPaymentId,
+      razorpaySignature,
+    });
 
-    if (!order) {
+    if (!settlement.order) {
       res.status(404).json({ error: "Order not found" });
       return;
     }
 
-    // Decrement stock for each product in the order
-    const orderItems = await db.select().from(orderItemsTable).where(eq(orderItemsTable.orderId, order.id));
-    for (const item of orderItems) {
-      const updated = await db.update(productsTable)
-        .set({ stock: sql`stock - ${item.quantity}` })
-        .where(and(eq(productsTable.id, item.productId!), gte(productsTable.stock, item.quantity)))
-        .returning();
-      if (updated.length === 0) {
-        req.log.warn({ productId: item.productId, quantity: item.quantity }, "Insufficient stock for decrement — skipped");
-      }
+    if (settlement.newlyPaid) {
+      // Fire-and-forget so email provider latency does not delay verification.
+      sendOrderConfirmation(settlement.order.id, req.log).catch((err) => {
+        req.log.error({ err, orderId: settlement.order!.id }, "sendOrderConfirmation threw unexpectedly");
+      });
     }
 
-    // Send order confirmation email — fire-and-forget so the verify response
-    // is not delayed by the email provider. Errors are logged but do not fail the request.
-    sendOrderConfirmation(order.id, req.log).catch((err) => {
-      req.log.error({ err, orderId: order.id }, "sendOrderConfirmation threw unexpectedly");
-    });
-
-    res.json(await formatOrder(order));
+    res.json(await formatOrder(settlement.order));
   } catch (err) {
     req.log.error({ err }, "Verify payment error");
     res.status(500).json({ error: "Payment verification failed" });

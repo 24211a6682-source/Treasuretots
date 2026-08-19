@@ -2,3 +2,4 @@
 - [Razorpay MCP vs Replit Secrets](razorpay-mcp-credentials.md) — MCP uses its own credential store, separate from RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET Replit Secrets.
 - [Webhook idempotency — failed→paid](webhook-idempotency.md) — WHERE clause must use inArray(paymentStatus, ["pending","failed"]) not eq("pending"); Razorpay allows retries on failed orders.
 - [Password reset link origins](password-reset-link-origins.md) — action-token links must use a server-owned configured origin, never request host headers.
+- [Captured payment settlement](payment-settlement-stock-drift.md) — captured payments must settle even when stock drift requires later fulfillment reconciliation.

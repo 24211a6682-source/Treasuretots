@@ -10,6 +10,7 @@ export const ordersTable = pgTable("orders", {
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
   paymentStatus: varchar("payment_status", { length: 30 }).notNull().default("pending"),
   orderStatus: varchar("order_status", { length: 50 }).notNull().default("order_received"),
+  purchaseMode: varchar("purchase_mode", { length: 20 }).notNull().default("cart"),
   childName: varchar("child_name", { length: 100 }),
   shippingAddress: jsonb("shipping_address").notNull(),
   shippingAmount: numeric("shipping_amount", { precision: 10, scale: 2 }).notNull().default("0"),

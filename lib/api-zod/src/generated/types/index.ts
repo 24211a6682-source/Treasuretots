@@ -24,6 +24,7 @@ export * from './messageResponse';
 export * from './order';
 export * from './orderInitInput';
 export * from './orderInitInputItemsItem';
+export * from './orderInitInputPurchaseMode';
 export * from './orderInitResponse';
 export * from './orderItem';
 export * from './orderStatusUpdate';

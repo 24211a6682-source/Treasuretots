@@ -7,10 +7,12 @@
  */
 import type { AddressInput } from './addressInput';
 import type { OrderInitInputItemsItem } from './orderInitInputItemsItem';
+import type { OrderInitInputPurchaseMode } from './orderInitInputPurchaseMode';
 
 export interface OrderInitInput {
   items: OrderInitInputItemsItem[];
   /** @nullable */
   childName?: string | null;
   address: AddressInput;
+  purchaseMode?: OrderInitInputPurchaseMode;
 }
