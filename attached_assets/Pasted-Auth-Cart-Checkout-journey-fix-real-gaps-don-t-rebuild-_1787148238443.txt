@@ -1,0 +1,121 @@
+Auth / Cart / Checkout journey — fix real gaps, don't rebuild what already works.
+
+I've already inspected the current implementation. Don't re-derive all of
+this from scratch — verify what's listed below, then implement the fixes.
+Do NOT rebuild anything marked "already works."
+
+=== ALREADY WORKS — DO NOT REBUILD ===
+- Login/register endpoints exist (routes/auth.ts), passwords hashed via
+  hashPassword/comparePassword — never plaintext
+- Register already returns a generic error on duplicate email/phone (no
+  user-enumeration leak)
+- Guest cart already works via localStorage (hooks/use-cart.ts) and
+  auto-merges into the server cart the moment isAuthenticated flips true —
+  this is the mechanism that should carry "Add to Cart" intent across
+  signup. Reuse it, don't replace it.
+- addresses table already exists (lib/db/src/schema/addresses.ts) with
+  fullName/phone/houseNo/street/city/state/pincode/isDefault — do not
+  create a second address structure
+- cart_items table is already user-scoped (cart.ts schema)
+- checkout.tsx already fetches useListAddresses — the data is available,
+  it's just not used for a "previous address" prompt yet (see gap below)
+
+=== REAL GAPS — CONFIRMED BY READING THE CODE, NOT ASSUMED ===
+
+1. NO forgot-password / reset-password flow exists anywhere. No route in
+   auth.ts, no reset-token table/column, no email trigger, no frontend
+   page. This needs to be built from scratch:
+   - New table or columns for a reset token (hashed token, not plaintext;
+     expiry timestamp; single-use — delete or mark used on redemption)
+   - POST /v1/auth/forgot-password — accepts email, always returns the
+     same generic response regardless of whether the email exists (no
+     enumeration), sends a reset email via the existing Resend setup
+     (artifacts/api-server/src/lib/email.ts already has the Resend
+     pattern — follow it, don't add a second email library)
+   - POST /v1/auth/reset-password — verifies token server-side, checks
+     expiry and single-use, hashes and sets the new password
+   - Frontend: "Forgot Password?" link on login.tsx, a request-reset page,
+     and a reset-password page that reads the token from the URL
+
+2. Register has NO confirm-password field at all — checked register.tsx,
+   there's only one password input and no confirmPassword state.
+   Add a Confirm Password field, validate password === confirmPassword
+   client-side before submit (show an inline error, don't submit), and
+   never send confirmPassword to the backend — it's UI-only validation.
+
+3. There is no real "Buy Now" action anywhere. ProductCard.tsx's "Buy Now"
+   button is just a <Link> to the product detail page — it doesn't buy
+   anything. The product detail pages (learning-detail.tsx,
+   flashcards-detail.tsx, label-detail.tsx, storybook-detail.tsx) only
+   have ONE button wired to handleAddToCart. There is no second, distinct
+   Buy Now button anywhere in the actual purchase flow.
+   Build a real Buy Now action on each product detail page (check all
+   four detail pages, they may have diverged) that:
+   - If unauthenticated: redirects to login/register with the intent
+     "go straight to checkout for this exact product" preserved (see
+     item 5 below for how intent should be carried — do not reuse the
+     Add-to-Cart guest-cart-merge mechanism for this, they're different
+     intents per the spec)
+   - If authenticated: adds this single item and navigates directly to
+     /checkout — does not go through /cart
+   Rename ProductCard's misleading "Buy Now" link or make it consistent
+   with this real behavior — your call, but it can't stay a no-op link
+   labeled "Buy Now."
+
+4. Login redirects to /dashboard by default (login.tsx, `returnUrl || '/dashboard'`).
+   App.tsx confirms "/" is Home (home.tsx) and "/dashboard" is a separate
+   account/orders page. Change the default redirect target to Home ("/"),
+   not /dashboard — keep the returnUrl override behavior for the
+   preserved-intent cases (item 5).
+
+5. Intent preservation for unauthenticated Buy Now doesn't exist yet — only
+   the Add-to-Cart guest-cart mechanism does. Design and implement a way
+   to carry "this customer clicked Buy Now on product X" through
+   signup/login to checkout. Don't put product IDs in query params (spec
+   explicitly says no sensitive info in query params — a product ID isn't
+   sensitive, but keep the mechanism consistent and use the app's existing
+   session/state approach rather than inventing a new one). A reasonable
+   approach: same returnUrl pattern login.tsx already has, pointed at a
+   route that adds-then-redirects, e.g. returnUrl=/checkout?buyNow=productId
+   — verify this doesn't leak anything sensitive before implementing it.
+
+6. checkout.tsx always renders a blank fillable address form, even though
+   it already fetches useListAddresses. There's no "Use previous address /
+   Use a different address" choice UI at all. For a customer with at least
+   one saved address (prioritize the isDefault one if set), show a choice
+   before the form: "Use [Name], [City]..." vs "Use a different address."
+   Only show the blank form immediately if they have zero saved addresses
+   or choose "different."
+
+7. Verify whether a personalized "Welcome, {name}" message exists anywhere
+   in the authenticated experience (I didn't find one in a quick pass, but
+   confirm properly rather than assuming). If missing, add it somewhere
+   sensible in the authenticated header/nav — match existing UI style, not
+   a new banner component.
+
+=== DO NOT TOUCH ===
+- Razorpay integration (routes/orders.ts, routes/webhooks.ts, checkout.tsx
+  payment logic) — these were already fixed and tested in prior work,
+  including an atomic idempotency guard on /verify. Do not modify payment
+  logic while working on items 1–7; if something here genuinely must
+  change to support the address-selection UI in checkout.tsx, make the
+  smallest possible change and call it out explicitly rather than
+  refactoring the payment flow.
+- The existing guest-cart-merge mechanism in use-cart.ts
+
+=== IMPLEMENTATION ORDER ===
+Do these in order, test each before moving to the next:
+1. Confirm-password on register (smallest, isolated)
+2. Login redirect to Home
+3. Previous-address prompt in checkout (uses data already being fetched)
+4. Real Buy Now button + intent preservation through auth
+5. Forgot/reset password (largest, most security-sensitive — do this last
+   so earlier, simpler wins aren't blocked on it)
+6. Welcome message (only after confirming it's actually missing)
+
+=== OUTPUT ===
+For each of the 7 items: confirm my finding was accurate (or correct me
+if I misread something), list exact files touched, and describe how you
+tested it — actually click through the flow, don't just describe the code.
+Flag anything from the original acceptance criteria that you believe is
+already satisfied by existing code so I don't ask you to redo it.
