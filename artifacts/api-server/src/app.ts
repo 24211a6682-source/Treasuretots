@@ -21,8 +21,8 @@ app.set("trust proxy", 1);
 // ---------------------------------------------------------------------------
 // CORS — restrict to the explicitly configured frontend origin(s).
 // Set ALLOWED_ORIGIN to a comma-separated list of permitted origins.
-// In development with no env var set, the server falls back to the Replit
-// dev-domain pattern so the preview pane keeps working.
+// With no env var set, the server falls back to Replit's managed preview
+// domains so the preview pane keeps working.
 // ---------------------------------------------------------------------------
 const rawAllowedOrigins = process.env.ALLOWED_ORIGIN ?? "";
 const allowedOrigins: Set<string> = new Set(
@@ -39,10 +39,10 @@ app.use(
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.size === 0) {
-        // No allow-list configured: permit *.replit.dev in development only.
+        // No allow-list configured: permit only Replit-managed preview hosts.
         if (
-          process.env.NODE_ENV !== "production" &&
-          /^https:\/\/[^/]+\.replit\.dev(:\d+)?$/.test(origin)
+          /^https:\/\/[^/]+\.replit\.dev(:\d+)?$/.test(origin) ||
+          /^https:\/\/[^/]+\.pike\.repl\.co$/.test(origin)
         ) {
           return callback(null, true);
         }
