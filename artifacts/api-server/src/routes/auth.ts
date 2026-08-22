@@ -46,7 +46,10 @@ router.post("/v1/auth/register", async (req, res) => {
     res.status(400).json({ error: "Invalid input" });
     return;
   }
-  const { name, email, phone, password } = parse.data;
+  const name = parse.data.name.trim();
+  const email = parse.data.email?.trim().toLowerCase() || null;
+  const phone = parse.data.phone?.trim() || null;
+  const { password } = parse.data;
   if (!email && !phone) {
     res.status(400).json({ error: "Email or phone required" });
     return;
@@ -63,8 +66,8 @@ router.post("/v1/auth/register", async (req, res) => {
     const passwordHash = await hashPassword(password);
     const [user] = await db.insert(usersTable).values({
       name,
-      email: email ?? null,
-      phone: phone ?? null,
+      email,
+      phone,
       passwordHash,
       role: "user",
     }).returning();
@@ -85,13 +88,17 @@ router.post("/v1/auth/login", async (req, res) => {
     res.status(400).json({ error: "Invalid input" });
     return;
   }
-  const { email, phone, password } = parse.data;
+  const email = parse.data.email?.trim().toLowerCase() || null;
+  const phone = parse.data.phone?.trim() || null;
+  const { password } = parse.data;
   if (!email && !phone) {
     res.status(400).json({ error: "Email or phone required" });
     return;
   }
   try {
-    const condition = email ? eq(usersTable.email, email) : eq(usersTable.phone, phone!);
+    const condition = email
+      ? sql`lower(${usersTable.email}) = ${email}`
+      : eq(usersTable.phone, phone!);
     const [user] = await db.select().from(usersTable).where(condition).limit(1);
     if (!user) {
       res.status(401).json({ error: "Invalid credentials" });

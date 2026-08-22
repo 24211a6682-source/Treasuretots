@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useLogin } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -92,6 +92,11 @@ export default function AdminLogin() {
             >
               {loginMutation.isPending ? "Signing in…" : "Sign In"}
             </button>
+            <div className="text-center">
+              <Link href="/forgot-password" className="text-xs font-semibold text-orange-400 hover:text-orange-300 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
           </form>
         </div>
 
