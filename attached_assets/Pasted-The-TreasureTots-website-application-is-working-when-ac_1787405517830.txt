@@ -1,0 +1,133 @@
+The TreasureTots website/application is working when accessed directly, but the **Replit embedded Preview panel is not rendering the website**. The Preview currently shows a blank/failed page even though the application and API appear to be running.
+
+I need you to diagnose and fix **ONLY the Replit Preview/rendering issue** without breaking any existing website functionality, database, authentication, products, admin dashboard, Cloudinary integration, or Razorpay/payment implementation.
+
+### Current situation
+
+* The TreasureTots website is already working.
+* The web workflow is running.
+* The API workflow is listening on port `8080`.
+* The API health check returns `200 OK`.
+* Replit's Preview panel is currently showing a blank/error page.
+* There were some temporary `500` health checks during API startup, but the API subsequently became healthy.
+* Razorpay CSP warnings appear only inside the payment modal and should NOT be treated as the cause of the main Preview failure.
+
+### Your task
+
+Perform a systematic diagnosis of the Replit Preview problem.
+
+1. Inspect the complete project structure and determine:
+
+   * frontend framework
+   * backend framework
+   * frontend start command
+   * backend start command
+   * ports being used
+   * Vite/React/Next.js configuration if applicable
+   * Replit workflow configuration
+   * `.replit` configuration
+   * `replit.nix` if present
+   * environment variables relevant to frontend/backend URLs
+
+2. Check the browser/Preview console and network errors.
+
+3. Verify whether the frontend is actually listening on the port that Replit Preview expects.
+
+4. Check whether the frontend is binding to:
+
+   * `localhost`
+   * `127.0.0.1`
+   * `0.0.0.0`
+
+   If necessary, configure the development server to listen on `0.0.0.0`.
+
+5. Check for incorrect hardcoded URLs such as:
+
+   * `localhost`
+   * `127.0.0.1`
+   * incorrect ports
+   * incorrect API base URLs
+
+   Do NOT blindly replace URLs. Only change them where necessary for the Replit Preview environment.
+
+6. Check whether the frontend is attempting to call the backend using an inaccessible localhost URL from the browser.
+
+7. Check for:
+
+   * CORS problems
+   * proxy configuration problems
+   * incorrect frontend routing
+   * SPA fallback problems
+   * incorrect `base` configuration
+   * failed JavaScript bundle loading
+   * missing environment variables
+   * incorrect workflow commands
+   * port conflicts
+   * startup race conditions
+
+8. Check the Replit Preview URL and make sure the application is being served correctly through the Replit proxy.
+
+9. If the project uses Vite, verify the Vite server configuration and ensure it is compatible with Replit Preview.
+
+10. If the project uses another frontend framework, apply the equivalent Replit-compatible configuration.
+
+### Important constraints
+
+DO NOT:
+
+* rewrite the website
+* redesign the UI
+* modify product data
+* modify database schemas
+* modify authentication
+* modify Cloudinary functionality
+* modify Razorpay/payment logic
+* remove payment security/CSP configuration just to make the Preview work
+* replace working backend code unnecessarily
+* downgrade dependencies unnecessarily
+* create fake/mock API responses
+* disable security features as a workaround
+
+The website is already working. Treat this as a **deployment/Preview configuration and connectivity debugging task**, not a website redevelopment task.
+
+### Debugging procedure
+
+First inspect the existing configuration and logs.
+
+Then identify the exact root cause.
+
+Before changing anything, clearly state:
+
+**ROOT CAUSE:** <specific issue>
+
+Then make the smallest possible fix.
+
+After the fix:
+
+1. Restart the required workflow(s).
+2. Wait for the services to become healthy.
+3. Verify the API health endpoint returns `200`.
+4. Verify the frontend loads through the Replit Preview URL.
+5. Check browser console errors.
+6. Check network requests.
+7. Verify API requests from the frontend.
+8. Confirm that the homepage renders.
+9. Confirm that navigation still works.
+10. Confirm that the payment flow has NOT been modified or broken.
+
+If the Preview still fails, continue debugging instead of simply saying that the application is working.
+
+### Final response
+
+Give me:
+
+* Root cause
+* Files changed
+* Exact changes made
+* Frontend port
+* Backend port
+* Preview URL/status
+* Verification results
+* Any remaining warnings that are unrelated to the Preview issue
+
+Again: **fix the Replit Preview only. Preserve the existing TreasureTots application and payment implementation.**
