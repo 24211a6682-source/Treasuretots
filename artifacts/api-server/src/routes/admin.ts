@@ -149,6 +149,30 @@ router.delete("/v1/admin/products/:id", requireAdmin, async (req, res) => {
 });
 
 // Orders
+router.get("/v1/admin/orders/id-audit", requireAdmin, async (req, res) => {
+  try {
+    const [audit] = await db.select({
+      totalOrders: sql<number>`count(*)`,
+      uniqueOrderIds: sql<number>`count(distinct ${ordersTable.id})`,
+      duplicateOrderIds: sql<number>`count(*) - count(distinct ${ordersTable.id})`,
+      duplicateRazorpayOrderIds: sql<number>`count(*) filter (where ${ordersTable.razorpayOrderId} is not null) - count(distinct ${ordersTable.razorpayOrderId})`,
+    }).from(ordersTable);
+
+    res.json({
+      totalOrders: Number(audit.totalOrders),
+      uniqueOrderIds: Number(audit.uniqueOrderIds),
+      duplicateOrderIds: Number(audit.duplicateOrderIds),
+      duplicateRazorpayOrderIds: Number(audit.duplicateRazorpayOrderIds),
+      orderIdGeneration: "PostgreSQL serial primary key",
+      orderIdConstraint: "orders_pkey",
+      paymentRetryProtection: "Verified Razorpay order IDs must match the stored order before idempotent settlement",
+    });
+  } catch (err) {
+    req.log.error({ err }, "Order ID audit error");
+    res.status(500).json({ error: "Failed to audit order IDs" });
+  }
+});
+
 router.get("/v1/admin/orders", requireAdmin, async (req, res) => {
   try {
     const params = AdminListOrdersQueryParams.safeParse(req.query);

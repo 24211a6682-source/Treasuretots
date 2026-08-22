@@ -22,6 +22,7 @@ export * from './listProductsParams';
 export * from './loginInput';
 export * from './messageResponse';
 export * from './order';
+export * from './orderIdAudit';
 export * from './orderInitInput';
 export * from './orderInitInputItemsItem';
 export * from './orderInitInputPurchaseMode';

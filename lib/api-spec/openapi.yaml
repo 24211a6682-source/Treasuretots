@@ -597,6 +597,19 @@ paths:
                 items:
                   $ref: "#/components/schemas/Order"
 
+  /v1/admin/orders/id-audit:
+    get:
+      operationId: adminGetOrderIdAudit
+      tags: [admin]
+      summary: Admin — audit order ID uniqueness
+      responses:
+        "200":
+          description: Order ID integrity audit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderIdAudit"
+
   /v1/admin/orders/{id}/status:
     patch:
       operationId: adminUpdateOrderStatus
@@ -857,6 +870,32 @@ components:
           type: boolean
         isActive:
           type: boolean
+
+    OrderIdAudit:
+      type: object
+      properties:
+        totalOrders:
+          type: integer
+        uniqueOrderIds:
+          type: integer
+        duplicateOrderIds:
+          type: integer
+        duplicateRazorpayOrderIds:
+          type: integer
+        orderIdGeneration:
+          type: string
+        orderIdConstraint:
+          type: string
+        paymentRetryProtection:
+          type: string
+      required:
+        - totalOrders
+        - uniqueOrderIds
+        - duplicateOrderIds
+        - duplicateRazorpayOrderIds
+        - orderIdGeneration
+        - orderIdConstraint
+        - paymentRetryProtection
 
     CartItem:
       type: object

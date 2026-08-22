@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { saveBuyNowIntent } from "@/lib/buy-now";
+import { RecommendedProducts } from "@/components/RecommendedProducts";
 
 function Skeleton() {
   return (
@@ -233,6 +234,8 @@ export default function LabelDetail() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <RecommendedProducts product={product} />
 
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-4 md:hidden z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
         <div className="flex-1 grid grid-cols-2 gap-3">

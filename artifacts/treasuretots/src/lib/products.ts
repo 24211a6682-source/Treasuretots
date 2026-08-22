@@ -110,6 +110,41 @@ export const storybookProducts: StorybookData[] = [
   { id: 502, slug: "police-officer", name: "Police Officer", storyCategory: "career", coverImage: "/assets/images/customized story books/police officer/Police officer1.jpg", previewImage: "/assets/images/customized story books/police officer/Police officer2.jpg" },
 ];
 
+export interface StaticCatalogSearchResult {
+  id: string;
+  name: string;
+  categoryLabel: "Story Books" | "Wallpapers & Frames";
+  coverImage: string;
+  href: string;
+}
+
+export function searchStaticCatalog(query: string): StaticCatalogSearchResult[] {
+  const normalizedQuery = query.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+  if (!normalizedQuery) return [];
+
+  const storybookMatches = storybookProducts
+    .filter((book) => book.name.toLocaleLowerCase().includes(normalizedQuery))
+    .map((book) => ({
+      id: `storybook-${book.id}`,
+      name: book.name,
+      categoryLabel: "Story Books" as const,
+      coverImage: book.coverImage,
+      href: `/storybooks/${book.slug}`,
+    }));
+
+  const wallpaperMatches = wallpaperProducts
+    .filter((product) => product.name.toLocaleLowerCase().includes(normalizedQuery))
+    .map((product) => ({
+      id: `wallpaper-${product.id}`,
+      name: product.name,
+      categoryLabel: "Wallpapers & Frames" as const,
+      coverImage: product.coverImage,
+      href: "/wallpapers",
+    }));
+
+  return [...storybookMatches, ...wallpaperMatches];
+}
+
 export const reviews = [
   { id: 1, text: "Received the items... The quality is very nice. All items received in good condition with proper packing. Thanks dear.", stars: 5 },
   { id: 2, text: "Hi sir, received the book. It is too good. He liked it very much. Thank you so much ❤️", stars: 5 },

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, productsTable } from "@workspace/db";
-import { eq, like, and, SQL } from "drizzle-orm";
+import { eq, ilike, and, SQL } from "drizzle-orm";
 import { ListProductsQueryParams, SearchProductsQueryParams, GetProductParams } from "@workspace/api-zod";
 
 const router = Router();
@@ -50,11 +50,15 @@ router.get("/v1/products/search", async (req, res) => {
       res.status(400).json({ error: "Query parameter q is required" });
       return;
     }
-    const { q } = params.data;
+    const q = params.data.q.trim().replace(/\s+/g, " ");
+    if (!q) {
+      res.status(400).json({ error: "Query parameter q is required" });
+      return;
+    }
     const products = await db.select().from(productsTable).where(
       and(
         eq(productsTable.isActive, true),
-        like(productsTable.name, `%${q}%`)
+        ilike(productsTable.name, `%${q}%`)
       )
     );
     res.json(products.map(formatProduct));

@@ -34,6 +34,7 @@ import type {
   LoginInput,
   MessageResponse,
   Order,
+  OrderIdAudit,
   OrderInitInput,
   OrderInitResponse,
   OrderStatusUpdate,
@@ -2202,6 +2203,83 @@ export function useAdminListOrders<TData = Awaited<ReturnType<typeof adminListOr
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getAdminListOrdersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAdminGetOrderIdAuditUrl = () => {
+
+
+
+
+  return `/api/v1/admin/orders/id-audit`
+}
+
+/**
+ * @summary Admin — audit order ID uniqueness
+ */
+export const adminGetOrderIdAudit = async ( options?: RequestInit): Promise<OrderIdAudit> => {
+
+  return customFetch<OrderIdAudit>(getAdminGetOrderIdAuditUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminGetOrderIdAuditQueryKey = () => {
+    return [
+    `/api/v1/admin/orders/id-audit`
+    ] as const;
+    }
+
+
+export const getAdminGetOrderIdAuditQueryOptions = <TData = Awaited<ReturnType<typeof adminGetOrderIdAudit>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof adminGetOrderIdAudit>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminGetOrderIdAuditQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminGetOrderIdAudit>>> = ({ signal }) => adminGetOrderIdAudit({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminGetOrderIdAudit>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type AdminGetOrderIdAuditQueryResult = NonNullable<Awaited<ReturnType<typeof adminGetOrderIdAudit>>>
+export type AdminGetOrderIdAuditQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Admin — audit order ID uniqueness
+ */
+
+export function useAdminGetOrderIdAudit<TData = Awaited<ReturnType<typeof adminGetOrderIdAudit>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof adminGetOrderIdAudit>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getAdminGetOrderIdAuditQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

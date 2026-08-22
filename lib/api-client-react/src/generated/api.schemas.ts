@@ -128,6 +128,16 @@ export interface ProductUpdate {
   isActive?: boolean;
 }
 
+export interface OrderIdAudit {
+  totalOrders: number;
+  uniqueOrderIds: number;
+  duplicateOrderIds: number;
+  duplicateRazorpayOrderIds: number;
+  orderIdGeneration: string;
+  orderIdConstraint: string;
+  paymentRetryProtection: string;
+}
+
 export interface CartItem {
   productId: number;
   product: Product;

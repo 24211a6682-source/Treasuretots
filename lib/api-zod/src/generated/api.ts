@@ -760,6 +760,20 @@ export const AdminListOrdersResponse = zod.array(AdminListOrdersResponseItem)
 
 
 /**
+ * @summary Admin — audit order ID uniqueness
+ */
+export const AdminGetOrderIdAuditResponse = zod.object({
+  "totalOrders": zod.number(),
+  "uniqueOrderIds": zod.number(),
+  "duplicateOrderIds": zod.number(),
+  "duplicateRazorpayOrderIds": zod.number(),
+  "orderIdGeneration": zod.string(),
+  "orderIdConstraint": zod.string(),
+  "paymentRetryProtection": zod.string()
+})
+
+
+/**
  * @summary Admin — update order status
  */
 export const AdminUpdateOrderStatusParams = zod.object({
