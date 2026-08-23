@@ -326,4 +326,24 @@ router.get("/v1/admin/analytics", requireAdmin, async (req, res) => {
   }
 });
 
+// ONE-TIME: reset production admin email + password
+router.post("/v1/admin/reset-admin-credentials", async (req, res) => {
+  if (req.headers["x-reset-token"] !== "TT_RESET_2026_SECURE") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  try {
+    await db.update(usersTable)
+      .set({
+        email: "24211a6682@bvrit.ac.in",
+        passwordHash: "$2b$12$hs5YDHFHLYBCwaPI/1yVKeWlFBgK5.ATMdewYTPGo9xW4K/j1d6Wa",
+      })
+      .where(eq(usersTable.role, "admin"));
+    res.json({ ok: true, email: "24211a6682@bvrit.ac.in" });
+  } catch (err) {
+    req.log.error({ err }, "reset-admin-credentials error");
+    res.status(500).json({ error: "Reset failed" });
+  }
+});
+
 export default router;
