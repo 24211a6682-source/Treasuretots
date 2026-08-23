@@ -326,4 +326,64 @@ router.get("/v1/admin/analytics", requireAdmin, async (req, res) => {
   }
 });
 
+// ONE-TIME: purge all non-admin users and their data (idempotent, safe to call again)
+router.delete("/v1/admin/purge-test-users", requireAdmin, async (req, res) => {
+  try {
+    const result = await db.execute<{ step: string; deleted: string }>(
+      sql`
+        WITH
+          oi AS (
+            DELETE FROM order_items
+            WHERE order_id IN (
+              SELECT id FROM orders
+              WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')
+            )
+            RETURNING id
+          ),
+          ci AS (
+            DELETE FROM cart_items
+            WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')
+            RETURNING id
+          ),
+          ad AS (
+            DELETE FROM addresses
+            WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')
+            RETURNING id
+          ),
+          wi AS (
+            DELETE FROM wishlist_items
+            WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')
+            RETURNING id
+          ),
+          pr AS (
+            DELETE FROM password_reset_tokens
+            WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')
+            RETURNING id
+          ),
+          od AS (
+            DELETE FROM orders
+            WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')
+            RETURNING id
+          ),
+          us AS (
+            DELETE FROM users WHERE role != 'admin'
+            RETURNING id
+          )
+        SELECT
+          (SELECT COUNT(*) FROM oi) AS order_items_deleted,
+          (SELECT COUNT(*) FROM ci) AS cart_items_deleted,
+          (SELECT COUNT(*) FROM ad) AS addresses_deleted,
+          (SELECT COUNT(*) FROM wi) AS wishlist_items_deleted,
+          (SELECT COUNT(*) FROM pr) AS tokens_deleted,
+          (SELECT COUNT(*) FROM od) AS orders_deleted,
+          (SELECT COUNT(*) FROM us) AS users_deleted
+      `
+    );
+    res.json({ ok: true, deleted: result.rows[0] });
+  } catch (err) {
+    req.log.error({ err }, "purge-test-users error");
+    res.status(500).json({ error: "Purge failed" });
+  }
+});
+
 export default router;
