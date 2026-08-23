@@ -351,9 +351,9 @@ export default function AdminOrders() {
 
   const isAdmin = user?.role === "admin";
 
-  const { data: orders = [], isLoading: loadingOrders } = useAdminListOrders(
+  const { data: orders = [], isLoading: loadingOrders, isFetching, refetch } = useAdminListOrders(
     {},
-    { query: { queryKey: ["adminOrders"], enabled: isAdmin } },
+    { query: { queryKey: ["adminOrders"], enabled: isAdmin, refetchInterval: 30_000 } },
   );
 
   const updateOrderStatus = useAdminUpdateOrderStatus({
@@ -558,6 +558,15 @@ export default function AdminOrders() {
             <span className="text-gray-500 text-sm ml-auto">
               {filtered.length} of {allOrders.length} orders
             </span>
+            <button
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="h-10 px-4 flex items-center gap-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-60 border border-gray-700 rounded-xl text-sm text-gray-300 hover:text-white font-medium transition"
+              title="Refresh orders"
+            >
+              <span className={isFetching ? "animate-spin inline-block" : ""}>🔄</span>
+              {isFetching ? "Refreshing…" : "Refresh"}
+            </button>
             <button
               onClick={() => exportOrdersToCSV(allOrders)}
               disabled={allOrders.length === 0}

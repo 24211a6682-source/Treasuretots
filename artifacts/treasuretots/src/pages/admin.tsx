@@ -797,7 +797,7 @@ export default function Admin() {
 
   const { data: analytics, isLoading: loadingAnalytics } = useAdminGetAnalytics({ query: { queryKey: ["adminAnalytics"], enabled: isAdmin } });
   const { data: products, isLoading: loadingProducts } = useAdminListProducts({ query: { queryKey: ["adminProducts"], enabled: isAdmin } });
-  const { data: orders = [], isLoading: loadingOrders } = useAdminListOrders({}, { query: { queryKey: ["adminOrders"], enabled: isAdmin } });
+  const { data: orders = [], isLoading: loadingOrders } = useAdminListOrders({}, { query: { queryKey: ["adminOrders"], enabled: isAdmin, refetchInterval: 30_000 } });
   const { data: users = [], isLoading: loadingUsers } = useAdminListUsers({ query: { queryKey: ["adminUsers"], enabled: isAdmin } });
 
   const updateOrderStatus = useAdminUpdateOrderStatus({
