@@ -3,4 +3,4 @@
 - [Webhook idempotency — failed→paid](webhook-idempotency.md) — WHERE clause must use inArray(paymentStatus, ["pending","failed"]) not eq("pending"); Razorpay allows retries on failed orders.
 - [Password reset link origins](password-reset-link-origins.md) — action-token links must use a server-owned configured origin, never request host headers.
 - [Captured payment settlement](payment-settlement-stock-drift.md) — captured payments must settle even when stock drift requires later fulfillment reconciliation.
-- [Replit preview CORS](replit-preview-cors.md) — current preview traffic uses replit.dev; legacy pike.repl.co is retired.
+- [Replit preview CORS](replit-preview-cors.md) — preview traffic may originate from pike.repl.co, not only replit.dev.
