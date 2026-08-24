@@ -10,10 +10,16 @@ export function ProductCard({ product }: { product: Product }) {
       <Link href={`/${product.category}/${product.slug}`}>
         <div className="relative overflow-hidden bg-white">
           <AspectRatio ratio={3 / 4}>
+            {/* object-contain (not cover): product images are mixed-ratio —
+                portrait book covers (~0.66), square covers (1.0) and landscape
+                flashcards / name-tags (~1.41). In a 3:4 box, cover would crop a
+                landscape image by ~47% of its width, hiding the very product the
+                customer is choosing. Contain keeps the whole product visible; the
+                bg-white box reads as clean padding and the grid stays uniform. */}
             <img
               src={product.coverImage}
               alt={product.name}
-              className="object-cover w-full h-full"
+              className="object-contain w-full h-full"
             />
           </AspectRatio>
         </div>

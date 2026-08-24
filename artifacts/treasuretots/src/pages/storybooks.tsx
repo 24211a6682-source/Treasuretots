@@ -71,8 +71,8 @@ export default function Storybooks() {
 
       {/* Filter Tabs */}
       <div className="container mx-auto px-4 mb-8">
-        <div className="flex justify-center overflow-x-auto pb-2 hide-scrollbar">
-          <div className="flex gap-1 border-b border-gray-200">
+        <div className="overflow-x-auto pb-2 hide-scrollbar">
+          <div className="flex gap-1 border-b border-gray-200 w-max mx-auto">
             {FILTERS.map(f => (
               <button
                 key={f.value}
