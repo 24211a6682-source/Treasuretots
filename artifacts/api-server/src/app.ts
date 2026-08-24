@@ -40,10 +40,7 @@ app.use(
 
       if (allowedOrigins.size === 0) {
         // No allow-list configured: permit only Replit-managed preview hosts.
-        if (
-          /^https:\/\/[^/]+\.replit\.dev(:\d+)?$/.test(origin) ||
-          /^https:\/\/[^/]+\.pike\.repl\.co$/.test(origin)
-        ) {
+        if (/^https:\/\/[^/]+\.replit\.dev(:\d+)?$/.test(origin)) {
           return callback(null, true);
         }
         logger.warn({ origin }, "CORS request rejected — ALLOWED_ORIGIN not configured");
