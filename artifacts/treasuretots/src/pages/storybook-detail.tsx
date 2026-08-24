@@ -44,7 +44,7 @@ export default function StorybookDetail() {
         <span className="text-foreground font-medium truncate">{book.name}</span>
       </div>
 
-      <div className="grid md:grid-cols-12 gap-10 lg:gap-16">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-16">
         {/* Left: Images */}
         <div className="md:col-span-6 flex flex-col gap-4">
           <div className="relative overflow-hidden bg-muted/10 rounded-2xl border shadow-sm">

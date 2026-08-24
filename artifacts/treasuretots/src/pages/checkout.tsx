@@ -412,7 +412,7 @@ export default function Checkout() {
                         </div>
 
                         <form onSubmit={handleAddressSubmit} className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="fullName">Full Name</Label>
                               <Input id="fullName" required value={address.fullName} onChange={e => setAddress({...address, fullName: e.target.value})} />
@@ -430,7 +430,7 @@ export default function Checkout() {
                             <Label htmlFor="street">Street / Area / Locality</Label>
                             <Input id="street" required value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
                           </div>
-                          <div className="grid grid-cols-3 gap-4">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             <div className="space-y-2 col-span-1">
                               <Label htmlFor="pincode">Pincode</Label>
                               <Input id="pincode" required value={address.pincode} onChange={e => setAddress({...address, pincode: e.target.value})} />
@@ -439,7 +439,7 @@ export default function Checkout() {
                               <Label htmlFor="city">City</Label>
                               <Input id="city" required value={address.city} onChange={e => setAddress({...address, city: e.target.value})} />
                             </div>
-                            <div className="space-y-2 col-span-1">
+                            <div className="space-y-2 col-span-2 sm:col-span-1">
                               <Label htmlFor="state">State</Label>
                               <Input id="state" required value={address.state} onChange={e => setAddress({...address, state: e.target.value})} />
                             </div>

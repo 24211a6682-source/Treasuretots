@@ -138,7 +138,13 @@ export function Navbar() {
             {isSearchOpen && (
               <div
                 id="catalog-search"
-                className="absolute right-0 top-12 z-[60] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border bg-background p-3 shadow-xl"
+                /* The search icon sits mid-cluster (cart + account are to its
+                   right), so anchoring the dropdown `right-0` to the button
+                   pushed a 328px panel off the LEFT edge on phones, clipping the
+                   input. On mobile, pin the panel to the viewport instead
+                   (fixed, 1rem side margins, just below the 4rem navbar); from
+                   md: up restore the original right-aligned dropdown. */
+                className="fixed inset-x-4 top-16 z-[60] w-auto overflow-hidden rounded-xl border bg-background p-3 shadow-xl md:absolute md:inset-x-auto md:right-0 md:top-12 md:w-[22rem]"
               >
                 <div className="flex items-center gap-2">
                   <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />

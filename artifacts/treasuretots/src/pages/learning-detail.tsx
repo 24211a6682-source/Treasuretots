@@ -15,7 +15,7 @@ function Skeleton() {
   return (
     <div className="container mx-auto px-4 py-8 animate-pulse">
       <div className="h-4 bg-gray-100 rounded w-48 mb-6" />
-      <div className="grid md:grid-cols-12 gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
         <div className="md:col-span-7">
           <div className="aspect-square bg-gray-100 rounded-xl" />
           <div className="flex gap-3 mt-4">
@@ -87,7 +87,7 @@ export default function ProductDetail() {
         <span className="text-foreground font-medium truncate">{product.name}</span>
       </div>
 
-      <div className="grid md:grid-cols-12 gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
         <div className="md:col-span-7 flex flex-col gap-4">
           <div className="relative overflow-hidden bg-gray-50 rounded-xl border">
             <AspectRatio ratio={1}>

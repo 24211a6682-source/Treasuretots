@@ -204,7 +204,7 @@ function OrderRow({ order }: { order: any }) {
 }
 
 export default function Dashboard() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -212,7 +212,13 @@ export default function Dashboard() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAddress, setNewAddress] = useState<AddressInput>({ ...emptyAddress });
 
-  if (!isAuthenticated && typeof window !== "undefined") {
+  // Redirect to login only once the auth check has SETTLED. isAuthenticated is
+  // `!!token && !!user`, and on a direct open / refresh of /dashboard the token
+  // is present but useGetMe hasn't resolved `user` yet — so isAuthenticated is
+  // briefly false. Without the isLoading guard, a logged-in user gets bounced to
+  // login on every refresh. Waiting for isLoading to clear fixes that while still
+  // redirecting a genuinely unauthenticated visitor (no token → isLoading false).
+  if (!isAuthenticated && !isLoading && typeof window !== "undefined") {
     setLocation("/login");
     return null;
   }
@@ -344,7 +350,7 @@ export default function Dashboard() {
                 {showAddForm && (
                   <form onSubmit={handleAddAddress} className="border rounded-lg p-5 bg-muted/20 space-y-4">
                     <h3 className="font-semibold text-sm">New Address</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <Label htmlFor="a-fullName">Full Name</Label>
                         <Input id="a-fullName" required value={newAddress.fullName}
@@ -366,18 +372,18 @@ export default function Dashboard() {
                       <Input id="a-street" required value={newAddress.street}
                         onChange={e => setNewAddress({ ...newAddress, street: e.target.value })} />
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      <div className="space-y-1 col-span-1">
                         <Label htmlFor="a-pincode">Pincode</Label>
                         <Input id="a-pincode" required value={newAddress.pincode}
                           onChange={e => setNewAddress({ ...newAddress, pincode: e.target.value })} />
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 col-span-1">
                         <Label htmlFor="a-city">City</Label>
                         <Input id="a-city" required value={newAddress.city}
                           onChange={e => setNewAddress({ ...newAddress, city: e.target.value })} />
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 col-span-2 sm:col-span-1">
                         <Label htmlFor="a-state">State</Label>
                         <Input id="a-state" required value={newAddress.state}
                           onChange={e => setNewAddress({ ...newAddress, state: e.target.value })} />

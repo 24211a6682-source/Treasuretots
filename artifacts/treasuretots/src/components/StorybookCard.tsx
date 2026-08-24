@@ -20,10 +20,13 @@ export function StorybookCard({ book }: { book: StorybookData }) {
       <Link href={`/storybooks/${book.slug}`}>
         <div className="relative overflow-hidden bg-muted/20">
           <AspectRatio ratio={3/4}>
-            <img 
-              src={book.coverImage} 
-              alt={book.name} 
-              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+            {/* object-contain (not cover): storybook covers are square (1:1), so a
+                3:4 box under cover would slice ~25% off the sides — cutting cover
+                art and titles. Contain shows the full cover; bg-muted/20 frames it. */}
+            <img
+              src={book.coverImage}
+              alt={book.name}
+              className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-105"
             />
           </AspectRatio>
         </div>

@@ -280,6 +280,16 @@
     @apply hidden;
   }
 
+  /* Hide scrollbars on horizontal carousels / thumbnail strips while keeping
+     the content fully scrollable (swipe on touch, wheel/trackpad on desktop). */
+  .hide-scrollbar {
+    -ms-overflow-style: none; /* IE & legacy Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, other WebKit */
+  }
+
   /* Placeholder styling for contentEditable div */
   [contenteditable][data-placeholder]:empty::before {
     content: attr(data-placeholder);

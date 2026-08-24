@@ -48,16 +48,19 @@ export function Footer() {
             <h3 className="font-semibold text-lg mb-4">Contact</h3>
             <ul className="flex flex-col gap-3 text-sm text-muted-foreground">
               <li className="flex items-start gap-3">
-                <MapPin className="h-4 w-4 mt-0.5 text-primary" />
+                <MapPin className="h-4 w-4 mt-0.5 text-primary shrink-0" />
                 <span>South India<br />Made with love in India</span>
               </li>
               <li className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-primary" />
-                <span>{PHONE}</span>
+                <Phone className="h-4 w-4 text-primary shrink-0" />
+                <span className="min-w-0 break-words">{PHONE}</span>
               </li>
               <li className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-primary" />
-                <span>{EMAIL}</span>
+                <Mail className="h-4 w-4 text-primary shrink-0" />
+                {/* min-w-0 + break-words: the email is one unbreakable token; in the
+                    md:grid-cols-4 footer at narrow widths (landscape phones, ~768–900px)
+                    its 208px intrinsic width overflowed the ~160px column. Now it wraps. */}
+                <span className="min-w-0 break-words">{EMAIL}</span>
               </li>
             </ul>
           </div>
