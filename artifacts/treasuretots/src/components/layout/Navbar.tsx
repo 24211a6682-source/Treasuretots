@@ -9,11 +9,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { searchStaticCatalog } from "@/lib/products";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 export function Navbar() {
   const [location, setLocation] = useLocation();
   const { cart } = useCart();
   const { isAuthenticated, user } = useAuth();
+  // Controlled so the "More" tab in the mobile bottom navigation opens this
+  // same menu (single source of truth — no competing drawer).
+  const { open: isMenuOpen, setOpen: setMenuOpen } = useMobileMenu();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const firstName = user?.name.trim().split(/\s+/)[0];
@@ -82,25 +86,37 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
-          <Sheet>
+          <Sheet open={isMenuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+            <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto">
               <nav className="flex flex-col gap-4 mt-8">
                 {isAuthenticated && firstName && (
-                  <Link href="/dashboard" className="rounded-xl bg-orange-50 px-4 py-3 text-sm font-semibold text-primary">
+                  <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="rounded-xl bg-orange-50 px-4 py-3 text-sm font-semibold text-primary">
                     Welcome, {firstName}
                   </Link>
                 )}
                 {navLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className={`text-lg font-medium transition-colors hover:text-primary ${location === link.href ? "text-primary" : "text-muted-foreground"}`}>
+                  <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className={`text-lg font-medium transition-colors hover:text-primary ${location === link.href ? "text-primary" : "text-muted-foreground"}`}>
                     {link.label}
                   </Link>
                 ))}
+                {/* Secondary destinations — the bottom nav's "More" tab opens this same menu. */}
+                <div className="mt-2 flex flex-col gap-4 border-t pt-4">
+                  <Link href={isAuthenticated ? "/dashboard" : "/login"} onClick={() => setMenuOpen(false)} className="text-lg font-medium text-muted-foreground transition-colors hover:text-primary">
+                    My Account
+                  </Link>
+                  <Link href="/cart" onClick={() => setMenuOpen(false)} className="text-lg font-medium text-muted-foreground transition-colors hover:text-primary">
+                    Cart{cart && cart.itemCount > 0 ? ` (${cart.itemCount})` : ""}
+                  </Link>
+                  <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="text-lg font-medium text-muted-foreground transition-colors hover:text-primary">
+                    My Orders
+                  </Link>
+                </div>
               </nav>
             </SheetContent>
           </Sheet>

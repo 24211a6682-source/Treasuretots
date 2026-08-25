@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, ArrowLeft } from "lucide-react";
 import { BuyNowIntent, clearBuyNowIntent, readBuyNowIntent } from "@/lib/buy-now";
 
 declare global {
@@ -309,8 +309,22 @@ export default function Checkout() {
     }
   };
 
+  // Back respects the navigation context: a direct "Buy Now" checkout returns to
+  // that product's detail page; a cart checkout returns to the cart.
+  const checkoutBackHref =
+    isDirectPurchase && buyNowProduct
+      ? `/${buyNowProduct.category}/${buyNowProduct.slug}`
+      : "/cart";
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <button
+        type="button"
+        onClick={() => setLocation(checkoutBackHref)}
+        className="inline-flex items-center gap-1 -ml-1 mb-4 text-sm font-medium text-muted-foreground hover:text-primary"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
       <div className="flex gap-4 mb-8">

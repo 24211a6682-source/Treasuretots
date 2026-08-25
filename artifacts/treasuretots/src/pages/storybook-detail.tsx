@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { storybookProducts, getWhatsAppEnquiryUrl, PHONE, INSTAGRAM_URL, WHATSAPP_URL, EMAIL } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
-import { Star, MessageCircle, Phone, Instagram, Sparkles, Paintbrush, FileText, Truck, Mail } from "lucide-react";
+import { Star, MessageCircle, Phone, Instagram, Sparkles, Paintbrush, FileText, Truck, Mail, ArrowLeft } from "lucide-react";
 import { StorybookCard } from "@/components/StorybookCard";
 
 const categoryColors: Record<string, string> = {
@@ -22,6 +22,11 @@ export default function StorybookDetail() {
   const book = storybookProducts.find(b => b.slug === slug);
   const [activeImage, setActiveImage] = useState(0);
 
+  // Reset the gallery when navigating between related storybooks (same component).
+  useEffect(() => {
+    setActiveImage(0);
+  }, [slug]);
+
   if (!book) {
     return <div className="container mx-auto p-20 text-center text-xl">Storybook not found</div>;
   }
@@ -32,9 +37,16 @@ export default function StorybookDetail() {
     .slice(0, 3);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 pt-8 pb-40 md:pb-8">
+      {/* Mobile: concise back to the Story Books listing; desktop keeps the breadcrumb. */}
+      <Link
+        href="/storybooks"
+        className="md:hidden inline-flex items-center gap-1 -ml-1 mb-4 text-sm font-medium text-muted-foreground hover:text-primary"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </Link>
       {/* Breadcrumb */}
-      <div className="flex items-center text-sm text-muted-foreground mb-6">
+      <div className="hidden md:flex items-center text-sm text-muted-foreground mb-6">
         <Link href="/" className="hover:text-primary">Home</Link>
         <span className="mx-2">/</span>
         <Link href="/storybooks" className="hover:text-primary">Story Books</Link>
@@ -192,8 +204,8 @@ export default function StorybookDetail() {
         </div>
       )}
 
-      {/* Mobile Sticky Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-3 md:hidden z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+      {/* Mobile Sticky Bar — sits above the fixed bottom nav (bottom-16, z-30). */}
+      <div className="fixed bottom-16 left-0 right-0 bg-background border-t p-4 flex gap-3 md:hidden z-30 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
         <Button
           asChild
           className="flex-1 h-12 bg-[#25D366] hover:bg-[#128C7E] text-white gap-2"

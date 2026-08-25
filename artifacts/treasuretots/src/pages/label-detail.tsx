@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useGetProduct } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
+import { cn } from "@/lib/utils";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Star, MessageCircle, Phone, Instagram, CheckCircle2, Truck } from "lucide-react";
+import { Star, MessageCircle, Phone, Instagram, CheckCircle2, Truck, ArrowLeft, ShoppingCart, Check } from "lucide-react";
 import { WHATSAPP_URL, PHONE, INSTAGRAM_URL } from "@/lib/products";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -34,12 +35,23 @@ function Skeleton() {
 export default function LabelDetail() {
   const { slug } = useParams();
   const { data: product, isLoading, isError } = useGetProduct(slug ?? "");
-  const { addItem } = useCart();
+  const { addItem, cart } = useCart();
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [childName, setChildName] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
+
+  // Reset per-product UI when navigating product → recommended product without a
+  // full remount, so the new product never inherits the previous one's state.
+  useEffect(() => {
+    setActiveImage(0);
+    setQuantity(1);
+    setChildName("");
+    setJustAdded(false);
+  }, [slug]);
 
   if (isLoading) return <Skeleton />;
 
@@ -48,13 +60,25 @@ export default function LabelDetail() {
   }
 
   const requiresChildName = product.slug === "customised-name-tags";
+  // Single source of truth = the existing cart state. "Added" shows if the item
+  // is already in the cart (e.g. on reload) or was just added this session.
+  const isInCart = cart.items.some((item) => item.productId === product.id);
+  const showAdded = isInCart || justAdded;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (requiresChildName && !childName.trim()) {
       alert("Please enter the child's name");
       return;
     }
-    addItem(product.id, quantity, childName || undefined);
+    // Prevent duplicate adds: ignore repeat clicks while in flight / already added.
+    if (isAdding || showAdded) return;
+    setIsAdding(true);
+    try {
+      await addItem(product.id, quantity, childName || undefined);
+      setJustAdded(true);
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleBuyNow = () => {
@@ -71,8 +95,16 @@ export default function LabelDetail() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center text-sm text-muted-foreground mb-6">
+    <div className="container mx-auto px-4 pt-8 pb-40 md:pb-8">
+      {/* Mobile: concise back to the originating listing; desktop keeps the breadcrumb. */}
+      <button
+        type="button"
+        onClick={() => setLocation(`/${product.category}`)}
+        className="md:hidden inline-flex items-center gap-1 -ml-1 mb-4 text-sm font-medium text-muted-foreground hover:text-primary"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
+      <div className="hidden md:flex items-center text-sm text-muted-foreground mb-6">
         <Link href="/" className="hover:text-primary">Home</Link>
         <span className="mx-2">/</span>
         <Link href="/labels" className="hover:text-primary">Name Tags</Link>
@@ -166,8 +198,17 @@ export default function LabelDetail() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-            <Button size="lg" variant="outline" className="w-full text-lg h-14 rounded-xl shadow-sm" onClick={handleAddToCart}>
-              Add to Cart
+            <Button
+              size="lg"
+              variant="outline"
+              className={cn(
+                "w-full text-lg h-14 rounded-xl shadow-sm gap-2",
+                showAdded && "border-green-600 text-green-700 hover:text-green-700",
+              )}
+              onClick={handleAddToCart}
+              disabled={isAdding}
+            >
+              {showAdded ? <><Check className="h-5 w-5" /> Added to Cart</> : <><ShoppingCart className="h-5 w-5" /> Add to Cart</>}
             </Button>
             <Button size="lg" className="w-full text-lg h-14 rounded-xl shadow-sm" onClick={handleBuyNow}>
               Buy Now
@@ -237,10 +278,20 @@ export default function LabelDetail() {
 
       <RecommendedProducts product={product} />
 
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-4 md:hidden z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+      {/* Sits at bottom-16 (above the 64px fixed bottom nav) with a lower z so it
+          never overlaps it. */}
+      <div className="fixed bottom-16 left-0 right-0 bg-background border-t p-4 flex gap-4 md:hidden z-30 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
         <div className="flex-1 grid grid-cols-2 gap-3">
-          <Button variant="outline" className="w-full text-base h-12 shadow-sm" onClick={handleAddToCart}>
-            Add to Cart
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full text-base h-12 shadow-sm gap-2",
+              showAdded && "border-green-600 text-green-700 hover:text-green-700",
+            )}
+            onClick={handleAddToCart}
+            disabled={isAdding}
+          >
+            {showAdded ? <><Check className="h-4 w-4" /> Added</> : <><ShoppingCart className="h-4 w-4" /> Add to Cart</>}
           </Button>
           <Button className="w-full text-base h-12 shadow-sm" onClick={handleBuyNow}>
             Buy Now

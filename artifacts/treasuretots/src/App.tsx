@@ -5,6 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
+import { BottomNav } from "@/components/layout/BottomNav";
+import { ScrollToTop } from "@/components/ScrollToTop";
+import { MobileMenuProvider } from "@/hooks/use-mobile-menu";
 
 import Home from "@/pages/home";
 import Learning from "@/pages/learning";
@@ -35,14 +38,21 @@ const queryClient = new QueryClient();
 
 function UserLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-[100dvh] flex-col relative">
-      <Navbar />
-      <main className="flex-1">
-        {children}
-      </main>
-      <Footer />
-      <FloatingWhatsApp />
-    </div>
+    <MobileMenuProvider>
+      <div className="flex min-h-[100dvh] flex-col relative">
+        {/* Reset scroll to top on every route change (product A → recommended B → C). */}
+        <ScrollToTop />
+        <Navbar />
+        <main className="flex-1">
+          {children}
+        </main>
+        <Footer />
+        {/* Spacer so the fixed mobile bottom navigation never overlaps the footer. */}
+        <div className="h-16 md:hidden" aria-hidden="true" />
+        <FloatingWhatsApp />
+        <BottomNav />
+      </div>
+    </MobileMenuProvider>
   );
 }
 
