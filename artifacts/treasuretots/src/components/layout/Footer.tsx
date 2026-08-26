@@ -1,6 +1,6 @@
 import { Link } from "wouter";
-import { Instagram, Mail, Phone, MapPin } from "lucide-react";
-import { PHONE, EMAIL, INSTAGRAM_URL } from "@/lib/products";
+import { Instagram, Mail, MapPin } from "lucide-react";
+import { EMAIL, INSTAGRAM_URL } from "@/lib/products";
 
 export function Footer() {
   return (
@@ -49,11 +49,7 @@ export function Footer() {
             <ul className="flex flex-col gap-3 text-sm text-muted-foreground">
               <li className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-                <span>South India<br />Made with love in India</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-primary shrink-0" />
-                <span className="min-w-0 break-words">{PHONE}</span>
+                 <span>Hyderabad, India<br />Made with love in India</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-primary shrink-0" />

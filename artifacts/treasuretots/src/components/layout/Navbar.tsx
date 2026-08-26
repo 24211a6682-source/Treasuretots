@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { searchStaticCatalog } from "@/lib/products";
 import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
@@ -94,6 +94,8 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto">
+              <SheetTitle className="sr-only">Treasure Tots navigation</SheetTitle>
+              <SheetDescription className="sr-only">Browse the Treasure Tots shop and account links.</SheetDescription>
               <nav className="flex flex-col gap-4 mt-8">
                 {isAuthenticated && firstName && (
                   <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="rounded-xl bg-orange-50 px-4 py-3 text-sm font-semibold text-primary">
@@ -120,8 +122,9 @@ export function Navbar() {
               </nav>
             </SheetContent>
           </Sheet>
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/assets/images/logo.png" alt="TreasureTots Logo" className="h-10 object-contain" />
+           <Link href="/" className="flex min-w-0 items-center gap-2">
+             <img src="/assets/images/logo.png" alt="TreasureTots Logo" className="h-10 w-auto object-contain" />
+             <span className="truncate text-sm font-extrabold tracking-tight text-primary md:hidden">Treasure Tots</span>
           </Link>
         </div>
 

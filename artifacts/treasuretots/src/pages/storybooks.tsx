@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { storybookProducts, StoryCategory, WHATSAPP_URL, PHONE, INSTAGRAM_URL, EMAIL } from "@/lib/products";
+import { storybookProducts, StoryCategory, WHATSAPP_URL, INSTAGRAM_URL, EMAIL } from "@/lib/products";
 import { BookCarousel3D } from "@/components/BookCarousel3D";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Phone, Instagram, Mail } from "lucide-react";
+import { MessageCircle, Instagram, Mail } from "lucide-react";
 
 type FilterType = StoryCategory | "all";
 
@@ -33,7 +33,7 @@ export default function Storybooks() {
         </h1>
         <p className="text-gray-500 text-sm md:text-base mb-4 leading-relaxed">
           These storybooks are customized for every child.<br />
-          To order, contact us via WhatsApp, Email, Phone or Instagram.
+          To order, contact us via WhatsApp, Email or Instagram.
         </p>
 
         {/* Contact pills — the ONLY place contact buttons appear on this page */}
@@ -51,12 +51,6 @@ export default function Storybooks() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
           >
             <Mail className="w-3.5 h-3.5" /> Email
-          </a>
-          <a
-            href={`tel:${PHONE.replace(/\s+/g, "")}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition"
-          >
-            <Phone className="w-3.5 h-3.5" /> Call
           </a>
           <a
             href={INSTAGRAM_URL}

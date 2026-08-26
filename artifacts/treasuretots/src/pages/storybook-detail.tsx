@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
-import { storybookProducts, getWhatsAppEnquiryUrl, PHONE, INSTAGRAM_URL, WHATSAPP_URL, EMAIL } from "@/lib/products";
+import { storybookProducts, getWhatsAppEnquiryUrl, INSTAGRAM_URL, EMAIL } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
-import { Star, MessageCircle, Phone, Instagram, Sparkles, Paintbrush, FileText, Truck, Mail, ArrowLeft } from "lucide-react";
+import { Star, MessageCircle, Instagram, Sparkles, Paintbrush, FileText, Truck, Mail, ArrowLeft } from "lucide-react";
 import { StorybookCard } from "@/components/StorybookCard";
 
 const categoryColors: Record<string, string> = {
@@ -151,11 +151,6 @@ export default function StorybookDetail() {
                 </a>
               </Button>
               <Button asChild variant="outline" className="gap-2 rounded-xl h-12">
-                <a href={`tel:${PHONE.replace(/\s+/g, "")}`}>
-                  <Phone className="w-4 h-4" /> Call Us
-                </a>
-              </Button>
-              <Button asChild variant="outline" className="gap-2 rounded-xl h-12">
                 <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
                   <Instagram className="w-4 h-4 text-pink-600" /> Instagram
                 </a>
@@ -171,7 +166,7 @@ export default function StorybookDetail() {
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">How It Works</h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
             {[
-              { n: 1, title: "Contact us on WhatsApp or call", desc: "Reach out via WhatsApp or phone to express your interest." },
+              { n: 1, title: "Contact us on WhatsApp", desc: "Reach out via WhatsApp to express your interest." },
               { n: 2, title: "Share child's name, age & photo", desc: "Send a clear photo with name and age details." },
               { n: 3, title: "Choose pronouns (He / She / They)", desc: "Let us know which pronouns to use in the story." },
               { n: 4, title: "Add a dedication message (optional)", desc: "A personal note to print inside the book." },
@@ -212,11 +207,6 @@ export default function StorybookDetail() {
         >
           <a href={getWhatsAppEnquiryUrl(book.name)} target="_blank" rel="noopener noreferrer">
             <MessageCircle className="w-4 h-4" /> Enquire on WhatsApp
-          </a>
-        </Button>
-        <Button asChild variant="outline" className="h-12 px-4">
-          <a href={`tel:${PHONE.replace(/\s+/g, "")}`}>
-            <Phone className="w-4 h-4" />
           </a>
         </Button>
       </div>

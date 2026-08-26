@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Star, MessageCircle, Phone, Instagram, CheckCircle2, Truck, Gift, ArrowLeft, ShoppingCart, Check } from "lucide-react";
-import { WHATSAPP_URL, PHONE, INSTAGRAM_URL } from "@/lib/products";
+import { Star, MessageCircle, Instagram, Mail, CheckCircle2, Truck, Gift, ArrowLeft, ShoppingCart, Check, Trash2 } from "lucide-react";
+import { WHATSAPP_URL, INSTAGRAM_URL, EMAIL } from "@/lib/products";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { saveBuyNowIntent } from "@/lib/buy-now";
@@ -33,20 +33,19 @@ function Skeleton() {
 export default function FlashcardDetail() {
   const { slug } = useParams();
   const { data: product, isLoading, isError } = useGetProduct(slug ?? "");
-  const { addItem, cart } = useCart();
+  const { addItem, removeItem, cart } = useCart();
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
-  const [justAdded, setJustAdded] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   // Reset per-product UI when navigating product → recommended product without a
   // full remount, so the new product never inherits the previous one's state.
   useEffect(() => {
     setActiveImage(0);
     setQuantity(1);
-    setJustAdded(false);
   }, [slug]);
 
   if (isLoading) return <Skeleton />;
@@ -58,17 +57,26 @@ export default function FlashcardDetail() {
   // Single source of truth = the existing cart state. "Added" shows if the item
   // is already in the cart (e.g. on reload) or was just added this session.
   const isInCart = cart.items.some((item) => item.productId === product.id);
-  const showAdded = isInCart || justAdded;
+  const showAdded = isInCart;
 
   const handleAddToCart = async () => {
     // Prevent duplicate adds: ignore repeat clicks while in flight / already added.
     if (isAdding || showAdded) return;
     setIsAdding(true);
     try {
-      await addItem(product.id, quantity);
-      setJustAdded(true);
+      await addItem(product.id, quantity, undefined, product);
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleRemoveFromCart = async () => {
+    if (isRemoving || !isInCart) return;
+    setIsRemoving(true);
+    try {
+      await removeItem(product.id);
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -184,10 +192,15 @@ export default function FlashcardDetail() {
                 showAdded && "border-green-600 text-green-700 hover:text-green-700",
               )}
               onClick={handleAddToCart}
-              disabled={isAdding}
+              disabled={isAdding || isRemoving}
             >
               {showAdded ? <><Check className="h-5 w-5" /> Added to Cart</> : <><ShoppingCart className="h-5 w-5" /> Add to Cart</>}
             </Button>
+            {showAdded && (
+              <Button size="lg" variant="outline" className="w-full text-lg h-14 rounded-xl shadow-sm gap-2 text-destructive hover:text-destructive" onClick={handleRemoveFromCart} disabled={isRemoving}>
+                <Trash2 className="h-5 w-5" /> Remove from Cart
+              </Button>
+            )}
             <Button size="lg" className="w-full text-lg h-14 rounded-xl shadow-sm" onClick={handleBuyNow}>
               Buy Now
             </Button>
@@ -200,8 +213,8 @@ export default function FlashcardDetail() {
               </a>
             </Button>
             <Button asChild variant="outline" size="sm" className="rounded-full gap-2">
-              <a href={`tel:${PHONE.replace(/\s+/g, '')}`}>
-                <Phone className="w-4 h-4" /> Call
+              <a href={`mailto:${EMAIL}`}>
+                <Mail className="w-4 h-4" /> Email
               </a>
             </Button>
             <Button asChild variant="outline" size="sm" className="rounded-full gap-2">
@@ -267,10 +280,15 @@ export default function FlashcardDetail() {
               showAdded && "border-green-600 text-green-700 hover:text-green-700",
             )}
             onClick={handleAddToCart}
-            disabled={isAdding}
+            disabled={isAdding || isRemoving}
           >
             {showAdded ? <><Check className="h-4 w-4" /> Added</> : <><ShoppingCart className="h-4 w-4" /> Add to Cart</>}
           </Button>
+          {showAdded && (
+            <Button variant="outline" className="w-full text-base h-12 shadow-sm gap-1 text-destructive hover:text-destructive" onClick={handleRemoveFromCart} disabled={isRemoving}>
+              <Trash2 className="h-4 w-4" /> Remove
+            </Button>
+          )}
           <Button className="w-full text-base h-12 shadow-sm" onClick={handleBuyNow}>
             Buy Now
           </Button>

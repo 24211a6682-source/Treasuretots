@@ -1,8 +1,8 @@
 import { Link } from "wouter";
-import { wallpaperProducts, WHATSAPP_URL, PHONE, INSTAGRAM_URL, EMAIL } from "@/lib/products";
+import { wallpaperProducts, WHATSAPP_URL, INSTAGRAM_URL, EMAIL } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { MessageCircle, Phone, Instagram, Mail } from "lucide-react";
+import { MessageCircle, Instagram, Mail } from "lucide-react";
 
 export default function Wallpapers() {
   const images = wallpaperProducts.flatMap(p => p.images);
@@ -20,8 +20,13 @@ export default function Wallpapers() {
             </a>
           </Button>
           <Button asChild variant="outline" className="rounded-full px-6">
-            <a href={`tel:${PHONE.replace(/\s+/g, '')}`}>
-              <Phone className="w-4 h-4 mr-2" /> Call Us
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+              <Instagram className="w-4 h-4 mr-2" /> Instagram
+            </a>
+          </Button>
+          <Button asChild variant="outline" className="rounded-full px-6">
+            <a href={`mailto:${EMAIL}`}>
+              <Mail className="w-4 h-4 mr-2" /> Email
             </a>
           </Button>
         </div>

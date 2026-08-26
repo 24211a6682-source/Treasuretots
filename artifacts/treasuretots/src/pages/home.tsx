@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useListProducts, Product } from "@workspace/api-client-react";
 import {
   storybookProducts, wallpaperProducts, reviews,
-  PHONE, INSTAGRAM_URL, EMAIL, WHATSAPP_URL
+  INSTAGRAM_URL, EMAIL, WHATSAPP_URL
 } from "@/lib/products";
 import { ProductCard } from "@/components/ProductCard";
 import { BookCarousel3D } from "@/components/BookCarousel3D";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star, MessageCircle, Phone, Instagram, Mail, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, MessageCircle, Instagram, Mail, ChevronLeft, ChevronRight, Sparkles, BookOpen, Heart, Pencil } from "lucide-react";
 
 const WALLPAPER_IMAGES = wallpaperProducts.flatMap(p => p.images);
 
@@ -99,18 +99,22 @@ export default function Home() {
   return (
     <div className="flex flex-col w-full">
       {/* Hero Banner */}
-      <section className="relative w-full bg-orange-50 overflow-hidden">
-        <div className="container mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-8 items-center">
+      <section className="hero-section relative w-full bg-orange-50 overflow-hidden">
+        <div className="hero-decoration hero-decoration-one" aria-hidden="true"><Sparkles /></div>
+        <div className="hero-decoration hero-decoration-two" aria-hidden="true"><BookOpen /></div>
+        <div className="hero-decoration hero-decoration-three" aria-hidden="true"><Heart /></div>
+        <div className="hero-decoration hero-decoration-four" aria-hidden="true"><Pencil /></div>
+        <div className="container mx-auto px-4 py-14 md:py-24 grid md:grid-cols-2 gap-10 md:gap-8 items-center">
           <div className="flex flex-col gap-6 z-10">
-            <div className="inline-flex items-center gap-2 bg-white px-3 py-1 rounded-full text-sm font-medium w-fit text-orange-600 shadow-sm border border-orange-100">
+            <div className="inline-flex items-center gap-2 bg-white px-3 py-1 rounded-full text-xs sm:text-sm font-medium w-fit text-orange-600 shadow-sm border border-orange-100">
               <Star className="w-4 h-4 fill-orange-500 text-orange-500" />
-              4.9 Rating | 100% Handmade | Pan-India Shipping
+              4.9 Rating <span aria-hidden="true">|</span> 100% Handmade <span aria-hidden="true">|</span> India Shipping
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight">
               Stories Where Your <span className="text-primary">Child is the Hero</span>
             </h1>
             <p className="text-lg text-gray-700 md:text-xl max-w-lg">
-              Personalized books, flashcards, and learning materials handcrafted with love in South India.
+              Personalized books, flashcards, and learning materials handcrafted with love in India.
             </p>
             <div className="flex flex-wrap gap-4 mt-2">
               <Button asChild size="lg" className="rounded-full font-semibold px-8 text-base">
@@ -121,8 +125,8 @@ export default function Home() {
               </Button>
             </div>
           </div>
-          <div className="relative">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500 border-8 border-white">
+          <div className="relative z-10 max-w-xl mx-auto w-full">
+            <div className="hero-image relative rounded-2xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500 border-8 border-white">
               <img src="/assets/images/customized story books/cover photo.jpg" alt="Featured Storybook" className="w-full h-auto block" />
             </div>
             <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-xl overflow-hidden shadow-xl -rotate-6 border-4 border-white hidden md:block">
@@ -251,11 +255,6 @@ export default function Home() {
             </a>
           </Button>
           <Button asChild size="sm" variant="outline" className="rounded-full gap-2">
-            <a href={`tel:${PHONE.replace(/\s+/g, '')}`}>
-              <Phone className="w-4 h-4" /> {PHONE}
-            </a>
-          </Button>
-          <Button asChild size="sm" variant="outline" className="rounded-full gap-2">
             <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
               <Instagram className="w-4 h-4 text-pink-600" /> Instagram
             </a>
@@ -354,12 +353,6 @@ export default function Home() {
               </a>
             </Button>
             <Button asChild size="lg" variant="outline" className="font-bold rounded-full gap-2 bg-transparent text-white border-white hover:bg-white/10 hover:text-white">
-              <a href={`tel:${PHONE.replace(/\s+/g, '')}`}>
-                <Phone className="w-5 h-5" />
-                {PHONE}
-              </a>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="font-bold rounded-full gap-2 bg-transparent text-white border-white hover:bg-white/10 hover:text-white">
               <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
                 <Instagram className="w-5 h-5" />
                 @treasuretots2025
@@ -373,9 +366,6 @@ export default function Home() {
             </Button>
           </div>
 
-          <p className="text-sm opacity-80">
-            Or email us at: <a href={`mailto:${EMAIL}`} className="underline hover:opacity-100">{EMAIL}</a>
-          </p>
         </div>
       </section>
     </div>
