@@ -1,0 +1,942 @@
+TREASURE TOTS — COMPLETE UX, CONTENT, CART & VISUAL POLISH UPDATE
+
+Work directly on the EXISTING Treasure Tots application.
+
+This is an incremental improvement pass. Do NOT rebuild the application or redesign unrelated parts.
+
+============================================================
+IMPORTANT — BEFORE YOU START
+============================================================
+
+First inspect the existing codebase and understand:
+
+- Current project structure
+- Routing
+- Cart state/context/store
+- Product cards
+- Product detail pages
+- Checkout
+- Navbar
+- Mobile bottom navigation
+- More menu
+- Footer
+- Contact sections
+- Shipping Policy
+- FAQ pages/components
+- Homepage/hero
+- Existing logo/brand assets
+- Existing CSS/Tailwind configuration
+- Existing animation/icon libraries
+
+Reuse the existing architecture.
+
+DO NOT create:
+
+- a second cart system
+- a second cart context/store
+- a second navigation system
+- duplicate pages
+- duplicate FAQ components
+- duplicate mobile navigation
+- a new logo unless absolutely necessary
+
+Preserve everything that already works.
+
+Do not modify unrelated functionality.
+
+DO NOT commit or push anything.
+
+============================================================
+PART 1 — PRODUCT DETAIL CART UX
+============================================================
+
+Improve the existing Product Detail page.
+
+Current behavior:
+
+Quantity:
+
+[ − ] 1 [ + ]
+
+Buttons:
+
+[ Add to Cart ] [ Buy Now ]
+
+When the product is already in the cart, the page currently does not provide a direct way to remove it.
+
+Implement this behavior using the EXISTING cart state.
+
+BEFORE product is in cart:
+
+[ − ] 1 [ + ]
+
+[ 🛒 Add to Cart ] [ Buy Now ]
+
+
+AFTER product is in cart:
+
+[ − ] 1 [ + ]
+
+[ ✓ Added to Cart ] [ Remove from Cart ]
+
+The exact styling can match the existing Treasure Tots design.
+
+Requirements:
+
+- Add to Cart must use the existing cart implementation.
+- After adding, the UI must immediately show "✓ Added to Cart".
+- Show a clear "Remove from Cart" action.
+- Remove from Cart must remove the product from the existing cart.
+- After removal, return to "Add to Cart".
+- Cart count must update immediately.
+- Cart contents must update immediately.
+- Product detail UI must always reflect the REAL cart state.
+- Do NOT fake this with local-only state.
+- Do NOT create another cart context/store.
+
+Derive the state from the existing cart.
+
+Conceptually:
+
+const isInCart = cart.some(item => item.id === product.id)
+
+If false:
+show Add to Cart
+
+If true:
+show Added to Cart + Remove from Cart
+
+Reuse existing cart APIs.
+
+============================================================
+PART 2 — CART QUANTITY / DUPLICATE PROTECTION
+============================================================
+
+Preserve the existing quantity logic.
+
+Verify:
+
+- Quantity selector works.
+- Selected quantity is added correctly.
+- Repeated Add to Cart clicks do NOT create duplicate cart entries.
+- If the product already exists in cart, use the existing quantity/update behavior.
+- Remove completely removes the product.
+- Cart count updates immediately.
+- Cart totals remain correct.
+- Checkout continues to work.
+
+Do not change the underlying cart architecture unless absolutely necessary.
+
+============================================================
+PART 3 — PRODUCT CARD / CHECKOUT FLOW
+============================================================
+
+Do NOT break the existing product flow.
+
+Product cards:
+
+View Details → Product Detail
+
+Buy Now → Checkout
+
+Important:
+
+Clicking Buy Now must NOT also trigger the product-card click.
+
+Preserve the existing event handling.
+
+Checkout Back behavior:
+
+If the user entered checkout through Buy Now from a product:
+
+Checkout → Back → originating Product Detail
+
+Do not simply use a generic history.back() if the existing app already has route/context handling.
+
+Product Detail Back:
+
+Return to the actual originating listing/page.
+
+Recommended products:
+
+- Open at scroll position 0.
+- Product pages must open at scroll position 0.
+
+Preserve the existing routing architecture.
+
+============================================================
+PART 4 — MOBILE BOTTOM NAVIGATION
+============================================================
+
+DO NOT redesign or replace the existing mobile bottom navigation.
+
+It must remain:
+
+Home | Books | Learn | Cards | More
+
+Preserve:
+
+- functionality
+- routes
+- active states
+- cart live count
+- More menu
+- responsive behavior
+
+The More menu must continue to provide the existing:
+
+- Wallpapers
+- Name Tags
+- My Account
+- Cart with live count
+- My Orders
+
+Do NOT create another navigation system.
+
+Ensure homepage decorations do not overlap the bottom navigation.
+
+Ensure sufficient bottom padding on mobile.
+
+============================================================
+PART 5 — REMOVE PHONE NUMBER EVERYWHERE
+============================================================
+
+The phone number must NEVER appear in the customer-facing website.
+
+Search the entire frontend.
+
+Remove/hide phone information from:
+
+- Homepage
+- Homepage contact CTA
+- Footer
+- Product Detail
+- Order Processing
+- Contact Us
+- Checkout-related contact sections
+- Mobile contact sections
+- Desktop contact sections
+- Any other customer-facing UI
+
+Remove:
+
+- visible phone number
+- Call button
+- telephone icon used for calling
+- tel: links
+
+Do NOT unnecessarily delete backend/internal configuration if something depends on it.
+
+The important requirement is:
+
+CUSTOMERS MUST NOT SEE THE PHONE NUMBER ANYWHERE.
+
+============================================================
+PART 6 — CONTACT OPTIONS
+============================================================
+
+Customer-facing contact options should contain ONLY:
+
+[ WhatsApp ] [ Instagram ] [ Email ]
+
+Remove:
+
+[ Call ]
+
+Reuse the existing configured:
+
+- WhatsApp destination
+- Instagram destination
+- Email destination
+
+Do NOT invent new URLs or handles.
+
+If the homepage currently has a separate:
+
+"Or email us at ..."
+
+line that duplicates the Email button unnecessarily, clean up the duplication while keeping a clear Email contact option.
+
+============================================================
+PART 7 — LOCATION TEXT
+============================================================
+
+Search all customer-facing UI for:
+
+"South India"
+
+Replace general customer-facing occurrences with:
+
+"India"
+
+Examples:
+
+South India
+
+→
+
+India
+
+Made with love in South India.
+
+→
+
+Made with love in India.
+
+Do not blindly change internal identifiers or unrelated technical strings.
+
+============================================================
+PART 8 — ORDER / CONTACT LOCATION
+============================================================
+
+Where the business/order/contact location is displayed, use:
+
+Hyderabad, India
+
+Specifically update the relevant Order Processing / Contact Us information.
+
+Do not change unrelated locations.
+
+============================================================
+PART 9 — FOOTER
+============================================================
+
+Clean the existing footer.
+
+It must NOT display:
+
+- phone number
+- Call
+- South India
+
+It may display:
+
+- India
+- Hyderabad, India where appropriate
+- WhatsApp
+- Email
+- Instagram
+- existing Shop links
+- existing Help links
+- Privacy Policy
+- Terms of Service
+
+Preserve the existing footer layout and styling.
+
+Do NOT redesign the footer.
+
+============================================================
+PART 10 — SHIPPING POLICY
+============================================================
+
+The current shipping policy incorrectly says that international shipping is unavailable.
+
+Update it.
+
+Use clear wording such as:
+
+"We ship across India and internationally. International orders are available with applicable shipping charges."
+
+Do NOT claim:
+
+- free international shipping
+- ₹70 international shipping
+- specific international rates
+
+unless the actual business logic already confirms those values.
+
+============================================================
+PART 11 — SHIPPING FEE
+============================================================
+
+The existing ₹70 shipping fee applies to domestic/India orders.
+
+Make the wording clear.
+
+Use wording such as:
+
+"Domestic orders within India have a flat shipping fee of ₹70."
+
+And:
+
+"International orders are available with applicable shipping charges based on the destination."
+
+Do not incorrectly state that ₹70 applies internationally.
+
+Do not invent shipping calculations.
+
+If the application already contains domestic/international shipping logic, preserve it.
+
+============================================================
+PART 12 — ORDER PROCESSING
+============================================================
+
+Keep the existing Order Processing explanation.
+
+It should continue communicating that products are handcrafted and personalised to order.
+
+But ensure:
+
+- no phone number
+- no Call option
+- WhatsApp remains available
+- Email remains available
+- Instagram can remain where appropriate
+- location is Hyderabad, India
+
+============================================================
+PART 13 — CUSTOMISED STORY BOOK FAQ
+============================================================
+
+Update/create the existing Story Book FAQ using this exact customer-facing content.
+
+TITLE:
+
+Treasure Tots – Customised Story Book FAQs
+
+1. What is so unique about a Treasure Tots customised story book?
+
+Every book is created especially for your child. Your child becomes the hero of their own magical adventure! We personalise the story, characters, theme and illustrations to create a one-of-a-kind storybook that your child can cherish forever.
+
+2. Can I give my own story?
+
+Yes! ❤️ You can share your own story, concept, family memory or special idea with us. We can transform your idea into a beautifully illustrated personalised storybook, depending on the scope of customisation.
+
+3. How can I provide images of my child?
+
+After placing your order, you can share your child's photographs with us through the WhatsApp/contact method provided by Treasure Tots.
+
+For the best results, please provide clear, well-lit photographs where your child's face is clearly visible.
+
+4. Will I get a sample before the book is created?
+
+Yes! We first create and share an initial cover-page sample featuring your personalised character.
+
+This allows you to check whether the facial features and overall character appearance match before we proceed with creating the complete book.
+
+5. What happens after I approve the cover-page sample?
+
+Once you approve the cover-page sample, we proceed with creating the complete personalised storybook, including the story and illustrations.
+
+A PDF of the completed book will then be shared with you for review.
+
+6. Can I make changes after the PDF is shared?
+
+Yes. Two revisions are included with your customised storybook.
+
+After receiving the PDF, you can review the complete book and share your changes. We will make the included revisions and share the updated version for your approval.
+
+Additional revisions, if required, may be chargeable.
+
+7. When does the book go for printing?
+
+The book is sent for printing only after you approve the final PDF.
+
+This gives you the opportunity to review the complete personalised book before it goes into print.
+
+8. Can I cancel my order or request a refund?
+
+Cancellation/refund is possible before the initial cover-page sample is shared.
+
+Once the initial cover-page sample has been shared, the order becomes non-refundable, as personalised work has commenced specifically for your order.
+
+9. How many days does the entire delivery process take?
+
+The complete process, including personalisation, cover-page creation, story creation, illustrations, revisions, final approval, printing and delivery, generally takes around 10–15 days.
+
+10. Can I order a single story book for both my kids?
+
+Yes! You can create one personalised storybook featuring both your children together in the same story. Both children can become characters/heroes in their shared adventure.
+
+If you prefer separate personalised books for each child, you can also place individual orders.
+
+For current pricing and sibling options, please contact us.
+
+11. Can I choose the theme and characters for my child's story?
+
+Yes! You can tell us about your child's favourite themes, characters, interests or story ideas. We will work with you to create a magical story that suits your preferences, subject to availability and copyright restrictions.
+
+12. Can the story book be customised for adults?
+
+Yes! ❤️ Our customised storybooks are not just for children. We can create personalised stories for adults too—whether it's a romantic story, family memory, friendship journey, special milestone or a unique gift.
+
+Tell us your idea, and we'll turn it into a story made especially for you.
+
+13. How much does a customised story book cost?
+
+Pricing depends on the type and level of customisation required.
+
+Please contact Treasure Tots for current pricing and available options.
+
+14. Can I order a customised story book as a gift?
+
+Absolutely! 🎁 A personalised storybook makes a beautiful and memorable gift for birthdays, Raksha Bandhan, special occasions and celebrations.
+
+A story made just for you. A treasure to cherish forever. ❤️
+
+Use the existing FAQ component/design if available.
+
+Prefer accordion/collapsible behavior if already used.
+
+Make sure long answers wrap correctly on mobile.
+
+============================================================
+PART 14 — CUSTOMISED WALLPAPER FAQ
+============================================================
+
+TITLE:
+
+Treasure Tots – Customised Wallpapers FAQs
+
+1. How do I provide my wallpaper requirements and measurements?
+
+Please share your wall dimensions/measurements, along with details such as the wall you want to customise, preferred theme/design, and any other requirements. You can also share photos or videos of the wall to help us understand the space better.
+
+If you are unsure how to measure the wall, don’t worry! Contact us and we’ll guide you through the process.
+
+2. What will be the cost of the customised wallpaper?
+
+The cost depends on the size of the wall, measurements and the material selected.
+
+Please share your wall measurements and requirements with us, and we will provide you with a quotation based on the size and material used.
+
+3. Is wallpaper installation available?
+
+Yes! Installation is available in major cities across India.
+
+We have partnered with Design Walls for professional wallpaper installation. Once your order is confirmed, we can help coordinate the installation based on your location and availability.
+
+============================================================
+PART 15 — CUSTOMISED NAME TAG FAQ
+============================================================
+
+TITLE:
+
+Treasure Tots – Customised Name Tags FAQs
+
+1. What are Treasure Tots customised name tags?
+
+They are high-quality PVC cards that are durable and perfect for everyday use. The design is completely customisable, so you can create a tag that is unique to you.
+
+2. Can I customise both sides of the tag?
+
+Yes! We offer printing on both sides, allowing you to personalise the front and back with names, contact details, designs or other information.
+
+3. Where can I use the customised name tags?
+
+They are ideal for school bags, luggage bags, lunch bags and travel bags, making it easy to identify your belongings while adding a personalised touch.
+
+============================================================
+PART 16 — HOMEPAGE VISUAL POLISH
+============================================================
+
+The current homepage looks too plain and static.
+
+Do NOT completely redesign it.
+
+Make it feel:
+
+- playful
+- warm
+- child-friendly
+- magical
+- handcrafted
+- premium
+- visually engaging
+
+But avoid making it look like a cluttered cartoon website.
+
+Think:
+
+storybook + handcrafted + modern ecommerce
+
+============================================================
+PART 17 — MOBILE HEADER
+============================================================
+
+This is a high-priority change.
+
+The mobile header currently feels too generic and the Treasure Tots brand is not prominent enough.
+
+Improve it so the Treasure Tots branding is clearly visible.
+
+Conceptually:
+
+[☰] [Treasure Tots logo / brand] [cart] [account]
+
+Use the existing Treasure Tots logo/brand asset.
+
+If the existing circular orange logo exists, reuse it.
+
+Where space allows, display the "Treasure Tots" name beside the logo.
+
+Keep the header compact.
+
+Do not create a completely new logo.
+
+Do not break the existing mobile navigation.
+
+============================================================
+PART 18 — HERO VISUAL DECORATIONS
+============================================================
+
+Add tasteful decorations around the homepage hero.
+
+Theme:
+
+- books
+- storytelling
+- children
+- creativity
+- learning
+- magical sparkles
+
+Possible elements:
+
+- ✨ sparkles
+- ⭐ stars
+- small books
+- pencils/crayons
+- hearts
+- small clouds
+- subtle rainbow shapes
+- drawing/painting elements
+
+IMPORTANT:
+
+Do NOT scatter random emojis everywhere.
+
+Prefer:
+
+- SVG
+- CSS shapes
+- existing icon library
+- subtle illustrations
+- small decorative elements
+
+Use the existing Treasure Tots color palette:
+
+- warm cream
+- orange
+- dark navy
+- soft pastels
+
+============================================================
+PART 19 — HERO ANIMATIONS
+============================================================
+
+Add subtle animations.
+
+Examples:
+
+- sparkles gently fade in/out
+- stars gently float
+- small book gently bobs
+- clouds move slightly
+- hero image subtly floats
+- decorations use staggered delays
+
+Animations must be:
+
+- slow
+- subtle
+- polished
+- non-distracting
+
+DO NOT:
+
+- make everything bounce
+- aggressively spin
+- move text continuously
+- shake buttons
+- create distracting animations
+
+The goal is magical, not chaotic.
+
+============================================================
+PART 20 — HERO IMAGE
+============================================================
+
+Keep the existing Treasure Tots hero image.
+
+Do NOT replace it.
+
+Improve presentation with:
+
+- subtle floating animation
+- soft shadow
+- small surrounding decorations
+- subtle warm glow if appropriate
+
+Do not crop it badly.
+
+Do not make it excessively large on mobile.
+
+============================================================
+PART 21 — DESKTOP HERO
+============================================================
+
+Preserve the current basic structure.
+
+LEFT:
+
+- rating/shipping badge
+- headline
+- description
+- CTA buttons
+
+RIGHT:
+
+- hero image
+
+Use the empty space around the hero for subtle storytelling decorations.
+
+Do not cover content.
+
+============================================================
+PART 22 — MOBILE HERO
+============================================================
+
+Maintain the existing order:
+
+Mobile Header
+
+↓
+Rating/shipping badge
+
+↓
+Headline
+
+↓
+Description
+
+↓
+CTA buttons
+
+↓
+Hero image
+
+Add a few tasteful decorations around these elements.
+
+Do not overcrowd the screen.
+
+Do not introduce horizontal scrolling.
+
+============================================================
+PART 23 — MICRO INTERACTIONS
+============================================================
+
+Add subtle interactions:
+
+Buttons:
+- slight hover lift
+- subtle shadow
+- smooth transition
+
+Product cards:
+- subtle hover elevation
+
+Navigation:
+- smooth active-state transition
+
+Decorations:
+- gentle movement
+
+Do not animate everything.
+
+============================================================
+PART 24 — ACCESSIBILITY
+============================================================
+
+Respect:
+
+prefers-reduced-motion
+
+When reduced motion is enabled:
+
+- disable floating animations
+- disable decorative movement
+- keep static design
+
+Decorative elements should be aria-hidden where appropriate.
+
+Animations must not interfere with:
+
+- accessibility
+- readability
+- buttons
+- navigation
+
+============================================================
+PART 25 — PERFORMANCE
+============================================================
+
+Do not install heavy animation libraries.
+
+Prefer:
+
+- CSS animations
+- existing dependencies
+- lightweight SVG
+- CSS shapes
+- existing icon library
+
+Avoid:
+
+- video backgrounds
+- canvas effects
+- expensive JavaScript animations
+- large new packages
+
+============================================================
+PART 26 — RESPONSIVE TESTING
+============================================================
+
+Test at:
+
+Desktop:
+1440px
+1280px
+1024px
+
+Mobile:
+390px
+375px
+360px
+
+Verify:
+
+- no horizontal scrollbar
+- no decorative overflow
+- no text overlap
+- no button overflow
+- mobile header works
+- Treasure Tots branding is visible
+- bottom navigation works
+- hero image is correctly sized
+- decorations do not cover CTAs
+- footer works
+- Product Detail buttons fit
+- quantity selector works
+- Add/Remove Cart actions are easy to tap
+
+============================================================
+PART 27 — FINAL SEARCH FOR OLD INFORMATION
+============================================================
+
+Search the customer-facing frontend for:
+
+"South India"
+
+the existing phone number
+
+"Call"
+
+"we do not ship internationally"
+
+"do not ship internationally"
+
+Remove outdated customer-facing occurrences.
+
+Do not remove unrelated legitimate technical/internal uses.
+
+============================================================
+PART 28 — FINAL VALIDATION
+============================================================
+
+After implementation:
+
+1. Test Add to Cart.
+2. Test Remove from Cart.
+3. Test duplicate protection.
+4. Test quantity.
+5. Test cart count.
+6. Test Buy Now.
+7. Test Checkout Back.
+8. Test Product Detail Back.
+9. Test scroll position.
+10. Test recommended product navigation.
+11. Test mobile bottom navigation.
+12. Test More menu.
+13. Test homepage contact CTA.
+14. Test footer.
+15. Test Order Processing.
+16. Test Shipping Policy.
+17. Test Story Book FAQ.
+18. Test Wallpaper FAQ.
+19. Test Name Tags FAQ.
+20. Search for old phone/location/shipping information.
+21. Test desktop responsive layout.
+22. Test mobile responsive layout.
+23. Test reduced-motion behavior.
+
+Run the project's existing:
+
+- build
+- typecheck
+- lint
+
+commands if available.
+
+Check for:
+
+- TypeScript errors
+- broken imports
+- broken routes
+- duplicate cart implementations
+- duplicate navigation implementations
+- horizontal overflow
+- accidental checkout changes
+- accidental cart changes
+- accidental desktop navigation changes
+
+============================================================
+PART 29 — IMPORTANT REPLIT SAFETY
+============================================================
+
+DO NOT:
+
+- commit
+- push
+- pull
+- merge
+- rebase
+- reset
+- modify Git configuration
+- create a new branch
+
+Only modify the application files required for this task.
+
+Do not create preview scaffolding.
+
+============================================================
+FINAL RESPONSE
+============================================================
+
+After completing the work, report:
+
+1. Files changed
+2. Components changed
+3. Cart changes
+4. Product/checkout behavior
+5. Mobile navigation status
+6. Contact changes
+7. Location changes
+8. Shipping changes
+9. FAQ changes
+10. Mobile header changes
+11. Visual decorations added
+12. Animations added
+13. Responsive testing
+14. Build/typecheck/lint results
+15. Any remaining issues
+
+Be honest about what was actually tested.
+
+DO NOT say something was tested if it was not actually tested.
+
+MOST IMPORTANT:
+
+PRESERVE EXISTING FUNCTIONALITY.
+IMPROVE ONLY WHAT IS REQUESTED.
+DO NOT REBUILD THE APPLICATION.
