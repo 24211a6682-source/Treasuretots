@@ -1,0 +1,239 @@
+MOBILE PRODUCT DETAIL — MATCH THE DESIRED QUANTITY + BUY NOW UX
+
+The current mobile Product Detail layout is too tall.
+
+Current implementation:
+
+[ −    1    + ]
+
+[ ✓ Added to Cart ]
+
+[ Remove from Cart ]
+
+[ Buy Now ]
+
+This creates too much vertical space and is not the desired mobile shopping UX.
+
+Change the mobile Product Detail purchase controls to the following compact layout:
+
+[ −        1        + ]
+
+[ Buy 1 now ]
+
+When quantity is 2:
+
+[ −        2        + ]
+
+[ Buy 2 now ]
+
+When quantity is 3:
+
+[ −        3        + ]
+
+[ Buy 3 now ]
+
+etc.
+
+============================================================
+IMPORTANT CART BEHAVIOR
+============================================================
+
+DO NOT remove the existing cart functionality.
+
+The existing cart state must continue to work.
+
+However, on MOBILE, simplify the visible purchase controls.
+
+The primary mobile action should be:
+
+"Buy {quantity} now"
+
+Examples:
+
+Buy 1 now
+Buy 2 now
+Buy 3 now
+Buy 4 now
+
+The button text must update immediately when the quantity changes.
+
+============================================================
+ADD TO CART BEHAVIOR
+============================================================
+
+Keep Add to Cart functionality available, but do NOT let it create a huge three-button stack on mobile.
+
+If the product is already in the cart, the UI should still communicate that clearly.
+
+For example, the secondary cart action can remain compact:
+
+✓ Added to Cart
+
+or
+
+Remove from Cart
+
+But prioritize the compact purchase flow.
+
+Do NOT show:
+
+✓ Added to Cart
+
+Remove from Cart
+
+Buy Now
+
+as three large vertically stacked buttons on mobile.
+
+That is exactly what needs to be fixed.
+
+============================================================
+QUANTITY SELECTOR
+============================================================
+
+Make the quantity selector a single compact horizontal control:
+
+┌─────────────────────────────┐
+│    −          1          +  │
+└─────────────────────────────┘
+
+Requirements:
+
+- minus button on the left
+- quantity centered
+- plus button on the right
+- compact height
+- rounded border
+- easy to tap on mobile
+- no excessive vertical spacing
+
+Minimum quantity = 1.
+
+Do not allow quantity to become 0 or negative.
+
+============================================================
+BUY NOW
+============================================================
+
+The primary CTA should be:
+
+Buy {quantity} now
+
+Examples:
+
+quantity = 1
+→ Buy 1 now
+
+quantity = 2
+→ Buy 2 now
+
+quantity = 5
+→ Buy 5 now
+
+Clicking it must go directly to Checkout.
+
+The selected quantity must be passed to Checkout.
+
+Do NOT add the product twice.
+
+Do NOT trigger the Product Detail card click.
+
+============================================================
+MOBILE LAYOUT
+============================================================
+
+On mobile, the entire purchase section should be compact:
+
+In Stock
+
+[ −       1       + ]
+
+[ Buy 1 now ]
+
+Optional secondary cart state/action below or beside it if needed, but keep it compact.
+
+Avoid large vertical gaps.
+
+The purchase controls should fit comfortably within the viewport.
+
+============================================================
+DESKTOP
+============================================================
+
+Do NOT unnecessarily redesign the desktop Product Detail layout.
+
+Preserve the existing desktop design unless the same quantity/Buy Now logic needs to be shared internally.
+
+Use responsive CSS/classes so the mobile layout is optimized independently.
+
+============================================================
+IMPORTANT
+============================================================
+
+Reuse the existing:
+
+- cart context/store
+- product data
+- quantity state
+- checkout routing
+- Buy Now logic
+
+Do NOT create another cart system.
+
+Do NOT create another quantity system.
+
+Do NOT duplicate checkout logic.
+
+Make the smallest clean change necessary.
+
+============================================================
+VISUAL TARGET
+============================================================
+
+The mobile result should feel much closer to this:
+
+In Stock
+
+┌─────────────────────────────┐
+│  −          1          +    │
+└─────────────────────────────┘
+
+┌─────────────────────────────┐
+│          Buy 1 now          │
+└─────────────────────────────┘
+
+If quantity becomes 2:
+
+┌─────────────────────────────┐
+│  −          2          +    │
+└─────────────────────────────┘
+
+┌─────────────────────────────┐
+│          Buy 2 now          │
+└─────────────────────────────┘
+
+Keep the existing Treasure Tots visual language:
+cream background, orange primary CTA, rounded corners, clean typography.
+
+Do not make the controls unnecessarily large.
+
+============================================================
+VALIDATION
+============================================================
+
+Test:
+
+1. Quantity starts at 1.
+2. Minus cannot go below 1.
+3. Plus increments quantity.
+4. Buy button text updates immediately.
+5. Buy 2 now sends quantity 2 to checkout.
+6. Buy 3 now sends quantity 3 to checkout.
+7. Existing cart state remains correct.
+8. Existing Add/Remove Cart functionality still works.
+9. No duplicate cart entries.
+10. Mobile layout does not overflow horizontally.
+11. Desktop layout remains intact.
+12. Checkout still works correctly.
+
+Do not commit, push, pull, merge, or modify Git configuration.

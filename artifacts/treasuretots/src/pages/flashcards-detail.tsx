@@ -3,14 +3,14 @@ import { useParams, Link, useLocation } from "wouter";
 import { useGetProduct } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
-import { cn } from "@/lib/utils";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Star, MessageCircle, Instagram, Mail, CheckCircle2, Truck, Gift, ArrowLeft, ShoppingCart, Check, Trash2 } from "lucide-react";
+import { Star, MessageCircle, Instagram, Mail, CheckCircle2, Truck, Gift, ArrowLeft } from "lucide-react";
 import { WHATSAPP_URL, INSTAGRAM_URL, EMAIL } from "@/lib/products";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { saveBuyNowIntent } from "@/lib/buy-now";
 import { RecommendedProducts } from "@/components/RecommendedProducts";
+import { ProductPurchaseControls } from "@/components/ProductPurchaseControls";
 
 function Skeleton() {
   return (
@@ -86,7 +86,7 @@ export default function FlashcardDetail() {
   };
 
   return (
-    <div className="container mx-auto px-4 pt-8 pb-40 md:pb-8">
+    <div className="container mx-auto px-4 pt-8 pb-24 md:pb-8">
       {/* Mobile: concise back to the originating listing; desktop keeps the breadcrumb. */}
       <button
         type="button"
@@ -169,42 +169,16 @@ export default function FlashcardDetail() {
             <p className="text-gray-600 mb-8 leading-relaxed">{product.description}</p>
           )}
 
-          <div className="flex items-center gap-6 mb-8">
-            <div className="flex items-center border rounded-md">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="px-4 py-2 text-gray-600 hover:bg-muted transition-colors"
-              >−</button>
-              <div className="w-12 text-center font-medium">{quantity}</div>
-              <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="px-4 py-2 text-gray-600 hover:bg-muted transition-colors"
-              >+</button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-            <Button
-              size="lg"
-              variant="outline"
-              className={cn(
-                "w-full text-lg h-14 rounded-xl shadow-sm gap-2",
-                showAdded && "border-green-600 text-green-700 hover:text-green-700",
-              )}
-              onClick={handleAddToCart}
-              disabled={isAdding || isRemoving}
-            >
-              {showAdded ? <><Check className="h-5 w-5" /> Added to Cart</> : <><ShoppingCart className="h-5 w-5" /> Add to Cart</>}
-            </Button>
-            {showAdded && (
-              <Button size="lg" variant="outline" className="w-full text-lg h-14 rounded-xl shadow-sm gap-2 text-destructive hover:text-destructive" onClick={handleRemoveFromCart} disabled={isRemoving}>
-                <Trash2 className="h-5 w-5" /> Remove from Cart
-              </Button>
-            )}
-            <Button size="lg" className="w-full text-lg h-14 rounded-xl shadow-sm" onClick={handleBuyNow}>
-              Buy Now
-            </Button>
-          </div>
+          <ProductPurchaseControls
+            quantity={quantity}
+            setQuantity={setQuantity}
+            showAdded={showAdded}
+            isAdding={isAdding}
+            isRemoving={isRemoving}
+            onAddToCart={handleAddToCart}
+            onRemoveFromCart={handleRemoveFromCart}
+            onBuyNow={handleBuyNow}
+          />
 
           <div className="flex gap-2 justify-center border-t pt-6">
             <Button asChild variant="outline" size="sm" className="rounded-full gap-2">
@@ -269,31 +243,6 @@ export default function FlashcardDetail() {
 
       <RecommendedProducts product={product} />
 
-      {/* Sits at bottom-16 (above the 64px fixed bottom nav) with a lower z so it
-          never overlaps it. */}
-      <div className="fixed bottom-16 left-0 right-0 bg-background border-t p-4 flex gap-4 md:hidden z-30 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-        <div className="flex-1 grid grid-cols-2 gap-3">
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full text-base h-12 shadow-sm gap-2",
-              showAdded && "border-green-600 text-green-700 hover:text-green-700",
-            )}
-            onClick={handleAddToCart}
-            disabled={isAdding || isRemoving}
-          >
-            {showAdded ? <><Check className="h-4 w-4" /> Added</> : <><ShoppingCart className="h-4 w-4" /> Add to Cart</>}
-          </Button>
-          {showAdded && (
-            <Button variant="outline" className="w-full text-base h-12 shadow-sm gap-1 text-destructive hover:text-destructive" onClick={handleRemoveFromCart} disabled={isRemoving}>
-              <Trash2 className="h-4 w-4" /> Remove
-            </Button>
-          )}
-          <Button className="w-full text-base h-12 shadow-sm" onClick={handleBuyNow}>
-            Buy Now
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }
