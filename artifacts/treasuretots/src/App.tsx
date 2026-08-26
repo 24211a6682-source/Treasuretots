@@ -33,6 +33,7 @@ import ResetPassword from "@/pages/reset-password";
 import BuyNow from "@/pages/buy-now";
 import ShippingPolicy from "@/pages/shipping";
 import FAQ from "@/pages/faq";
+import Contact from "@/pages/contact";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -77,6 +78,7 @@ function UserRouter() {
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/shipping" component={ShippingPolicy} />
         <Route path="/faq" component={FAQ} />
+        <Route path="/contact" component={Contact} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/forgot-password" component={ForgotPassword} />

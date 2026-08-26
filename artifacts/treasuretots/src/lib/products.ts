@@ -163,7 +163,6 @@ export const reviews = [
 
 export const WHATSAPP_NUMBER = "918050640552";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
-export const PHONE = "+91 805 064 0552";
 export const INSTAGRAM_URL = "https://www.instagram.com/treasuretots2025";
 export const EMAIL = "treasuretots2025@gmail.com";
 

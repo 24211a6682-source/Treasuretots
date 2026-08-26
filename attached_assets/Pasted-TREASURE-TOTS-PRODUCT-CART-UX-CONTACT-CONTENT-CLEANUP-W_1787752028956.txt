@@ -1,0 +1,553 @@
+TREASURE TOTS — PRODUCT CART UX + CONTACT/CONTENT CLEANUP
+
+Work directly in the existing Treasure Tots codebase.
+
+IMPORTANT:
+- Inspect the existing implementation before changing anything.
+- Reuse the existing cart state/context.
+- Do not create a second cart system.
+- Preserve all existing routing, navigation, checkout, and responsive work unless explicitly changed below.
+- Make the implementation functional, not just visually similar.
+- Test the affected flows after implementation.
+
+============================================================
+PART 1 — PRODUCT DETAIL CART / QUANTITY CONTROL
+============================================================
+
+CURRENT PROBLEM:
+
+The product detail page currently has a separate quantity selector such as:
+
+[ −     1     + ]
+
+[ Buy 1 Now ]
+
+[ Add to Cart ]
+
+REMOVE THE SEPARATE QUANTITY SELECTOR COMPLETELY.
+
+There must be only ONE quantity/cart control.
+
+============================================================
+INITIAL STATE — PRODUCT NOT IN CART
+============================================================
+
+Show:
+
+[              Add to Cart              ]
+
+There must be NO separate:
+
+[ − 1 + ]
+
+quantity selector anywhere above or below it.
+
+Keep Buy Now as a separate button below the cart control:
+
+[              Buy 1 Now              ]
+
+============================================================
+AFTER CLICKING "ADD TO CART"
+============================================================
+
+When the user clicks Add to Cart:
+
+- Add the product to the existing cart with quantity = 1.
+- The Add to Cart button itself must transform into the unified quantity/cart control.
+
+Display:
+
+[       Remove       1             +     ]
+
+Structure:
+
+LEFT   = Remove
+CENTER = 1
+RIGHT  = +
+
+The quantity starts at 1.
+
+============================================================
+WHEN USER CLICKS "+"
+============================================================
+
+Increase the actual cart quantity.
+
+Example:
+
+1 → 2
+
+Display:
+
+[          −          2          +       ]
+
+For quantity >= 2:
+
+LEFT   = −
+CENTER = current quantity
+RIGHT  = +
+
+Examples:
+
+[          −          2          +       ]
+
+[          −          3          +       ]
+
+[          −          4          +       ]
+
+etc.
+
+============================================================
+WHEN USER CLICKS "−"
+============================================================
+
+If quantity > 1:
+
+Decrease the actual cart quantity by 1.
+
+Example:
+
+2 → 1
+
+When quantity becomes 1, change the left control back to:
+
+Remove
+
+So:
+
+[          −          2          +       ]
+
+becomes:
+
+[       Remove       1             +     ]
+
+============================================================
+WHEN USER CLICKS "REMOVE"
+============================================================
+
+Remove the product completely from the existing cart.
+
+Then reset the UI to:
+
+[              Add to Cart              ]
+
+The quantity should disappear.
+
+The actual cart state and cart badge/count must also update.
+
+============================================================
+BUY NOW
+============================================================
+
+Buy Now remains a separate button BELOW the unified cart control.
+
+Buy Now must use the CURRENT quantity.
+
+Quantity 1:
+
+[              Buy 1 Now              ]
+
+Quantity 2:
+
+[              Buy 2 Now              ]
+
+Quantity 3:
+
+[              Buy 3 Now              ]
+
+etc.
+
+If the product is not in the cart, Buy Now should use quantity 1.
+
+Do not create duplicate cart entries when Add to Cart is clicked repeatedly.
+
+============================================================
+IMPORTANT CART STATE RULES
+============================================================
+
+Use the EXISTING cart context/state.
+
+Do NOT create:
+- a second cart
+- fake local cart state
+- an independent quantity system
+- a duplicate cart item
+
+The displayed quantity must always represent the actual cart quantity.
+
+Operations:
+
+Add to Cart:
+→ Add product with quantity 1.
+
++:
+→ Increase existing cart item's quantity by 1.
+
+−:
+→ Decrease existing cart item's quantity by 1.
+
+Remove:
+→ Completely remove existing cart item.
+
+Cart badge:
+→ Must remain synchronized with the real cart.
+
+============================================================
+PRODUCT DETAIL LAYOUT
+============================================================
+
+The product detail page should follow this order:
+
+Product information
+↓
+Description
+↓
+Unified Cart Control
+↓
+Buy Now
+↓
+WhatsApp / Email / Instagram
+↓
+Details & Specs / Reviews
+
+There must NEVER be another standalone quantity selector.
+
+============================================================
+MOBILE UX
+============================================================
+
+The unified cart control must:
+
+- Fit properly on mobile.
+- Have sufficient touch target size.
+- Keep the quantity visually centered.
+- Keep − / Remove on the left.
+- Keep + on the right.
+- Avoid horizontal overflow.
+- Match the existing Treasure Tots visual style.
+- Not become unnecessarily tall.
+
+============================================================
+DO NOT CHANGE CART-UNRELATED FUNCTIONALITY
+============================================================
+
+Preserve:
+
+- Product detail routing
+- Checkout flow
+- Existing cart architecture
+- Mobile bottom navigation
+- Desktop navigation
+- Product card behavior
+- Existing Buy Now routing
+- Existing Back button behavior
+- Recommendation behavior
+- Existing responsive behavior
+
+The quantity/cart UI IS explicitly being changed by this task.
+Everything else should remain untouched unless required for the implementation.
+
+============================================================
+PART 2 — REMOVE "100% HANDMADE"
+============================================================
+
+Remove the exact marketing phrase:
+
+"100% Handmade"
+
+and case variations such as:
+
+"100% handmade"
+
+from all visible UI.
+
+Examples:
+
+CURRENT:
+⭐ 4.9 Rating | 100% Handmade | India Shipping
+
+CHANGE TO:
+⭐ 4.9 Rating | India Shipping
+
+Do NOT replace it with another "100% Handmade" claim.
+
+Do not unnecessarily remove legitimate descriptive words such as "handcrafted" unless they are part of the unwanted marketing badge.
+
+Search the entire application for:
+
+"100% Handmade"
+"100% handmade"
+
+and remove those visible occurrences.
+
+============================================================
+PART 3 — REPLACE "SOUTH INDIA"
+============================================================
+
+Wherever "South India" refers to Treasure Tots' location/origin, replace it with:
+
+"India"
+
+Example:
+
+CURRENT:
+Personalized books, flashcards, and learning materials
+handcrafted with love in South India.
+
+CHANGE TO:
+Personalized books, flashcards, and learning materials
+handcrafted with love in India.
+
+Also check for:
+
+"South India"
+"S India"
+
+There should be no visible location claim using "South India" or "S India".
+
+============================================================
+PART 4 — SHIPPING POLICY
+============================================================
+
+On the Shipping Policy page:
+
+REMOVE the Contact Us section appearing at the bottom.
+
+The Shipping Policy page should contain shipping-related information only.
+
+Do NOT add a replacement Contact Us section to the Shipping Policy page.
+
+The existing Contact Us section elsewhere on the website should remain functional.
+
+============================================================
+PART 5 — 404 / OOPS PAGE
+============================================================
+
+The 404 page should remain simple.
+
+Expected structure:
+
+Header
+
+Oops! Page not found
+
+The page you're looking for has wandered
+off. Let's get you back to the treasures.
+
+[ Back to Home ]
+
+Mobile Bottom Navigation
+
+Do NOT show an unnecessary page-specific Contact Us section on the 404 page.
+
+Do not remove the actual reusable Contact Us functionality from the rest of the website.
+
+============================================================
+PART 6 — CONTACT INFORMATION
+============================================================
+
+The visible Contact Us information should contain ONLY:
+
+WhatsApp
+Email
+Instagram
+
+Do NOT display:
+
+- Phone number
+- Call
+- Telephone
+
+The phone number must not be visible anywhere in the UI.
+
+This applies to:
+
+- Contact sections
+- Footer
+- Product pages
+- Order pages
+- Shipping pages
+- FAQ
+- CTA sections
+- Mobile UI
+- Desktop UI
+
+IMPORTANT:
+
+Keep the actual WhatsApp functionality/link working.
+
+Only remove the visible phone-number text.
+
+Use:
+
+Email:
+treasuretots2025@gmail.com
+
+Instagram:
+@treasuretots2025
+
+WhatsApp:
+Keep the WhatsApp action/link, but do not display the phone number as text.
+
+============================================================
+PART 7 — CONTACT US DESIGN
+============================================================
+
+Contact Us should look approximately like:
+
+Contact Us
+
+Have a question about your order or delivery?
+We're happy to help.
+
+[ WhatsApp ]
+
+[ Email
+  treasuretots2025@gmail.com ]
+
+[ Instagram
+  @treasuretots2025 ]
+
+Preserve the existing Treasure Tots styling.
+
+Do not redesign the entire contact section.
+
+============================================================
+PART 8 — PRESERVE EXISTING FUNCTIONALITY
+============================================================
+
+Do NOT break:
+
+- Mobile bottom navigation
+- Desktop navigation
+- Product → checkout flow
+- Buy Now behavior
+- Cart behavior
+- Product detail routing
+- Checkout routing
+- Back button behavior
+- Recommendation navigation
+- WhatsApp functionality
+- Email functionality
+- Instagram functionality
+- Responsive layouts
+
+The ONLY functional changes requested are:
+
+1. Unified Product Detail cart/quantity control.
+2. Contact/content cleanup described above.
+
+============================================================
+PART 9 — FINAL CODEBASE SEARCH
+============================================================
+
+Before finishing, search the entire application for:
+
+"100% Handmade"
+"100% handmade"
+"South India"
+"S India"
+
+Remove any remaining VISIBLE occurrences.
+
+Also search for the existing phone number.
+
+The phone number must not be rendered anywhere in the UI.
+
+IMPORTANT:
+Do not blindly delete a WhatsApp link just because its URL contains a phone number.
+
+The WhatsApp action must continue working.
+Only the visible phone-number text must be removed.
+
+============================================================
+PART 10 — ACCEPTANCE TEST
+============================================================
+
+PRODUCT CART:
+
+1. Open a product that is NOT in the cart.
+2. Confirm there is no standalone − / quantity / + selector.
+3. Confirm Add to Cart is visible.
+4. Click Add to Cart.
+5. Confirm:
+
+   Remove | 1 | +
+
+6. Confirm actual cart quantity = 1.
+7. Click +.
+8. Confirm:
+
+   − | 2 | +
+
+9. Confirm actual cart quantity = 2.
+10. Click +.
+11. Confirm:
+
+   − | 3 | +
+
+12. Click −.
+13. Confirm:
+
+   − | 2 | +
+
+14. Click −.
+15. Confirm:
+
+   Remove | 1 | +
+
+16. Click Remove.
+17. Confirm:
+
+   Add to Cart
+
+18. Confirm product is actually removed from cart.
+19. Confirm cart badge/count updates correctly.
+
+BUY NOW:
+
+20. Test Buy Now with quantity 1.
+21. Test Buy Now after increasing quantity to 2.
+22. Confirm checkout receives the correct quantity.
+23. Confirm existing checkout/back behavior remains unchanged.
+
+CONTENT:
+
+24. Verify Home.
+25. Verify Story Books.
+26. Verify Learning.
+27. Verify Flash Cards.
+28. Verify Wallpapers.
+29. Verify Name Tags.
+30. Verify Product Detail.
+31. Verify Checkout.
+32. Verify Shipping Policy.
+33. Verify FAQ.
+34. Verify 404 page.
+35. Verify Footer.
+36. Verify Contact Us.
+37. Verify mobile layout.
+38. Verify desktop layout.
+
+FINAL REQUIREMENTS:
+
+- No "100% Handmade"
+- No "South India"
+- No "S India"
+- No visible phone number
+- Shipping Policy has no Contact Us section at the bottom
+- 404 page has no unnecessary Contact Us section
+- Contact Us contains only WhatsApp, Email and Instagram
+- WhatsApp remains functional
+- Email remains functional
+- Instagram remains functional
+- Cart quantity is real and synchronized
+- No duplicate cart entries
+- No standalone quantity selector
+- Add to Cart transforms into Remove/quantity/+ control
+- Buy Now uses the current quantity
+- Existing navigation and checkout behavior remains intact
+
+IMPORTANT:
+Do not merely make the UI look correct.
+Verify the underlying cart state, cart badge, and checkout quantity as well.

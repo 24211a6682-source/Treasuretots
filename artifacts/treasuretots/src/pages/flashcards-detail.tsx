@@ -33,19 +33,18 @@ function Skeleton() {
 export default function FlashcardDetail() {
   const { slug } = useParams();
   const { data: product, isLoading, isError } = useGetProduct(slug ?? "");
-  const { addItem, removeItem, cart } = useCart();
+  const { addItem, updateQuantity, removeItem, cart } = useCart();
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [activeImage, setActiveImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
   // Reset per-product UI when navigating product → recommended product without a
   // full remount, so the new product never inherits the previous one's state.
   useEffect(() => {
     setActiveImage(0);
-    setQuantity(1);
   }, [slug]);
 
   if (isLoading) return <Skeleton />;
@@ -54,19 +53,37 @@ export default function FlashcardDetail() {
     return <div className="container mx-auto p-20 text-center text-xl">Product not found</div>;
   }
 
-  // Single source of truth = the existing cart state. "Added" shows if the item
-  // is already in the cart (e.g. on reload) or was just added this session.
-  const isInCart = cart.items.some((item) => item.productId === product.id);
-  const showAdded = isInCart;
+  // The displayed quantity comes from the existing cart state, including after
+  // reloads. Buy Now uses one when the product has not been added yet.
+  const cartItem = cart.items.find((item) => item.productId === product.id);
+  const isInCart = Boolean(cartItem);
+  const cartQuantity = cartItem?.quantity ?? 1;
 
   const handleAddToCart = async () => {
     // Prevent duplicate adds: ignore repeat clicks while in flight / already added.
-    if (isAdding || showAdded) return;
+    if (isAdding || isInCart) return;
     setIsAdding(true);
     try {
-      await addItem(product.id, quantity, undefined, product);
+      await addItem(product.id, 1, undefined, product);
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleQuantityChange = async (nextQuantity: number) => {
+    if (
+      !cartItem ||
+      isUpdatingQuantity ||
+      nextQuantity < 1 ||
+      nextQuantity === cartItem.quantity
+    ) {
+      return;
+    }
+    setIsUpdatingQuantity(true);
+    try {
+      await updateQuantity(product.id, nextQuantity);
+    } finally {
+      setIsUpdatingQuantity(false);
     }
   };
 
@@ -81,7 +98,7 @@ export default function FlashcardDetail() {
   };
 
   const handleBuyNow = () => {
-    saveBuyNowIntent({ productId: product.id, quantity });
+    saveBuyNowIntent({ productId: product.id, quantity: cartQuantity });
     setLocation(isAuthenticated ? "/buy-now" : "/login?returnUrl=%2Fbuy-now");
   };
 
@@ -170,12 +187,14 @@ export default function FlashcardDetail() {
           )}
 
           <ProductPurchaseControls
-            quantity={quantity}
-            setQuantity={setQuantity}
-            showAdded={showAdded}
+            quantity={cartQuantity}
+            isInCart={isInCart}
             isAdding={isAdding}
+            isUpdating={isUpdatingQuantity}
             isRemoving={isRemoving}
             onAddToCart={handleAddToCart}
+            onIncreaseQuantity={() => void handleQuantityChange(cartQuantity + 1)}
+            onDecreaseQuantity={() => void handleQuantityChange(cartQuantity - 1)}
             onRemoveFromCart={handleRemoveFromCart}
             onBuyNow={handleBuyNow}
           />

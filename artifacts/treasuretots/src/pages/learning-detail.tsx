@@ -36,20 +36,19 @@ function Skeleton() {
 export default function ProductDetail() {
   const { slug } = useParams();
   const { data: product, isLoading, isError } = useGetProduct(slug ?? "");
-  const { addItem, removeItem, cart } = useCart();
+  const { addItem, updateQuantity, removeItem, cart } = useCart();
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [activeImage, setActiveImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [childName, setChildName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
   // Reset per-product UI when navigating product → recommended product without a
   // full remount, so the new product never inherits the previous one's state.
   useEffect(() => {
     setActiveImage(0);
-    setQuantity(1);
     setChildName("");
   }, [slug]);
 
@@ -60,9 +59,11 @@ export default function ProductDetail() {
   }
 
   const requiresChildName = product.slug === "customised-name-tags";
-  // Single source of truth = the existing cart state, including after reloads.
-  const isInCart = cart.items.some((item) => item.productId === product.id);
-  const showAdded = isInCart;
+  // The displayed quantity comes from the existing cart state, including after
+  // reloads. Buy Now uses one when the product has not been added yet.
+  const cartItem = cart.items.find((item) => item.productId === product.id);
+  const isInCart = Boolean(cartItem);
+  const cartQuantity = cartItem?.quantity ?? 1;
 
   const handleAddToCart = async () => {
     if (requiresChildName && !childName.trim()) {
@@ -71,12 +72,29 @@ export default function ProductDetail() {
     }
     // Prevent duplicate adds: ignore repeat clicks while the request is in flight
     // and once the item is already in the cart.
-    if (isAdding || showAdded) return;
+    if (isAdding || isInCart) return;
     setIsAdding(true);
     try {
-      await addItem(product.id, quantity, childName || undefined, product);
+      await addItem(product.id, 1, childName || undefined, product);
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleQuantityChange = async (nextQuantity: number) => {
+    if (
+      !cartItem ||
+      isUpdatingQuantity ||
+      nextQuantity < 1 ||
+      nextQuantity === cartItem.quantity
+    ) {
+      return;
+    }
+    setIsUpdatingQuantity(true);
+    try {
+      await updateQuantity(product.id, nextQuantity);
+    } finally {
+      setIsUpdatingQuantity(false);
     }
   };
 
@@ -97,7 +115,7 @@ export default function ProductDetail() {
     }
     saveBuyNowIntent({
       productId: product.id,
-      quantity,
+      quantity: cartQuantity,
       childName: childName || undefined,
     });
     setLocation(isAuthenticated ? "/buy-now" : "/login?returnUrl=%2Fbuy-now");
@@ -212,12 +230,14 @@ export default function ProductDetail() {
           )}
 
           <ProductPurchaseControls
-            quantity={quantity}
-            setQuantity={setQuantity}
-            showAdded={showAdded}
+            quantity={cartQuantity}
+            isInCart={isInCart}
             isAdding={isAdding}
+            isUpdating={isUpdatingQuantity}
             isRemoving={isRemoving}
             onAddToCart={handleAddToCart}
+            onIncreaseQuantity={() => void handleQuantityChange(cartQuantity + 1)}
+            onDecreaseQuantity={() => void handleQuantityChange(cartQuantity - 1)}
             onRemoveFromCart={handleRemoveFromCart}
             onBuyNow={handleBuyNow}
           />

@@ -108,7 +108,7 @@ export default function Home() {
           <div className="flex flex-col gap-6 z-10">
             <div className="inline-flex items-center gap-2 bg-white px-3 py-1 rounded-full text-xs sm:text-sm font-medium w-fit text-orange-600 shadow-sm border border-orange-100">
               <Star className="w-4 h-4 fill-orange-500 text-orange-500" />
-              4.9 Rating <span aria-hidden="true">|</span> 100% Handmade <span aria-hidden="true">|</span> India Shipping
+              4.9 Rating <span aria-hidden="true">|</span> India Shipping
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight">
               Stories Where Your <span className="text-primary">Child is the Hero</span>
