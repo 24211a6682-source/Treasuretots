@@ -180,7 +180,7 @@ export const GetProductResponse = zod.object({
 export const GetCartResponse = zod.object({
   "items": zod.array(zod.object({
   "productId": zod.number(),
-  "product": zod.object({
+  "product": zod.union([zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "description": zod.string().nullish(),
@@ -193,7 +193,7 @@ export const GetCartResponse = zod.object({
   "slug": zod.string(),
   "isBuyable": zod.boolean(),
   "isActive": zod.boolean()
-}),
+}),zod.null()]),
   "quantity": zod.number(),
   "childName": zod.string().nullish()
 })),
@@ -214,7 +214,7 @@ export const AddToCartBody = zod.object({
 export const AddToCartResponse = zod.object({
   "items": zod.array(zod.object({
   "productId": zod.number(),
-  "product": zod.object({
+  "product": zod.union([zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "description": zod.string().nullish(),
@@ -227,7 +227,7 @@ export const AddToCartResponse = zod.object({
   "slug": zod.string(),
   "isBuyable": zod.boolean(),
   "isActive": zod.boolean()
-}),
+}),zod.null()]),
   "quantity": zod.number(),
   "childName": zod.string().nullish()
 })),
@@ -250,7 +250,7 @@ export const UpdateCartItemBody = zod.object({
 export const UpdateCartItemResponse = zod.object({
   "items": zod.array(zod.object({
   "productId": zod.number(),
-  "product": zod.object({
+  "product": zod.union([zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "description": zod.string().nullish(),
@@ -263,7 +263,7 @@ export const UpdateCartItemResponse = zod.object({
   "slug": zod.string(),
   "isBuyable": zod.boolean(),
   "isActive": zod.boolean()
-}),
+}),zod.null()]),
   "quantity": zod.number(),
   "childName": zod.string().nullish()
 })),
@@ -282,7 +282,7 @@ export const RemoveFromCartParams = zod.object({
 export const RemoveFromCartResponse = zod.object({
   "items": zod.array(zod.object({
   "productId": zod.number(),
-  "product": zod.object({
+  "product": zod.union([zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "description": zod.string().nullish(),
@@ -295,7 +295,7 @@ export const RemoveFromCartResponse = zod.object({
   "slug": zod.string(),
   "isBuyable": zod.boolean(),
   "isActive": zod.boolean()
-}),
+}),zod.null()]),
   "quantity": zod.number(),
   "childName": zod.string().nullish()
 })),
@@ -310,7 +310,7 @@ export const RemoveFromCartResponse = zod.object({
 export const ClearCartResponse = zod.object({
   "items": zod.array(zod.object({
   "productId": zod.number(),
-  "product": zod.object({
+  "product": zod.union([zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "description": zod.string().nullish(),
@@ -323,7 +323,7 @@ export const ClearCartResponse = zod.object({
   "slug": zod.string(),
   "isBuyable": zod.boolean(),
   "isActive": zod.boolean()
-}),
+}),zod.null()]),
   "quantity": zod.number(),
   "childName": zod.string().nullish()
 })),

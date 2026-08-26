@@ -28,18 +28,26 @@ async function buildCartResponse(userId: number) {
       stock: productsTable.stock,
     }
   }).from(cartItemsTable)
-    .leftJoin(productsTable, eq(cartItemsTable.productId, productsTable.id))
+    // A deactivated product must be treated the same as a deleted one. Keeping
+    // the cart line lets the shopper remove it, while excluding it from totals
+    // and checkout until it is resolved.
+    .leftJoin(productsTable, and(
+      eq(cartItemsTable.productId, productsTable.id),
+      eq(productsTable.isActive, true),
+    ))
     .where(eq(cartItemsTable.userId, userId));
 
   const cartItems = items.map(item => ({
     productId: item.productId,
     quantity: item.quantity,
     childName: item.childName ?? null,
-    product: {
-      ...item.product!,
-      price: item.product?.price ? Number(item.product.price) : null,
-      images: Array.isArray(item.product?.images) ? item.product.images : [],
-    },
+    product: item.product
+      ? {
+          ...item.product,
+          price: item.product.price ? Number(item.product.price) : null,
+          images: Array.isArray(item.product.images) ? item.product.images : [],
+        }
+      : null,
   }));
 
   const total = cartItems.reduce((sum, item) => {

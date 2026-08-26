@@ -140,7 +140,7 @@ export interface OrderIdAudit {
 
 export interface CartItem {
   productId: number;
-  product: Product;
+  product: Product | null;
   quantity: number;
   /** @nullable */
   childName?: string | null;

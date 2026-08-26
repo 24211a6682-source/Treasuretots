@@ -9,7 +9,7 @@ import type { Product } from './product';
 
 export interface CartItem {
   productId: number;
-  product: Product;
+  product: Product | null;
   quantity: number;
   /** @nullable */
   childName?: string | null;

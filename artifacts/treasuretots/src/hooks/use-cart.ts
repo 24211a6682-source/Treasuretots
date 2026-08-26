@@ -1,5 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { useGetCart, useAddToCart, useUpdateCartItem, useRemoveFromCart, useListProducts, Cart, CartItem } from '@workspace/api-client-react';
+import { useQueries } from '@tanstack/react-query';
+import {
+  useGetCart,
+  useAddToCart,
+  useUpdateCartItem,
+  useRemoveFromCart,
+  useListProducts,
+  listProducts,
+  Cart,
+  CartItem,
+} from '@workspace/api-client-react';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
 
@@ -10,7 +20,16 @@ export interface LocalCartItem {
   product?: CartItem["product"];
 }
 
+export type CartItemWithAvailability = Omit<CartItem, "product"> & {
+  product?: CartItem["product"] | null;
+};
+
+export type CartState = Omit<Cart, "items"> & {
+  items: CartItemWithAvailability[];
+};
+
 const LOCAL_CART_EVENT = "tt-cart-updated";
+const CATALOG_PAGE_SIZE = 100;
 
 function readLocalCart(): LocalCartItem[] {
   if (typeof window === "undefined") return [];
@@ -40,10 +59,36 @@ export function useCart() {
     query: { queryKey: ["getCart"], enabled: isAuthenticated }
   });
 
-  const { data: allProductsData } = useListProducts({ per_page: 100 }, {
+  const {
+    data: allProductsData,
+    isLoading: areProductsLoading,
+    isError: hasProductsError,
+  } = useListProducts({ page: 1, per_page: CATALOG_PAGE_SIZE }, {
     query: { queryKey: ["listProducts", "all"], enabled: !isAuthenticated && localCart.length > 0 }
   });
-  const allProducts = allProductsData?.products ?? [];
+  const catalogPageCount = Math.ceil((allProductsData?.total ?? 0) / CATALOG_PAGE_SIZE);
+  const remainingCatalogPages = useQueries({
+    queries: Array.from({ length: Math.max(catalogPageCount - 1, 0) }, (_, index) => {
+      const page = index + 2;
+      return {
+        queryKey: ["listProducts", "all", page],
+        queryFn: ({ signal }: { signal: AbortSignal }) =>
+          listProducts({ page, per_page: CATALOG_PAGE_SIZE }, { signal }),
+        enabled: !isAuthenticated && localCart.length > 0 && Boolean(allProductsData),
+      };
+    }),
+  });
+  const allProducts = [
+    ...(allProductsData?.products ?? []),
+    ...remainingCatalogPages.flatMap((page) => page.data?.products ?? []),
+  ];
+  const hasCatalogError = hasProductsError || remainingCatalogPages.some((page) => page.isError);
+  const isCatalogLoading = areProductsLoading || remainingCatalogPages.some((page) => page.isLoading);
+  // A product is unavailable only after every catalog page has loaded
+  // successfully. On an API error or incomplete page set, retain a saved
+  // snapshot rather than turning a temporary catalog issue into a zero total
+  // and blocked checkout.
+  const hasCompleteCatalog = Boolean(allProductsData) && !hasCatalogError && !isCatalogLoading;
 
   const addToServerCart = useAddToCart();
   const updateServerCartItem = useUpdateCartItem();
@@ -130,27 +175,33 @@ export function useCart() {
     setSyncedLocalCart(() => []);
   };
 
-  const localCartPopulated: CartItem[] = localCart.map(item => {
-    const product = item.product ?? allProducts.find(p => p.id === item.productId);
+  const localCartPopulated: CartItemWithAvailability[] = localCart.map(item => {
+    const currentProduct = allProducts.find(p => p.id === item.productId);
+    const product = currentProduct ?? (hasCompleteCatalog ? undefined : item.product);
     return {
       productId: item.productId,
       quantity: item.quantity,
       childName: item.childName,
-      product: product as any,
+      product,
     };
-  }).filter(item => item.product);
+  });
 
   const localTotal = localCartPopulated.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
 
-  const cart: Cart = isAuthenticated && serverCart ? serverCart : {
+  const cart: CartState = isAuthenticated && serverCart ? serverCart : {
     items: localCartPopulated,
     total: localTotal,
-    itemCount: localCartPopulated.reduce((sum, item) => sum + item.quantity, 0)
+    // itemCount represents everything saved in the cart, including lines that
+    // need to be removed. This keeps the header and More-menu count honest.
+    itemCount: localCart.reduce((sum, item) => sum + item.quantity, 0)
   };
 
   return {
     cart,
-    isLoading: isAuthenticated ? isServerLoading : false,
+    isLoading: isAuthenticated
+      ? isServerLoading
+      : localCart.length > 0 && isCatalogLoading,
+    hasUnavailableItems: cart.items.some(item => !item.product),
     addItem,
     updateQuantity,
     removeItem,

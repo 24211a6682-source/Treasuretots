@@ -32,7 +32,7 @@ function toAddressInput(address: Address): AddressInput {
 
 export default function Checkout() {
   const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
-  const { cart, clearLocalCart, isLoading: isCartLoading, refetch } = useCart();
+  const { cart, clearLocalCart, isLoading: isCartLoading, hasUnavailableItems, refetch } = useCart();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -115,10 +115,19 @@ export default function Checkout() {
       setLocation("/login?returnUrl=/checkout");
       return;
     }
+    if (!isDirectPurchase && hasUnavailableItems) {
+      toast({
+        title: "Remove unavailable items first",
+        description: "Return to your cart and remove items that are no longer available.",
+        variant: "destructive",
+      });
+      setLocation("/cart");
+      return;
+    }
     if (!isCartLoading && !isDirectPurchase && cart.items.length === 0) {
       setLocation("/cart");
     }
-  }, [cart.items.length, isAuthenticated, isAuthLoading, isCartLoading, isDirectPurchase, setLocation]);
+  }, [cart.items.length, hasUnavailableItems, isAuthenticated, isAuthLoading, isCartLoading, isDirectPurchase, setLocation, toast]);
 
   useEffect(() => {
     if (!buyNowIntent || areBuyNowProductsLoading || buyNowProduct) return;
@@ -136,6 +145,7 @@ export default function Checkout() {
     !isAuthenticated ||
     isCartLoading ||
     (isDirectPurchase && (areBuyNowProductsLoading || !buyNowProduct)) ||
+    (!isDirectPurchase && hasUnavailableItems) ||
     (!isDirectPurchase && cart.items.length === 0)
   ) {
     return (

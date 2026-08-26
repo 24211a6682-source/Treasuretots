@@ -903,7 +903,9 @@ components:
         productId:
           type: integer
         product:
-          $ref: "#/components/schemas/Product"
+          oneOf:
+            - $ref: "#/components/schemas/Product"
+            - type: "null"
         quantity:
           type: integer
         childName:

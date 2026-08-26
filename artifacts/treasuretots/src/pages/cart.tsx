@@ -2,13 +2,19 @@ import { Link, useLocation } from "wouter";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2, ShoppingBag } from "lucide-react";
+import { AlertCircle, Trash2, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Cart() {
-  const { cart, isLoading, updateQuantity, removeItem } = useCart();
+  const { cart, isLoading, updateQuantity, removeItem, hasUnavailableItems } = useCart();
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const availableItems = cart.items.filter((item) => item.product);
+  const unavailableItemCount = cart.items
+    .filter((item) => !item.product)
+    .reduce((sum, item) => sum + item.quantity, 0);
+  const shipping = availableItems.length > 0 ? 70 : 0;
 
   const handleCheckout = () => {
     if (isAuthenticated) {
@@ -41,11 +47,52 @@ export default function Cart() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
 
+      {hasUnavailableItems && (
+        <Alert variant="destructive" className="mb-8">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Some saved items are no longer available</AlertTitle>
+          <AlertDescription>
+            Remove the unavailable item{unavailableItemCount === 1 ? "" : "s"} below to continue to checkout. Unavailable items are not included in your subtotal.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-4">
           {cart.items.map((item) => {
             const product = item.product;
-            if (!product) return null;
+            if (!product) {
+              return (
+                <Card key={`${item.productId}-${item.childName}`} className="overflow-hidden border-destructive/40" data-testid="unavailable-cart-item">
+                  <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                    <div className="w-24 h-24 shrink-0 rounded-md border border-dashed border-destructive/40 bg-destructive/5 flex items-center justify-center">
+                      <ShoppingBag className="h-8 w-8 text-destructive/70" aria-hidden="true" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">Item no longer available</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        We couldn’t load this saved product. Remove it before checking out.
+                      </p>
+                      {item.childName && (
+                        <div className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-xs font-medium mt-3">
+                          Name: {item.childName}
+                        </div>
+                      )}
+                      <p className="text-sm text-muted-foreground mt-2">Quantity: {item.quantity}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive w-full sm:w-auto"
+                      onClick={() => removeItem(item.productId)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove item
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            }
 
             return (
               <Card key={`${item.productId}-${item.childName}`} className="overflow-hidden">
@@ -113,20 +160,24 @@ export default function Cart() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span className="font-medium">₹70</span>
+                  <span className="font-medium">₹{shipping}</span>
                 </div>
               </div>
 
               <div className="border-t pt-4 mb-8">
                 <div className="flex justify-between items-end">
                   <span className="font-bold">Total</span>
-                  <span className="font-bold text-2xl text-primary">₹{cart.total + 70}</span>
+                  <span className="font-bold text-2xl text-primary">₹{cart.total + shipping}</span>
                 </div>
                 <p className="text-xs text-muted-foreground text-right mt-1">Inclusive of all taxes</p>
               </div>
 
-              <Button size="lg" className="w-full rounded-xl h-14 text-base shadow-md" onClick={handleCheckout}>
-                {isAuthenticated ? "Proceed to Checkout" : "Login to Checkout"}
+              <Button size="lg" className="w-full rounded-xl h-14 text-base shadow-md" onClick={handleCheckout} disabled={hasUnavailableItems}>
+                {hasUnavailableItems
+                  ? "Remove unavailable items to checkout"
+                  : isAuthenticated
+                    ? "Proceed to Checkout"
+                    : "Login to Checkout"}
               </Button>
             </CardContent>
           </Card>
