@@ -15,5 +15,5 @@ export interface Address {
   city: string;
   state: string;
   pincode: string;
-  isDefault?: boolean;
+  isDefault: boolean;
 }

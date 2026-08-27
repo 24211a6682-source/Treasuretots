@@ -78,6 +78,10 @@ export default function Checkout() {
     () => [...(addressesData ?? [])].sort((a, b) => Number(Boolean(b.isDefault)) - Number(Boolean(a.isDefault))),
     [addressesData],
   );
+  const defaultSavedAddress = useMemo(
+    () => savedAddresses.find((savedAddress) => savedAddress.isDefault),
+    [savedAddresses],
+  );
   const buyNowProduct = useMemo(
     () => buyNowProductsData?.products.find((product) => product.id === buyNowIntent?.productId),
     [buyNowIntent?.productId, buyNowProductsData],
@@ -103,12 +107,22 @@ export default function Checkout() {
   );
 
   useEffect(() => {
-    if (selectedAddressId !== null || savedAddresses.length === 0) return;
-    const preferredAddress = savedAddresses[0];
-    setSelectedAddressId(preferredAddress.id);
-    setAddress(toAddressInput(preferredAddress));
-    setAddressMode("saved");
-  }, [savedAddresses, selectedAddressId]);
+    const selectedAddressStillExists = selectedAddressId !== null &&
+      savedAddresses.some((savedAddress) => savedAddress.id === selectedAddressId);
+    if (selectedAddressStillExists) return;
+
+    if (defaultSavedAddress) {
+      setSelectedAddressId(defaultSavedAddress.id);
+      setAddress(toAddressInput(defaultSavedAddress));
+      setAddressMode("saved");
+      return;
+    }
+
+    if (selectedAddressId !== null) {
+      setSelectedAddressId(null);
+      setAddressMode("new");
+    }
+  }, [defaultSavedAddress, savedAddresses, selectedAddressId]);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -381,7 +395,7 @@ export default function Checkout() {
                     {savedAddresses.length > 0 && (
                       <div className="mb-6 space-y-3">
                         <p className="text-sm font-semibold">Choose a saved address</p>
-                        {savedAddresses.map((savedAddress, index) => {
+                        {savedAddresses.map((savedAddress) => {
                           const isSelected = addressMode === "saved" && selectedAddressId === savedAddress.id;
                           return (
                             <button
@@ -405,7 +419,7 @@ export default function Checkout() {
                                   </p>
                                   <p className="text-sm text-muted-foreground">{savedAddress.phone}</p>
                                 </div>
-                                {(savedAddress.isDefault || index === 0) && (
+                                {savedAddress.isDefault && (
                                   <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
                                     Default
                                   </span>

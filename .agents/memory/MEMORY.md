@@ -4,3 +4,4 @@
 - [Password reset link origins](password-reset-link-origins.md) — action-token links must use a server-owned configured origin, never request host headers.
 - [Captured payment settlement](payment-settlement-stock-drift.md) — captured payments must settle even when stock drift requires later fulfillment reconciliation.
 - [Replit preview CORS](replit-preview-cors.md) — preview traffic may originate from pike.repl.co, not only replit.dev.
+- [Saved address defaults](saved-address-defaults.md) — each user has at most one persisted default; deleting it promotes the oldest remaining address.

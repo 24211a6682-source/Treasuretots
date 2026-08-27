@@ -4,13 +4,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
-  useListOrders, useListAddresses, useUpdateProfile, useCreateAddress, AddressInput
+  useListOrders, useListAddresses, useUpdateProfile, useCreateAddress, useSetDefaultAddress, useDeleteAddress, AddressInput
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LogOut, Package, MapPin, User, Plus, X, Loader2, ChevronDown, ChevronUp, CreditCard, Truck } from "lucide-react";
+import { LogOut, Package, MapPin, User, Plus, X, Loader2, ChevronDown, ChevronUp, CreditCard, Truck, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -241,6 +241,8 @@ export default function Dashboard() {
     query: { queryKey: ["listAddresses"], enabled: !!user },
   });
   const createAddress = useCreateAddress();
+  const setDefaultAddress = useSetDefaultAddress();
+  const deleteAddress = useDeleteAddress();
 
   const handleLogout = () => {
     logout();
@@ -257,6 +259,32 @@ export default function Dashboard() {
       refetchAddresses();
     } catch {
       toast({ title: "Failed to save address", variant: "destructive" });
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId: number) => {
+    try {
+      await setDefaultAddress.mutateAsync({ id: addressId });
+      await refetchAddresses();
+      toast({ title: "Default address updated" });
+    } catch {
+      toast({ title: "Failed to update default address", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteAddress = async (address: { id: number; fullName: string; isDefault: boolean }) => {
+    if (!window.confirm(`Delete the saved address for ${address.fullName}?`)) return;
+    try {
+      await deleteAddress.mutateAsync({ id: address.id });
+      await refetchAddresses();
+      toast({
+        title: "Address deleted",
+        description: address.isDefault && (addressesData?.length ?? 0) > 1
+          ? "Another saved address is now your default."
+          : undefined,
+      });
+    } catch {
+      toast({ title: "Failed to delete address", variant: "destructive" });
     }
   };
 
@@ -425,6 +453,29 @@ export default function Dashboard() {
                         <p className="text-sm text-muted-foreground">{address.houseNo}, {address.street}</p>
                         <p className="text-sm text-muted-foreground">{address.city}, {address.state} {address.pincode}</p>
                         <p className="text-sm mt-2 font-medium">Ph: {address.phone}</p>
+                        <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
+                          {!address.isDefault && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleSetDefaultAddress(address.id)}
+                              disabled={setDefaultAddress.isPending || deleteAddress.isPending}
+                            >
+                              {setDefaultAddress.isPending ? "Updating..." : "Set as Default"}
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => handleDeleteAddress(address)}
+                            disabled={setDefaultAddress.isPending || deleteAddress.isPending}
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" /> Delete
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>

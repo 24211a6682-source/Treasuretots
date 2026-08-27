@@ -469,6 +469,44 @@ paths:
               schema:
                 $ref: "#/components/schemas/Address"
 
+  /v1/users/addresses/{id}/default:
+    patch:
+      operationId: setDefaultAddress
+      tags: [users]
+      summary: Set a saved address as the default
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+        "404":
+          description: Address not found
+
+  /v1/users/addresses/{id}:
+    delete:
+      operationId: deleteAddress
+      tags: [users]
+      summary: Delete a saved address
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Address deleted
+        "404":
+          description: Address not found
+
   /v1/users/wishlist:
     get:
       operationId: getWishlist
@@ -989,7 +1027,7 @@ components:
           type: string
         isDefault:
           type: boolean
-      required: [id, fullName, phone, houseNo, street, city, state, pincode]
+      required: [id, fullName, phone, houseNo, street, city, state, pincode, isDefault]
 
     AddressInput:
       type: object

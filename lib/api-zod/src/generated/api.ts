@@ -350,7 +350,7 @@ export const ListOrdersResponseItem = zod.object({
   "city": zod.string(),
   "state": zod.string(),
   "pincode": zod.string(),
-  "isDefault": zod.boolean().optional()
+  "isDefault": zod.boolean()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
   "items": zod.array(zod.object({
@@ -428,7 +428,7 @@ export const VerifyPaymentResponse = zod.object({
   "city": zod.string(),
   "state": zod.string(),
   "pincode": zod.string(),
-  "isDefault": zod.boolean().optional()
+  "isDefault": zod.boolean()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
   "items": zod.array(zod.object({
@@ -481,7 +481,7 @@ export const UpdatePaymentStatusResponse = zod.object({
   "city": zod.string(),
   "state": zod.string(),
   "pincode": zod.string(),
-  "isDefault": zod.boolean().optional()
+  "isDefault": zod.boolean()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
   "items": zod.array(zod.object({
@@ -530,7 +530,7 @@ export const GetOrderResponse = zod.object({
   "city": zod.string(),
   "state": zod.string(),
   "pincode": zod.string(),
-  "isDefault": zod.boolean().optional()
+  "isDefault": zod.boolean()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
   "items": zod.array(zod.object({
@@ -588,7 +588,7 @@ export const ListAddressesResponseItem = zod.object({
   "city": zod.string(),
   "state": zod.string(),
   "pincode": zod.string(),
-  "isDefault": zod.boolean().optional()
+  "isDefault": zod.boolean()
 })
 export const ListAddressesResponse = zod.array(ListAddressesResponseItem)
 
@@ -605,6 +605,34 @@ export const CreateAddressBody = zod.object({
   "state": zod.string(),
   "pincode": zod.string(),
   "isDefault": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Set a saved address as the default
+ */
+export const SetDefaultAddressParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SetDefaultAddressResponse = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "houseNo": zod.string(),
+  "street": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "pincode": zod.string(),
+  "isDefault": zod.boolean()
+})
+
+
+/**
+ * @summary Delete a saved address
+ */
+export const DeleteAddressParams = zod.object({
+  "id": zod.coerce.number()
 })
 
 
@@ -784,7 +812,7 @@ export const AdminListOrdersResponseItem = zod.object({
   "city": zod.string(),
   "state": zod.string(),
   "pincode": zod.string(),
-  "isDefault": zod.boolean().optional()
+  "isDefault": zod.boolean()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
   "items": zod.array(zod.object({
@@ -853,7 +881,7 @@ export const AdminUpdateOrderStatusResponse = zod.object({
   "city": zod.string(),
   "state": zod.string(),
   "pincode": zod.string(),
-  "isDefault": zod.boolean().optional()
+  "isDefault": zod.boolean()
 }).optional(),
   "razorpayOrderId": zod.string().nullish(),
   "items": zod.array(zod.object({

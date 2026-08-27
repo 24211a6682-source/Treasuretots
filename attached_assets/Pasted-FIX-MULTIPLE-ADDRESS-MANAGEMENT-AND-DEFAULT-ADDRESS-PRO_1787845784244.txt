@@ -1,0 +1,123 @@
+FIX MULTIPLE ADDRESS MANAGEMENT AND DEFAULT ADDRESS
+
+PROBLEM:
+
+Users can have multiple saved addresses.
+
+When multiple addresses exist, the user needs a reliable way to:
+
+- View all saved addresses
+- Select one as the default address
+- Change the default address
+- Use the selected/default address during checkout
+
+Currently the default address behavior is not working correctly.
+
+==================================================
+EXPECTED BEHAVIOR
+==================================================
+
+If the user has multiple addresses:
+
+Each address should be displayed separately.
+
+The user should be able to identify which address is currently default.
+
+Provide a clear:
+
+"Set as Default"
+
+or equivalent control using the application's existing UI conventions.
+
+When the user selects another address as default:
+
+1. The previous default becomes non-default.
+2. The selected address becomes the ONLY default address.
+3. The change persists.
+4. Checkout uses the new default address.
+
+There must never be two default addresses simultaneously.
+
+==================================================
+DATA LOGIC
+==================================================
+
+Inspect the existing address storage/database/schema first.
+
+Use the existing address architecture.
+
+Do NOT create a second address system.
+
+Do NOT use localStorage as a fake replacement if addresses are already persisted in the application.
+
+Ensure the default state is persisted correctly.
+
+==================================================
+CHECKOUT
+==================================================
+
+When checkout loads:
+
+If a default address exists:
+
+→ automatically use the default address.
+
+If there is no default address:
+
+→ require the user to select/add an address according to the existing checkout flow.
+
+If the user changes the default address from My Account:
+
+→ checkout must reflect the new default.
+
+==================================================
+EDGE CASES
+==================================================
+
+Handle:
+
+- One address
+- Multiple addresses
+- Changing default
+- Deleting the default address
+- Adding a new address
+- Refreshing the page
+- Logging out and back in
+
+If the default address is deleted:
+
+Automatically select another existing address as default only if that matches the existing product requirements.
+
+Never leave the system with a reference to a deleted address.
+
+==================================================
+DO NOT BREAK
+==================================================
+
+Do not modify:
+
+- Product/cart behavior
+- Payment logic
+- Product routing
+- Mobile navigation
+- Desktop navigation
+- Unrelated account functionality
+
+==================================================
+ACCEPTANCE TEST
+==================================================
+
+1. Add Address A.
+2. Make Address A default.
+3. Add Address B.
+4. Confirm A remains default.
+5. Set B as default.
+6. Confirm A is no longer default.
+7. Refresh.
+8. Confirm B is still default.
+9. Go to checkout.
+10. Confirm B is used.
+11. Delete B.
+12. Confirm the application handles the default correctly.
+
+Verify the actual persisted data, not just the visual state.
