@@ -456,6 +456,59 @@ export const VerifyPaymentResponse = zod.object({
 
 
 /**
+ * @summary Record an unpaid Razorpay attempt outcome
+ */
+export const UpdatePaymentStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdatePaymentStatusBody = zod.object({
+  "paymentStatus": zod.enum(['failed', 'cancelled'])
+})
+
+export const UpdatePaymentStatusResponse = zod.object({
+  "id": zod.number(),
+  "totalAmount": zod.number(),
+  "paymentStatus": zod.string(),
+  "orderStatus": zod.string(),
+  "childName": zod.string().nullish(),
+  "shippingAddress": zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "houseNo": zod.string(),
+  "street": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "pincode": zod.string(),
+  "isDefault": zod.boolean().optional()
+}).optional(),
+  "razorpayOrderId": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "productId": zod.number(),
+  "product": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "price": zod.number().nullish(),
+  "stock": zod.number().optional(),
+  "coverImage": zod.string(),
+  "images": zod.array(zod.string()),
+  "category": zod.string(),
+  "subcategory": zod.string().nullish(),
+  "slug": zod.string(),
+  "isBuyable": zod.boolean(),
+  "isActive": zod.boolean()
+}).optional(),
+  "quantity": zod.number(),
+  "price": zod.number()
+})),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Get order by ID
  */
 export const GetOrderParams = zod.object({

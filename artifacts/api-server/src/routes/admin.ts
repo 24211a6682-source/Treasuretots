@@ -4,6 +4,7 @@ import { db, productsTable, ordersTable, orderItemsTable, usersTable } from "@wo
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/requireAuth";
 import { AdminCreateProductBody, AdminUpdateProductBody, AdminUpdateOrderStatusBody, AdminListOrdersQueryParams } from "@workspace/api-zod";
+import { isOrderReceivable } from "../lib/order-status";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -225,6 +226,33 @@ router.patch("/v1/admin/orders/:id/status", requireAdmin, async (req, res) => {
     return;
   }
   try {
+    const [currentOrder] = await db
+      .select()
+      .from(ordersTable)
+      .where(eq(ordersTable.id, id))
+      .limit(1);
+    if (!currentOrder) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+
+    // Payment can only become paid through verified Razorpay settlement.
+    // Admins may update fulfillment statuses, but cannot bypass that check.
+    if (parse.data.paymentStatus === "paid") {
+      res.status(400).json({ error: "Payment must be verified before an order is marked paid" });
+      return;
+    }
+
+    const effectivePaymentStatus = parse.data.paymentStatus ?? currentOrder.paymentStatus;
+    const effectiveOrderStatus = parse.data.orderStatus ?? currentOrder.orderStatus;
+    if (
+      effectiveOrderStatus === "order_received" &&
+      !isOrderReceivable(effectivePaymentStatus, currentOrder.paymentMethod)
+    ) {
+      res.status(400).json({ error: "An unpaid online order cannot be marked received" });
+      return;
+    }
+
     const updateData: Partial<typeof ordersTable.$inferInsert> = {};
     if (parse.data.orderStatus) updateData.orderStatus = parse.data.orderStatus;
     if (parse.data.paymentStatus) updateData.paymentStatus = parse.data.paymentStatus;

@@ -30,7 +30,7 @@ const emptyForm: ProductFormData = {
   subcategory: "", slug: "", description: "", coverImage: "", isBuyable: true,
 };
 
-const ORDER_STATUSES = ["order_received", "making", "dispatched", "delivered", "cancelled"];
+const ORDER_STATUSES = ["payment_pending", "order_received", "making", "dispatched", "delivered", "cancelled"];
 const PIE_COLORS = ["#FF7A00", "#3b82f6", "#22c55e", "#a855f7", "#ef4444"];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -44,6 +44,7 @@ function StatusBadge({ status }: { status: string }) {
     delivered: "bg-green-500/20 text-green-400",
     dispatched: "bg-blue-500/20 text-blue-400",
     making: "bg-orange-500/20 text-orange-400",
+    payment_pending: "bg-yellow-500/20 text-yellow-400",
     order_received: "bg-purple-500/20 text-purple-400",
     cancelled: "bg-red-500/20 text-red-400",
     active: "bg-green-500/20 text-green-400",
@@ -53,7 +54,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${map[status] ?? "bg-gray-500/20 text-gray-400"}`}>
-      {status.replace(/_/g, " ")}
+      {status === "payment_pending" ? "awaiting payment" : status.replace(/_/g, " ")}
     </span>
   );
 }

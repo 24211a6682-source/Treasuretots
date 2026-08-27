@@ -31,6 +31,8 @@ export * from './orderItem';
 export * from './orderStatusUpdate';
 export * from './passwordResetInput';
 export * from './passwordResetRequestInput';
+export * from './paymentStatusUpdate';
+export * from './paymentStatusUpdatePaymentStatus';
 export * from './paymentVerifyInput';
 export * from './product';
 export * from './productInput';

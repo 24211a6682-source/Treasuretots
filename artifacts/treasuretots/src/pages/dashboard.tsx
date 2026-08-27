@@ -27,7 +27,7 @@ const emptyAddress: AddressInput = {
 };
 
 type PaymentStatus = "pending" | "paid" | "failed" | string;
-type OrderStatus = "processing" | "dispatched" | "delivered" | "cancelled" | "completed" | string;
+type OrderStatus = "payment_pending" | "processing" | "dispatched" | "delivered" | "cancelled" | "completed" | string;
 
 function paymentStatusBadge(status: PaymentStatus) {
   const map: Record<string, string> = {
@@ -44,9 +44,14 @@ function orderStatusBadge(status: OrderStatus) {
     delivered: "bg-green-100 text-green-800",
     dispatched: "bg-blue-100 text-blue-800",
     processing: "bg-orange-100 text-orange-800",
+    payment_pending: "bg-yellow-100 text-yellow-800",
     cancelled: "bg-red-100 text-red-800",
   };
   return map[status] ?? "bg-orange-100 text-orange-800";
+}
+
+function orderStatusLabel(status: OrderStatus) {
+  return status === "payment_pending" ? "Awaiting payment" : status.replace(/_/g, " ");
 }
 
 function OrderRow({ order }: { order: any }) {
@@ -84,7 +89,7 @@ function OrderRow({ order }: { order: any }) {
           <div>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Status</p>
             <span className={`inline-flex px-2 py-1 rounded text-xs font-bold capitalize ${orderStatusBadge(order.orderStatus)}`}>
-              {order.orderStatus}
+              {orderStatusLabel(order.orderStatus)}
             </span>
           </div>
           <div className="flex items-center self-center text-muted-foreground">

@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { db, ordersTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import crypto from "crypto";
 import { sendOrderConfirmation } from "../lib/email";
 import { settlePaidOrder } from "../lib/payment-settlement";
+import { PAYMENT_PENDING_ORDER_STATUS } from "../lib/order-status";
 
 const router = Router();
 
@@ -115,10 +116,18 @@ router.post("/v1/webhooks/razorpay", async (req, res) => {
       const razorpayOrderId: string | undefined = paymentEntity?.order_id;
 
       if (razorpayOrderId) {
-        // Only update if still pending — never overwrite a paid order
+        // Only update if still pending — never overwrite a paid order. A
+        // browser cancellation may have already set the order to cancelled;
+        // retain that order state while recording the failed payment.
         await db
           .update(ordersTable)
-          .set({ paymentStatus: "failed" })
+          .set({
+            paymentStatus: "failed",
+            orderStatus: sql`CASE
+              WHEN ${ordersTable.orderStatus} = 'cancelled' THEN ${ordersTable.orderStatus}
+              ELSE ${PAYMENT_PENDING_ORDER_STATUS}
+            END`,
+          })
           .where(
             and(
               eq(ordersTable.razorpayOrderId, razorpayOrderId),

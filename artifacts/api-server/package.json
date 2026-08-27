@@ -7,6 +7,8 @@
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
+    "test:order-status": "pnpm --filter @workspace/scripts exec tsx --test ../artifacts/api-server/src/lib/order-status.test.ts",
+    "migrate:payment-pending-orders": "pnpm --filter @workspace/scripts exec tsx ../artifacts/api-server/src/migrate.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

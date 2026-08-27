@@ -40,6 +40,7 @@ import type {
   OrderStatusUpdate,
   PasswordResetInput,
   PasswordResetRequestInput,
+  PaymentStatusUpdate,
   PaymentVerifyInput,
   Product,
   ProductInput,
@@ -1325,6 +1326,78 @@ export const useVerifyPayment = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getVerifyPaymentMutationOptions(options));
+    }
+
+export const getUpdatePaymentStatusUrl = (id: number,) => {
+
+
+
+
+  return `/api/v1/orders/${id}/payment-status`
+}
+
+/**
+ * @summary Record an unpaid Razorpay attempt outcome
+ */
+export const updatePaymentStatus = async (id: number,
+    paymentStatusUpdate: PaymentStatusUpdate, options?: RequestInit): Promise<Order> => {
+
+  return customFetch<Order>(getUpdatePaymentStatusUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      paymentStatusUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdatePaymentStatusMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePaymentStatus>>, TError,{id: number;data: BodyType<PaymentStatusUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePaymentStatus>>, TError,{id: number;data: BodyType<PaymentStatusUpdate>}, TContext> => {
+
+const mutationKey = ['updatePaymentStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePaymentStatus>>, {id: number;data: BodyType<PaymentStatusUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updatePaymentStatus(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePaymentStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updatePaymentStatus>>>
+    export type UpdatePaymentStatusMutationBody = BodyType<PaymentStatusUpdate>
+    export type UpdatePaymentStatusMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Record an unpaid Razorpay attempt outcome
+ */
+export const useUpdatePaymentStatus = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePaymentStatus>>, TError,{id: number;data: BodyType<PaymentStatusUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePaymentStatus>>,
+        TError,
+        {id: number;data: BodyType<PaymentStatusUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePaymentStatusMutationOptions(options));
     }
 
 export const getGetOrderUrl = (id: number,) => {

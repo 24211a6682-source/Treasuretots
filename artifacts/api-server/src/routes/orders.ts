@@ -1,11 +1,16 @@
 import { Router } from "express";
 import { db, ordersTable, orderItemsTable, productsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
-import { InitializeOrderBody, VerifyPaymentBody } from "@workspace/api-zod";
+import { InitializeOrderBody, VerifyPaymentBody, UpdatePaymentStatusBody } from "@workspace/api-zod";
 import crypto from "crypto";
 import { sendOrderConfirmation } from "../lib/email";
 import { settlePaidOrder } from "../lib/payment-settlement";
+import {
+  ONLINE_PAYMENT_INITIAL_STATE,
+  isRazorpayOnlineOrder,
+  paymentOutcomeUpdate,
+} from "../lib/order-status";
 
 const router = Router();
 
@@ -146,8 +151,7 @@ router.post("/v1/orders/initialize", requireAuth, async (req, res) => {
       userId: req.user!.userId,
       totalAmount: finalAmount.toFixed(2),
       shippingAmount: SHIPPING_AMOUNT.toFixed(2),
-      paymentStatus: "pending",
-      orderStatus: "order_received",
+      ...ONLINE_PAYMENT_INITIAL_STATE,
       purchaseMode,
       childName: childName ?? null,
       shippingAddress: address,
@@ -237,6 +241,68 @@ router.post("/v1/orders/verify", requireAuth, async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Verify payment error");
     res.status(500).json({ error: "Payment verification failed" });
+  }
+});
+
+router.post("/v1/orders/:id/payment-status", requireAuth, async (req, res) => {
+  const id = parseInt(String(req.params.id));
+  const parse = UpdatePaymentStatusBody.safeParse(req.body);
+  if (isNaN(id) || !parse.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+
+  try {
+    const [currentOrder] = await db
+      .select()
+      .from(ordersTable)
+      .where(and(eq(ordersTable.id, id), eq(ordersTable.userId, req.user!.userId)))
+      .limit(1);
+    if (!currentOrder) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+    if (!isRazorpayOnlineOrder(currentOrder.razorpayOrderId)) {
+      res.status(409).json({ error: "Payment outcomes can only be recorded for Razorpay orders" });
+      return;
+    }
+    if (currentOrder.paymentStatus === "paid") {
+      res.json(await formatOrder(currentOrder));
+      return;
+    }
+
+    const [updatedOrder] = await db
+      .update(ordersTable)
+      .set(paymentOutcomeUpdate(parse.data.paymentStatus))
+      .where(
+        and(
+          eq(ordersTable.id, id),
+          eq(ordersTable.userId, req.user!.userId),
+          ne(ordersTable.paymentStatus, "paid"),
+        ),
+      )
+      .returning();
+
+    if (updatedOrder) {
+      res.json(await formatOrder(updatedOrder));
+      return;
+    }
+
+    // A verified payment may have won the race after the initial read. Re-read
+    // with ownership checking; browser callbacks can never overwrite it.
+    const [settledOrder] = await db
+      .select()
+      .from(ordersTable)
+      .where(and(eq(ordersTable.id, id), eq(ordersTable.userId, req.user!.userId)))
+      .limit(1);
+    if (!settledOrder) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+    res.json(await formatOrder(settledOrder));
+  } catch (err) {
+    req.log.error({ err }, "Update payment status error");
+    res.status(500).json({ error: "Failed to update payment status" });
   }
 });
 

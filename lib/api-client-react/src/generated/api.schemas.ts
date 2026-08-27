@@ -247,6 +247,18 @@ export interface PaymentVerifyInput {
   orderId: number;
 }
 
+export type PaymentStatusUpdatePaymentStatus = typeof PaymentStatusUpdatePaymentStatus[keyof typeof PaymentStatusUpdatePaymentStatus];
+
+
+export const PaymentStatusUpdatePaymentStatus = {
+  failed: 'failed',
+  cancelled: 'cancelled',
+} as const;
+
+export interface PaymentStatusUpdate {
+  paymentStatus: PaymentStatusUpdatePaymentStatus;
+}
+
 export interface OrderStatusUpdate {
   orderStatus?: string;
   paymentStatus?: string;

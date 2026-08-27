@@ -11,7 +11,7 @@ import { format } from "date-fns";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const ORDER_STATUSES = ["order_received", "making", "dispatched", "delivered", "cancelled"];
+const ORDER_STATUSES = ["payment_pending", "order_received", "making", "dispatched", "delivered", "cancelled"];
 const PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded"];
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -25,12 +25,13 @@ function StatusBadge({ status }: { status: string }) {
     delivered: "bg-green-500/20 text-green-400 border-green-500/30",
     dispatched: "bg-blue-500/20 text-blue-400 border-blue-500/30",
     making: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    payment_pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
     order_received: "bg-purple-500/20 text-purple-400 border-purple-500/30",
     cancelled: "bg-red-500/20 text-red-400 border-red-500/30",
   };
   return (
     <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${map[status] ?? "bg-gray-500/20 text-gray-400 border-gray-500/30"}`}>
-      {status.replace(/_/g, " ")}
+      {status === "payment_pending" ? "awaiting payment" : status.replace(/_/g, " ")}
     </span>
   );
 }

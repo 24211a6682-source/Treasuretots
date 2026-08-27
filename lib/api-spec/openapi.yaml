@@ -374,6 +374,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/Order"
 
+  /v1/orders/{id}/payment-status:
+    post:
+      operationId: updatePaymentStatus
+      tags: [orders]
+      summary: Record an unpaid Razorpay attempt outcome
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentStatusUpdate"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
   /v1/orders/{id}:
     get:
       operationId: getOrder
@@ -1082,6 +1107,14 @@ components:
         orderId:
           type: integer
       required: [razorpayPaymentId, razorpayOrderId, razorpaySignature, orderId]
+
+    PaymentStatusUpdate:
+      type: object
+      properties:
+        paymentStatus:
+          type: string
+          enum: [failed, cancelled]
+      required: [paymentStatus]
 
     OrderStatusUpdate:
       type: object

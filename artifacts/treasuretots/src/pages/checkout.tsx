@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
-import { useInitializeOrder, useVerifyPayment, useCreateAddress, useListAddresses, useListProducts, Address, AddressInput } from "@workspace/api-client-react";
+import { useInitializeOrder, useUpdatePaymentStatus, useVerifyPayment, useCreateAddress, useListAddresses, useListProducts, Address, AddressInput } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +55,7 @@ export default function Checkout() {
 
   const initOrder = useInitializeOrder();
   const verifyPayment = useVerifyPayment();
+  const updatePaymentStatus = useUpdatePaymentStatus();
   const createAddress = useCreateAddress();
   const {
     data: buyNowProductsData,
@@ -254,6 +255,18 @@ export default function Checkout() {
         }
       });
 
+      let paymentOutcomeRecorded = false;
+      const recordPaymentOutcome = (paymentStatus: "failed" | "cancelled") => {
+        if (paymentOutcomeRecorded) return;
+        paymentOutcomeRecorded = true;
+        void updatePaymentStatus.mutateAsync({
+          id: orderData.orderId,
+          data: { paymentStatus },
+        }).catch((error) => {
+          console.error("Could not record Razorpay payment outcome", error);
+        });
+      };
+
       const options = {
         key: orderData.key,
         amount: orderData.amount,
@@ -290,6 +303,9 @@ export default function Checkout() {
         theme: {
           color: "#FF7A00"
         },
+        modal: {
+          ondismiss: () => recordPaymentOutcome("cancelled"),
+        },
         config: {
           display: {
             blocks: {
@@ -310,6 +326,7 @@ export default function Checkout() {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response: any) {
+        recordPaymentOutcome("failed");
         toast({ title: "Payment failed", description: response.error.description, variant: "destructive" });
       });
       rzp.open();

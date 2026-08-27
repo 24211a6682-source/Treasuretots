@@ -6,6 +6,7 @@ import {
   productsTable,
 } from "@workspace/db";
 import { and, eq, gt, gte, inArray, lte, sql } from "drizzle-orm";
+import { PAYMENT_SETTLEMENT_ELIGIBLE_STATUSES } from "./order-status";
 
 const CART_LOCK_NAMESPACE = 62144;
 
@@ -85,7 +86,7 @@ export async function settlePaidOrder(
       .where(
         and(
           eq(ordersTable.id, currentOrder.id),
-          inArray(ordersTable.paymentStatus, ["pending", "failed"]),
+          inArray(ordersTable.paymentStatus, PAYMENT_SETTLEMENT_ELIGIBLE_STATUSES),
         ),
       )
       .returning();

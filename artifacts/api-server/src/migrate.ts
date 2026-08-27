@@ -1,4 +1,5 @@
 import { pool } from "@workspace/db";
+import { pathToFileURL } from "node:url";
 import { logger } from "./lib/logger";
 import { seedProducts } from "./seed";
 
@@ -43,7 +44,7 @@ CREATE TABLE IF NOT EXISTS orders (
   user_id INTEGER REFERENCES users(id),
   total_amount NUMERIC(10,2) NOT NULL,
   payment_status VARCHAR(30) NOT NULL DEFAULT 'pending',
-  order_status VARCHAR(50) NOT NULL DEFAULT 'order_received',
+  order_status VARCHAR(50) NOT NULL DEFAULT 'payment_pending',
   child_name VARCHAR(100),
   shipping_address JSONB NOT NULL,
   razorpay_order_id TEXT,
@@ -92,11 +93,25 @@ CREATE TABLE IF NOT EXISTS wishlist_items (
 );
 `;
 
+// Existing installations may contain online orders created before unpaid
+// payment attempts had their own order status. Only repair Razorpay rows so
+// historical or future COD orders keep their valid unpaid received state.
+const ORDER_STATUS_STATE_MIGRATION = `
+ALTER TABLE orders ALTER COLUMN order_status SET DEFAULT 'payment_pending';
+
+UPDATE orders
+SET order_status = 'payment_pending'
+WHERE razorpay_order_id IS NOT NULL
+  AND payment_status IN ('pending', 'failed')
+  AND order_status = 'order_received';
+`;
+
 export async function migrate() {
   const client = await pool.connect();
   try {
     logger.info("Running DB migration...");
     await client.query(DDL);
+    await client.query(ORDER_STATUS_STATE_MIGRATION);
     logger.info("DB migration complete");
   } finally {
     client.release();
@@ -105,4 +120,25 @@ export async function migrate() {
   logger.info("Seeding products...");
   await seedProducts();
   logger.info("Products seeded");
+}
+
+export async function migratePaymentPendingOrderStatus() {
+  const client = await pool.connect();
+  try {
+    logger.info("Running payment-pending order status migration...");
+    await client.query(ORDER_STATUS_STATE_MIGRATION);
+    logger.info("Payment-pending order status migration complete");
+  } finally {
+    client.release();
+  }
+}
+
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  migratePaymentPendingOrderStatus().catch((err) => {
+    logger.error({ err }, "Payment-pending order status migration failed");
+    process.exitCode = 1;
+  });
 }
