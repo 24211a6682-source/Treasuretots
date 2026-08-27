@@ -1,0 +1,258 @@
+FIX ORDER STATUS / PAYMENT STATE BUG
+
+IMPORTANT:
+Do NOT simply change the displayed "Received" text. Trace the existing order and payment flow and fix the underlying state logic.
+
+PROBLEM:
+
+I tested the website by:
+
+1. Selecting a product.
+2. Going through checkout.
+3. Proceeding to the payment stage.
+4. NOT completing the payment.
+5. Cancelling/exiting the payment process.
+6. I did NOT select Cash on Delivery.
+
+However, the order still appears in the order history/admin order page as:
+
+Order Status: Received
+Payment Status: Pending
+
+This is incorrect.
+
+An unpaid online-payment order must NOT automatically become "Received".
+
+==================================================
+EXPECTED ORDER LOGIC
+==================================================
+
+There are two separate concepts:
+
+1. PAYMENT STATUS
+2. ORDER STATUS
+
+Do NOT merge these concepts.
+
+For online payment:
+
+Before successful payment:
+
+Payment Status:
+Pending
+
+Order Status:
+Payment Pending / Awaiting Payment
+
+After successful verified payment:
+
+Payment Status:
+Paid / Successful
+
+Order Status:
+Received / Confirmed
+
+If payment is cancelled:
+
+Payment Status:
+Cancelled / Unpaid
+
+Order Status:
+Cancelled
+
+If payment fails:
+
+Payment Status:
+Failed
+
+Order Status:
+Payment Failed / Cancelled
+
+Choose the existing status naming convention already used by the application rather than unnecessarily introducing many new status values.
+
+==================================================
+CASH ON DELIVERY
+==================================================
+
+COD is different.
+
+If the customer explicitly selects Cash on Delivery:
+
+Payment Status:
+Pending / COD
+
+Order Status:
+Received / Confirmed
+
+because COD is a valid placed order even though payment has not happened yet.
+
+IMPORTANT:
+
+Only an explicitly selected COD order may be considered a valid received order without online payment.
+
+An online-payment order must NOT become Received merely because the checkout/order record was created.
+
+==================================================
+TRACE THE ACTUAL CODE
+==================================================
+
+Before modifying anything, inspect:
+
+- Checkout/order creation logic
+- Order database/schema
+- Initial orderStatus
+- Initial paymentStatus
+- Payment method handling
+- Payment initiation
+- Payment success callback
+- Payment failure callback
+- Payment cancellation handling
+- Payment verification/webhook logic
+- Order history page
+- Admin order page
+- Any backend API that updates order status
+
+Find exactly where an order is being assigned:
+
+orderStatus = "Received"
+
+before payment has actually succeeded.
+
+Do not assume the problem is only frontend display logic.
+
+==================================================
+IMPORTANT SECURITY / CORRECTNESS RULE
+==================================================
+
+Never mark an online-payment order as Paid or Received based only on:
+
+- Clicking "Proceed to Payment"
+- Opening the payment gateway
+- Returning to the website
+- Creating the order record
+- A frontend state variable
+
+The application must rely on the existing verified payment-success mechanism.
+
+Do not fake payment success.
+
+==================================================
+ABANDONED PAYMENT
+==================================================
+
+If the customer starts online payment but exits/cancels without completing it:
+
+The order must NOT be treated as a received order.
+
+Use the application's existing appropriate state if available.
+
+If the current architecture keeps the order record:
+
+Payment:
+Pending / Cancelled
+
+Order:
+Payment Pending / Cancelled
+
+But never:
+
+Order:
+Received
+
+==================================================
+DO NOT BREAK
+==================================================
+
+Do NOT modify unrelated functionality.
+
+Do NOT change:
+
+- Product detail UI
+- Cart logic
+- Quantity controls
+- Buy Now behavior
+- Checkout layout unless required for this fix
+- Mobile navigation
+- Desktop navigation
+- Product routing
+- Back button behavior
+- Existing payment integration
+- Existing COD functionality
+
+Preserve the existing architecture.
+
+==================================================
+ACCEPTANCE TESTS
+==================================================
+
+Test at least these scenarios:
+
+TEST 1 — ONLINE PAYMENT SUCCESS
+
+Product → Checkout → Online Payment → Successful Payment
+
+Expected:
+
+Payment = Paid/Successful
+Order = Received/Confirmed
+
+--------------------------------------------------
+
+TEST 2 — ONLINE PAYMENT CANCELLED
+
+Product → Checkout → Online Payment → Cancel/Exit
+
+Expected:
+
+Payment != Paid
+Order != Received
+
+Expected state should be Payment Pending/Cancelled according to the existing application architecture.
+
+--------------------------------------------------
+
+TEST 3 — ONLINE PAYMENT FAILED
+
+Product → Checkout → Online Payment → Failed
+
+Expected:
+
+Payment = Failed
+Order != Received
+
+--------------------------------------------------
+
+TEST 4 — COD
+
+Product → Checkout → Select COD → Place Order
+
+Expected:
+
+Payment = Pending/COD
+Order = Received/Confirmed
+
+--------------------------------------------------
+
+TEST 5 — ADMIN
+
+Verify that the admin order-management page shows the correct status.
+
+An unpaid/cancelled online-payment order must NOT appear as a normal Received order.
+
+==================================================
+FINAL VERIFICATION
+==================================================
+
+After implementing:
+
+1. Trace the order lifecycle from checkout to database.
+2. Confirm the initial state.
+3. Confirm the payment-success transition.
+4. Confirm cancellation/failure behavior.
+5. Confirm COD behavior.
+6. Verify customer order history.
+7. Verify admin order management.
+
+Do not stop after changing UI text.
+
+The underlying order/payment state must be correct.
