@@ -34,6 +34,8 @@ import BuyNow from "@/pages/buy-now";
 import ShippingPolicy from "@/pages/shipping";
 import FAQ from "@/pages/faq";
 import Contact from "@/pages/contact";
+import PrivacyPolicy from "@/pages/privacy";
+import TermsOfService from "@/pages/terms";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -79,6 +81,8 @@ function UserRouter() {
         <Route path="/shipping" component={ShippingPolicy} />
         <Route path="/faq" component={FAQ} />
         <Route path="/contact" component={Contact} />
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={TermsOfService} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/forgot-password" component={ForgotPassword} />

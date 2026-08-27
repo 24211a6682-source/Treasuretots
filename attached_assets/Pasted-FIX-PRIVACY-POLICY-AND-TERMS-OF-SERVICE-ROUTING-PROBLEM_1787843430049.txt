@@ -1,0 +1,120 @@
+FIX PRIVACY POLICY AND TERMS OF SERVICE ROUTING
+
+PROBLEM:
+
+When the user clicks:
+
+- Privacy Policy
+- Terms of Service
+
+from the footer, the application navigates to the "Oops! Page not found" / 404 page.
+
+Both links must open their actual respective pages.
+
+==================================================
+REQUIRED BEHAVIOR
+==================================================
+
+Privacy Policy:
+
+Footer → Privacy Policy → Privacy Policy page
+
+Terms of Service:
+
+Footer → Terms of Service → Terms of Service page
+
+They must NOT navigate to the 404 page.
+
+==================================================
+IMPORTANT
+==================================================
+
+First inspect the existing routing architecture.
+
+Find:
+
+- Footer links
+- Privacy Policy route/page
+- Terms of Service route/page
+- Router configuration
+- Any lazy-loaded routes
+- Any catch-all / 404 route
+
+Determine whether:
+
+1. The pages already exist but routes are missing,
+2. The links point to incorrect paths,
+3. The routes are incorrectly registered,
+4. The pages are not being imported,
+5. There is a nested-route/base-path problem.
+
+Fix the actual cause.
+
+Do NOT simply redirect both links to Home.
+
+Do NOT remove the links.
+
+==================================================
+PAGE CONTENT
+==================================================
+
+If Privacy Policy and Terms of Service pages already exist:
+
+Use the existing content.
+
+Do not rewrite the legal content unnecessarily.
+
+If the pages do not exist, inspect the current project structure and implement proper pages using the existing Treasure Tots styling and routing architecture.
+
+==================================================
+MOBILE + DESKTOP
+==================================================
+
+Verify both links work on:
+
+- Desktop
+- Mobile
+
+The pages must also work when directly opening their URL.
+
+==================================================
+404
+==================================================
+
+Keep the existing 404 page for genuinely invalid routes.
+
+Do not weaken the catch-all route just to make these links work.
+
+==================================================
+DO NOT BREAK
+==================================================
+
+Do not modify:
+
+- Product routing
+- Checkout
+- Cart
+- Payment flow
+- Bottom navigation
+- Desktop navigation
+- Product detail behavior
+- Existing Back button behavior
+
+Only fix Privacy Policy and Terms of Service routing.
+
+==================================================
+ACCEPTANCE TEST
+==================================================
+
+1. Open Home.
+2. Scroll to footer.
+3. Click Privacy Policy.
+4. Confirm Privacy Policy page opens.
+5. Return.
+6. Click Terms of Service.
+7. Confirm Terms of Service page opens.
+8. Enter an invalid URL.
+9. Confirm the invalid URL still shows the 404 page.
+10. Repeat on mobile.
+
+Do not finish until both legal links work correctly.
