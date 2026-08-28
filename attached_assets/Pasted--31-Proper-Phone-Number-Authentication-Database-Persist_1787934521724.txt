@@ -1,0 +1,575 @@
+# #31 — Proper Phone Number Authentication & Database Persistence
+
+Fix the authentication and user-profile system so phone numbers are properly collected, persisted, and usable for login.
+
+IMPORTANT:
+The phone number must be a REAL database-backed user field.
+
+Do NOT simply change the UI.
+Do NOT store the phone number only in React/local state.
+Do NOT fake the value on the profile page.
+
+Trace the existing authentication architecture and database schema first, then implement this cleanly using the existing auth/user system.
+
+==================================================
+1. LOGIN PAGE
+==================================================
+
+Update the Login page so users can log in using EITHER:
+
+Option A:
+Email + Password
+
+OR
+
+Option B:
+Phone Number + Password
+
+The login identifier field should accept either an email address or phone number.
+
+Example:
+
+Identifier
+[ Email or Phone Number ]
+
+Password
+[ ******** ]
+
+[ Login ]
+
+The backend must determine whether the identifier is an email or phone number and authenticate against the corresponding database field.
+
+Do NOT create a second authentication system.
+
+Use the existing authentication/session architecture.
+
+==================================================
+2. SIGN-UP PAGE
+==================================================
+
+The Sign Up page MUST require all of the following:
+
+Full Name
+Email
+Phone Number
+Password
+Confirm Password
+
+Example:
+
+Full Name
+[                         ]
+
+Email
+[                         ]
+
+Phone Number
+[                         ]
+
+Password
+[                         ]
+
+Confirm Password
+[                         ]
+
+[ Create Account ]
+
+All five fields are required.
+
+==================================================
+3. PASSWORD CONFIRMATION
+==================================================
+
+Confirm Password must be validated before account creation.
+
+If:
+
+Password != Confirm Password
+
+do NOT create the account.
+
+Show a clear validation error.
+
+The confirmation password itself must NOT be stored in the database.
+
+Only the properly hashed password should be persisted using the existing authentication architecture.
+
+==================================================
+4. PHONE NUMBER DATABASE PERSISTENCE
+==================================================
+
+The phone number entered during signup must be stored in the appropriate existing user/customer database record.
+
+Trace the current schema and determine the correct canonical user table/field.
+
+Do NOT create a duplicate user database/table just for phone authentication.
+
+The stored phone number must be associated with the same user account as:
+
+- Full Name
+- Email
+- Password/auth credentials
+
+After signup:
+
+Database user record
+    ↓
+phone_number = user's submitted phone number
+
+==================================================
+5. PROFILE SETTINGS
+==================================================
+
+The current Profile Settings page contains:
+
+Full Name
+Email
+Phone Number
+
+The phone number field must now read from the actual database-backed user record.
+
+When the user updates their phone number:
+
+1. Validate the input.
+2. Send it to the backend.
+3. Verify the authenticated user is updating their own profile.
+4. Persist it in the database.
+5. Return the updated user data.
+6. Update the displayed profile.
+
+Do NOT merely update the frontend state.
+
+After refreshing the page, the phone number must still be present.
+
+After logging out and logging back in, it must still be present.
+
+==================================================
+6. EXISTING USERS — IMPORTANT
+==================================================
+
+There are already existing users who may not have a phone number stored.
+
+For existing users whose phone number is missing:
+
+Make phone-number completion MANDATORY.
+
+When such a user logs in, they must be required to provide/update their phone number before continuing to normal account usage.
+
+For example:
+
+Existing User Login
+        ↓
+Authentication succeeds
+        ↓
+Phone number missing
+        ↓
+Require Phone Number
+        ↓
+Save phone number to database
+        ↓
+Continue to application
+
+Do NOT create a new account for the existing user.
+
+Do NOT replace their existing account.
+
+Do NOT lose their existing:
+
+- orders
+- addresses
+- profile data
+- cart
+- account history
+
+The phone number must be attached to their existing user/customer record.
+
+==================================================
+7. EXISTING USERS WHO ALREADY HAVE A PHONE
+==================================================
+
+If an existing user already has a valid phone number stored:
+
+Do NOT ask them to enter it again unnecessarily.
+
+They should continue normally.
+
+==================================================
+8. PHONE NUMBER VALIDATION
+==================================================
+
+Implement appropriate phone-number validation consistent with the application's supported users/locations.
+
+At minimum:
+
+- Reject empty values.
+- Reject obviously invalid values.
+- Normalize the stored format consistently.
+- Prevent accidental whitespace/format inconsistencies.
+
+Do not silently modify a legitimate phone number into an incorrect value.
+
+Use the existing validation conventions in the project where possible.
+
+==================================================
+9. DUPLICATE PHONE NUMBERS
+==================================================
+
+A phone number must not accidentally become associated with multiple accounts if the existing authentication model expects unique login identifiers.
+
+Before assigning a phone number:
+
+Check whether another account already owns it.
+
+If it is already associated with another user:
+
+Reject the update/signup and show an appropriate error.
+
+Do not overwrite another user's phone number.
+
+Likewise, preserve the existing email uniqueness behavior.
+
+==================================================
+10. PHONE LOGIN
+==================================================
+
+When the user enters a phone number on the login page:
+
+Identifier:
+[ 8500630595 ]
+
+Password:
+[ ******** ]
+
+The backend should locate the existing user by the canonical stored phone number and authenticate using the existing password/authentication mechanism.
+
+Do NOT authenticate based only on the phone number.
+
+Phone number + password are required.
+
+==================================================
+11. EMAIL LOGIN MUST CONTINUE WORKING
+==================================================
+
+Existing email + password login must continue working exactly as before.
+
+Both must work:
+
+Email + Password
+Phone + Password
+
+Do not break existing users who currently log in with email.
+
+==================================================
+12. AUTHENTICATION SECURITY
+==================================================
+
+Do NOT:
+
+- Store plaintext passwords.
+- Store Confirm Password.
+- Authenticate using frontend-only state.
+- Trust a client-provided user ID.
+- Allow one user to update another user's phone number.
+- Bypass existing authentication/session checks.
+- Create a second authentication system.
+- Weaken password verification.
+
+Use the existing secure password hashing and session/authentication implementation.
+
+==================================================
+13. DATABASE MIGRATION
+==================================================
+
+Inspect the existing database schema before modifying it.
+
+If the user table already has a phone field:
+
+Use the existing field.
+
+If it does not:
+
+Add the phone field through the project's normal database migration/schema process.
+
+Do not manually modify production data outside the existing database architecture.
+
+The migration must be backward-compatible with existing users who currently have no phone number.
+
+Existing users should initially have:
+
+phone_number = NULL / empty
+
+until they complete the required phone-number update.
+
+==================================================
+14. API / BACKEND
+==================================================
+
+Trace the existing endpoints responsible for:
+
+- Signup
+- Login
+- Current user/session
+- Profile updates
+
+Update them to support the phone number.
+
+The backend must be the source of truth.
+
+The frontend should never be responsible for permanently storing the user's phone number.
+
+==================================================
+15. PROFILE UPDATE TEST
+==================================================
+
+Test this exact sequence:
+
+1. Log in as an existing user.
+2. Open Profile Settings.
+3. Enter a phone number.
+4. Click Update Profile.
+5. Refresh the page.
+
+EXPECTED:
+
+The phone number is still displayed.
+
+Then:
+
+6. Log out.
+7. Log back in.
+8. Open Profile Settings.
+
+EXPECTED:
+
+The same phone number is still displayed.
+
+Finally verify the actual database record.
+
+EXPECTED:
+
+The phone number exists on the correct user's database record.
+
+==================================================
+16. EXISTING USER TEST
+==================================================
+
+Use an existing account with no phone number.
+
+1. Log in.
+2. Authentication succeeds.
+3. System detects missing phone number.
+4. User is required to provide a phone number.
+5. Submit the phone number.
+6. Verify the database record.
+7. Continue to the application.
+
+EXPECTED:
+
+The existing account is preserved.
+
+Its orders, addresses, and other data remain attached to the same account.
+
+==================================================
+17. SIGNUP TEST
+==================================================
+
+Create a new account using:
+
+Full Name
+Email
+Phone Number
+Password
+Confirm Password
+
+Expected:
+
+- Account is created.
+- Password is securely stored using the existing auth system.
+- Phone number is stored in the correct user record.
+- Confirm Password is NOT stored.
+
+Then log out.
+
+==================================================
+18. PHONE LOGIN TEST
+==================================================
+
+Use the newly created account.
+
+Login using:
+
+Phone Number + Password
+
+Expected:
+
+Login succeeds and opens the user's account.
+
+Then test:
+
+Email + Password
+
+Expected:
+
+Login also succeeds.
+
+==================================================
+19. INVALID CONFIRM PASSWORD TEST
+==================================================
+
+Signup with:
+
+Password:
+abc123
+
+Confirm Password:
+abc456
+
+Expected:
+
+Account creation is rejected.
+
+No user should be created.
+
+==================================================
+20. DUPLICATE PHONE TEST
+==================================================
+
+Create/update another account using a phone number that already belongs to an existing account.
+
+Expected:
+
+The operation is rejected.
+
+The original user's phone number remains unchanged.
+
+==================================================
+21. PROFILE SECURITY TEST
+==================================================
+
+Verify that a logged-in user can only update their own phone number.
+
+Do not trust a user ID supplied by the browser.
+
+The authenticated session must determine which user record is updated.
+
+==================================================
+22. UI REQUIREMENTS
+==================================================
+
+Keep the existing Treasure Tots visual design.
+
+Do not redesign the entire authentication system.
+
+Login should clearly communicate:
+
+"Email or Phone Number"
+
+Signup should clearly show:
+
+Full Name
+Email
+Phone Number
+Password
+Confirm Password
+
+Profile Settings should continue showing:
+
+Full Name
+Email
+Phone Number
+
+But the phone number must now be backed by the actual database.
+
+==================================================
+23. DO NOT BREAK
+==================================================
+
+Do NOT modify unrelated functionality:
+
+- Product detail
+- Cart
+- Quantity controls
+- Buy Now
+- Checkout
+- Razorpay
+- Order status
+- Mobile bottom navigation
+- Desktop navigation
+- Product routing
+- Recommendations
+- WhatsApp
+- Email
+- Instagram
+
+Only modify authentication/profile/database code required for this feature.
+
+==================================================
+24. FINAL CODEBASE VERIFICATION
+==================================================
+
+Before finishing:
+
+Search the existing authentication and user schema implementation.
+
+Identify:
+
+- User/customer table
+- Authentication logic
+- Signup endpoint
+- Login endpoint
+- Profile endpoint
+- Session handling
+- Database schema/migrations
+
+Then implement the feature using the existing architecture.
+
+Run:
+
+- Typecheck
+- Tests
+- Build
+- Relevant authentication tests
+
+Verify both frontend and backend behavior.
+
+==================================================
+FINAL ACCEPTANCE CRITERIA
+==================================================
+
+The feature is complete only when ALL of these are true:
+
+✓ Signup requires Full Name + Email + Phone + Password + Confirm Password.
+
+✓ Confirm Password is validated and never stored.
+
+✓ Phone number is persisted in the correct database user record.
+
+✓ Login supports Email + Password.
+
+✓ Login supports Phone + Password.
+
+✓ Existing email login continues working.
+
+✓ Existing users without a phone number are required to provide one.
+
+✓ Existing users are NOT replaced or duplicated.
+
+✓ Existing orders/addresses/account history remain intact.
+
+✓ Profile Settings reads the phone number from the database.
+
+✓ Updating the phone number persists it to the database.
+
+✓ Refreshing the page does not lose the phone number.
+
+✓ Logging out and back in does not lose the phone number.
+
+✓ Duplicate phone numbers are handled safely.
+
+✓ Users cannot update another user's phone number.
+
+✓ Password security remains unchanged.
+
+✓ Existing authentication/session architecture is preserved.
+
+✓ No unrelated application functionality is modified.
