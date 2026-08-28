@@ -56,7 +56,7 @@ router.post("/v1/auth/register", async (req, res) => {
     return;
   }
   if (!phone) {
-    res.status(400).json({ error: "Enter a valid Indian mobile number" });
+    res.status(400).json({ error: "Enter a valid phone number" });
     return;
   }
   if (password !== confirmPassword) {

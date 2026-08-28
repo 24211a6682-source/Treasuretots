@@ -1,0 +1,70 @@
+Update the "Complete Your Profile" phone number section shown in the screenshot.
+
+Current issue:
+- The phone number field currently displays an example/default number (e.g. 8500630595).
+- The form only asks for a phone number and assumes it is an Indian mobile number.
+- Our store supports international shipping, so customers may have phone numbers from any country.
+
+Requirements:
+
+1. REMOVE THE EXAMPLE NUMBER
+- The phone number input must be completely empty by default.
+- Do not prefill it with any example, placeholder number, or existing hardcoded number.
+- Do not show any Indian phone number anywhere in the field.
+- The placeholder should be something generic such as:
+  "Enter your phone number"
+- Do not use a real-looking number as the placeholder.
+
+2. ADD COUNTRY CODE SELECTION
+- Add a country-code selector before the phone number input.
+- The selector should allow customers to choose their country.
+- Display the country calling code clearly, e.g. +91, +1, +44, etc.
+- The default country can be India (+91) if that matches the existing application's primary market, but the user must be able to change it.
+- Do not hardcode the phone field to Indian numbers.
+
+3. PHONE NUMBER INPUT
+- Keep the actual phone number field separate from the country code.
+- The user should enter only their local/national phone number in the phone field.
+- Do not require users to manually type the country code into the phone number field.
+- Validate the phone number based on the selected country.
+- Show a clear validation message if the number is invalid.
+- Do not display "Use a valid Indian mobile number."
+- Replace it with a generic message such as:
+  "Enter a valid phone number for the selected country."
+
+4. INTERNATIONAL SUPPORT
+- Use a proper country list with country names and calling codes.
+- Make the country selector searchable so users can easily find their country.
+- Make sure common international countries and their calling codes are supported.
+- Store the country code and phone number separately if the existing backend/database structure allows it.
+- If the application currently stores a single phone-number value, update the implementation carefully so existing user records are not broken.
+
+5. UI/UX
+- Match the existing design exactly: same fonts, colors, border radius, spacing, button styling, and overall visual language.
+- The country selector and phone input should look like one cohesive phone-number component.
+- Keep the existing "Save and Continue" button.
+- Do not change unrelated parts of the page.
+- Make the layout responsive on mobile and desktop.
+
+6. EXISTING USER DATA
+- If a user already has a saved phone number, do not overwrite it.
+- If possible, intelligently display the existing country code separately from the local number.
+- If the country cannot be determined reliably from an existing number, ask the user to select their country rather than guessing.
+
+7. IMPORTANT
+- Inspect the existing codebase first and identify where this profile form, phone validation, and user data persistence are implemented.
+- Make the smallest clean changes necessary.
+- Reuse the project's existing components, styling system, validation library, and database/API patterns where possible.
+- Do not introduce unnecessary dependencies.
+- Make sure the change works with the existing authentication/profile flow.
+
+After implementation:
+- Test the form with India (+91).
+- Test it with at least one other country such as the US (+1) and UK (+44).
+- Verify that no example phone number is displayed anywhere.
+- Verify that invalid numbers are rejected.
+- Verify that valid international numbers can be saved.
+- Verify that existing users' profile data is not accidentally overwritten.
+- Check both desktop and mobile layouts.
+
+Do not modify unrelated functionality.

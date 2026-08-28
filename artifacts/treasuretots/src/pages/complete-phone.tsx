@@ -7,6 +7,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Check, ChevronDown } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  getLocalPhoneDigits,
+  PHONE_COUNTRIES,
+  toInternationalPhone,
+  validateLocalPhone,
+  type PhoneCountry,
+} from "@/lib/phone-countries";
 
 export default function CompletePhone({ returnTo = "/dashboard" }: { returnTo?: string }) {
   const { user, isLoading, refreshUser } = useAuth();
@@ -14,6 +31,9 @@ export default function CompletePhone({ returnTo = "/dashboard" }: { returnTo?: 
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState<PhoneCountry>(DEFAULT_PHONE_COUNTRY);
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -27,8 +47,14 @@ export default function CompletePhone({ returnTo = "/dashboard" }: { returnTo?: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationError = validateLocalPhone(country, phone);
+    if (validationError) {
+      setPhoneError(validationError);
+      return;
+    }
+    setPhoneError(null);
     try {
-      await updateProfile.mutateAsync({ data: { phone } });
+      await updateProfile.mutateAsync({ data: { phone: toInternationalPhone(country, phone) } });
       await refreshUser();
       toast({ title: "Phone number saved", description: "Your account is ready to use." });
       setLocation(returnTo === "/complete-phone" ? "/dashboard" : returnTo);
@@ -53,18 +79,64 @@ export default function CompletePhone({ returnTo = "/dashboard" }: { returnTo?: 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="required-phone">Phone Number</Label>
-              <Input
-                id="required-phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="8500630595"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground">Use a valid Indian mobile number.</p>
+              <div className="flex gap-2">
+                <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={countryOpen}
+                      className="h-12 w-[116px] shrink-0 justify-between px-3 sm:w-[132px]"
+                    >
+                      <span className="truncate">+{country.dialCode}</span>
+                      <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-[280px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search country..." />
+                      <CommandList>
+                        <CommandEmpty>No country found.</CommandEmpty>
+                        {PHONE_COUNTRIES.map((option) => (
+                          <CommandItem
+                            key={`${option.name}-${option.dialCode}`}
+                            value={`${option.name} +${option.dialCode}`}
+                            onSelect={() => {
+                              setCountry(option);
+                              setCountryOpen(false);
+                              setPhoneError(null);
+                            }}
+                          >
+                            <Check className={`h-4 w-4 ${country.name === option.name ? "opacity-100" : "opacity-0"}`} />
+                            <span className="flex-1 truncate">{option.name}</span>
+                            <span className="text-muted-foreground">+{option.dialCode}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <Input
+                  id="required-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="Enter your phone number"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (phoneError) setPhoneError(null);
+                  }}
+                  aria-invalid={!!phoneError}
+                  required
+                  autoFocus
+                  className="h-12 min-w-0 flex-1"
+                />
+              </div>
+              <p className={`text-xs ${phoneError ? "text-destructive" : "text-muted-foreground"}`}>
+                {phoneError ?? "Enter a valid phone number for the selected country."}
+              </p>
             </div>
             <Button type="submit" className="w-full" disabled={updateProfile.isPending}>
               {updateProfile.isPending ? "Saving..." : "Save and Continue"}

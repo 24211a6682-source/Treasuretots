@@ -49,7 +49,7 @@ router.patch("/v1/users/profile", requireAuth, async (req, res) => {
     if (parse.data.phone !== undefined) {
       const phone = normalizePhone(parse.data.phone);
       if (!phone) {
-        res.status(400).json({ error: "Enter a valid Indian mobile number" });
+        res.status(400).json({ error: "Enter a valid phone number" });
         return;
       }
       const [phoneOwner] = await db.select({ id: usersTable.id })
