@@ -8,6 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { getAuthLink, getSafeReturnUrl } from "@/lib/auth-navigation";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  toInternationalPhone,
+  validateLocalPhone,
+  type PhoneCountry,
+} from "@/lib/phone-countries";
+import { InternationalPhoneInput } from "@/components/InternationalPhoneInput";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -16,6 +23,8 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [country, setCountry] = useState<PhoneCountry>(DEFAULT_PHONE_COUNTRY);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const { login } = useAuth();
   const registerMutation = useRegister();
   const [, setLocation] = useLocation();
@@ -24,6 +33,12 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const phoneValidationError = validateLocalPhone(country, phone);
+    if (phoneValidationError) {
+      setPhoneError(phoneValidationError);
+      return;
+    }
+    setPhoneError(null);
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match.");
       return;
@@ -31,7 +46,7 @@ export default function Register() {
     setPasswordError(null);
     try {
       const res = await registerMutation.mutateAsync({
-        data: { name, email, phone, password, confirmPassword }
+        data: { name, email, phone: toInternationalPhone(country, phone), password, confirmPassword }
       });
       login(res.token, res.user);
       toast({ title: "Account created!", description: "Welcome to TreasureTots Creations." });
@@ -81,16 +96,15 @@ export default function Register() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <Input
+              <InternationalPhoneInput
                 id="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="8500630595"
                 value={phone}
-                onChange={e => setPhone(e.target.value)}
+                country={country}
+                error={phoneError}
+                onChange={setPhone}
+                onCountryChange={setCountry}
+                onErrorClear={() => setPhoneError(null)}
                 required
-                className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-white transition-all"
               />
             </div>
             <div className="space-y-2">

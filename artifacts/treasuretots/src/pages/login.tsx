@@ -54,7 +54,7 @@ export default function Login() {
                 id="identifier"
                 type="text"
                 autoComplete="username"
-                placeholder="name@example.com or 8500630595"
+                placeholder="name@example.com or your phone number"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
                 required

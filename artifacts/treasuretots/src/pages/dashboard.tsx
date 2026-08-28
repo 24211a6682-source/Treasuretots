@@ -429,7 +429,7 @@ export default function Dashboard() {
                         type="tel"
                         inputMode="tel"
                         autoComplete="tel"
-                        placeholder="8500630595"
+                      placeholder="Enter your phone number"
                         value={profilePhone}
                         onChange={(e) => setProfilePhone(e.target.value)}
                         readOnly={!profileEditing}

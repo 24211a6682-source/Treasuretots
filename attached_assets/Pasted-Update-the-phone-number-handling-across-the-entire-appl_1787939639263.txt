@@ -1,0 +1,208 @@
+Update the phone number handling across the entire application, including BOTH the Sign Up page and the "Complete Your Profile" page.
+
+IMPORTANT: The previous change only affected the Complete Your Profile page. The Sign Up page still contains a hardcoded phone number (8500630595). Fix this now.
+
+### 1. SIGN UP PAGE — MUST BE UPDATED
+
+On the Sign Up page, the Phone Number field currently displays:
+
+8500630595
+
+REMOVE THIS COMPLETELY.
+
+The phone number field must:
+- Be empty by default.
+- Never contain a hardcoded/example phone number.
+- Not use a real-looking phone number as a placeholder.
+- Not assume that the customer is from India.
+
+Replace the current phone input with an international phone-number component.
+
+It should have:
+
+[ Country Code ▼ ] [ Phone Number ]
+
+For example, visually:
+
+[ 🇮🇳 +91 ▼ ] [ Enter your phone number ]
+
+The example above is ONLY to explain the UI. Do NOT prefill the actual input with a number.
+
+### 2. COUNTRY CODE
+
+Add a searchable country selector.
+
+It must allow customers to select their country and calling code, including:
+- India +91
+- United States +1
+- United Kingdom +44
+- UAE +971
+- Australia +61
+- Canada +1
+- and all other relevant international countries.
+
+India (+91) may be selected by default, but the phone number itself must remain EMPTY.
+
+The user should NOT have to type the country code manually.
+
+### 3. PHONE VALIDATION
+
+The phone number must be validated according to the selected country.
+
+Remove any validation/error message such as:
+
+"Use a valid Indian mobile number."
+
+Replace it with a generic message such as:
+
+"Enter a valid phone number for the selected country."
+
+Do not restrict registration to Indian phone numbers.
+
+### 4. DATA STORAGE
+
+Inspect the existing signup/profile implementation before making changes.
+
+Prefer storing:
+
+countryCode
+phoneNumber
+
+as separate values.
+
+If the existing backend expects a single phone number, maintain compatibility and construct the full international number when submitting.
+
+Do not break existing users or existing authentication.
+
+### 5. COMPLETE YOUR PROFILE PAGE
+
+Apply the EXACT SAME international phone-number component to the Complete Your Profile page.
+
+Both pages must behave consistently.
+
+SIGN UP:
+[ Country Code ] [ Phone Number ]
+
+COMPLETE PROFILE:
+[ Country Code ] [ Phone Number ]
+
+Do not implement two different versions of the phone input.
+
+Create/reuse one shared phone-number component if the project architecture allows it.
+
+### 6. REMOVE ALL HARDCODED PHONE NUMBERS
+
+Search the ENTIRE codebase for:
+
+8500630595
+
+and remove every occurrence that is being used as:
+- a default value
+- example data
+- placeholder data
+- demo data
+- initial form value
+
+Do not simply hide the number in the UI.
+
+Make sure the actual source code no longer pre-populates the field with this number.
+
+Also search for other hardcoded phone-number examples and remove them where appropriate.
+
+### 7. EXISTING USER DATA
+
+If an existing user already has a phone number:
+- Do NOT overwrite it.
+- Display it appropriately.
+- Preserve existing profile information.
+- If the existing number contains a country code, parse it only if this can be done reliably.
+- Otherwise ask the user to select their country.
+
+For NEW users, the phone field must always start empty.
+
+### 8. UI
+
+Match the existing website design.
+
+Keep:
+- Existing fonts
+- Orange theme
+- Existing rounded input style
+- Existing spacing
+- Existing button design
+- Existing responsive behavior
+
+The country selector should visually integrate with the phone input instead of looking like an unrelated component.
+
+Make it responsive on mobile as well.
+
+### 9. SIGNUP SUBMISSION
+
+Before submitting the signup form, ensure:
+
+- Country is selected.
+- Phone number is entered.
+- Phone number is valid for the selected country.
+- The full international phone number is correctly constructed/stored.
+
+Example:
+
+Country:
+India (+91)
+
+Phone:
+9876543210
+
+Stored/submitted value:
+
++919876543210
+
+Again, this is only an implementation example. Do not hardcode this number anywhere.
+
+### 10. PROFILE SUBMISSION
+
+The same behavior must work when completing/updating the user's profile.
+
+### 11. IMPORTANT — INSPECT FIRST
+
+Before changing anything:
+
+1. Find the Sign Up page component.
+2. Find the Complete Your Profile component.
+3. Find where the phone number state is initialized.
+4. Find where phone validation is implemented.
+5. Find where signup/profile data is sent to the backend.
+6. Find where phone numbers are stored in the database.
+7. Search the entire repository for `8500630595`.
+
+Then implement the fix using the existing project architecture.
+
+Do NOT make unrelated changes.
+
+### 12. TEST EVERYTHING
+
+After implementation, verify:
+
+SIGN UP:
+- Phone field starts completely empty.
+- No example number is displayed.
+- Country selector works.
+- India +91 works.
+- US +1 works.
+- UK +44 works.
+- Invalid numbers are rejected.
+- Valid international numbers can be submitted.
+
+COMPLETE PROFILE:
+- Same behavior as Sign Up.
+- No example number.
+- International country selection works.
+- Existing saved phone numbers are preserved.
+
+Finally, search the entire codebase again for:
+
+8500630595
+
+and confirm that it is no longer being used as a default/example phone number.
+
+Do not modify unrelated functionality.
