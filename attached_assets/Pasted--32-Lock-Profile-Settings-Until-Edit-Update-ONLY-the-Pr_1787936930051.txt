@@ -1,0 +1,249 @@
+# #32 - Lock Profile Settings Until Edit
+
+Update ONLY the Profile Settings UI and its edit interaction.
+
+CURRENT BEHAVIOR:
+The Profile Settings page currently displays:
+
+Full Name
+[ Teja ]
+
+Email
+[ email@example.com ]
+
+Phone Number
+[ 8125151685 ]
+
+[ Update Profile ]
+
+All fields appear editable immediately.
+
+THIS IS NOT WHAT I WANT.
+
+==================================================
+NEW BEHAVIOR
+==================================================
+
+By default, ALL profile fields must be LOCKED / READ-ONLY.
+
+The page should initially show the existing user information, but the user must NOT be able to type into or modify any field.
+
+The locked state should clearly look like a read-only profile.
+
+Example:
+
+Profile Settings
+
+Full Name
+[ Teja                         🔒 ]
+
+Email
+[ email@example.com            🔒 ]
+
+Phone Number
+[ 8125151685                   🔒 ]
+
+[ Edit Profile ]
+
+==================================================
+EDIT MODE
+==================================================
+
+Add an "Edit Profile" button.
+
+When the user clicks:
+
+[ Edit Profile ]
+
+switch the profile form into EDIT MODE.
+
+The fields then become editable:
+
+Full Name
+[ Teja                         ]
+
+Email
+[ email@example.com            ]
+
+Phone Number
+[ 8125151685                   ]
+
+Show:
+
+[ Save Changes ]    [ Cancel ]
+
+(or use the existing Update Profile button as Save Changes if that fits the current design).
+
+==================================================
+CANCEL
+==================================================
+
+When the user clicks Cancel:
+
+- Exit edit mode.
+- Discard any unsaved changes.
+- Restore the values that were originally loaded from the database.
+- Lock all fields again.
+
+Example:
+
+Edit Profile
+→ user changes phone number
+→ clicks Cancel
+→ original phone number returns
+→ fields become locked again.
+
+==================================================
+SAVE
+==================================================
+
+When the user clicks Save Changes / Update Profile:
+
+- Use the EXISTING profile update API.
+- Do NOT create another profile/user system.
+- Persist the changes to the existing database user record.
+- Update the displayed profile data from the successful server response.
+- Exit edit mode.
+- Lock all fields again.
+
+The existing phone-number validation and persistence from #31 must remain intact.
+
+==================================================
+EMAIL
+==================================================
+
+Keep the existing email behavior.
+
+If email is intentionally non-editable according to the current account architecture, it must remain read-only even while editing.
+
+Do NOT change authentication or account identity logic.
+
+==================================================
+PHONE NUMBER
+==================================================
+
+Phone number must remain editable ONLY after clicking Edit Profile.
+
+When saved:
+
+- Validate it using the existing backend validation.
+- Store it on the existing user record.
+- Preserve duplicate-phone protection.
+- Do not create a separate phone/profile data store.
+
+==================================================
+IMPORTANT
+==================================================
+
+This is a UI/interaction change.
+
+DO NOT modify:
+
+- Login
+- Signup
+- Password authentication
+- JWT
+- bcrypt
+- Phone authentication
+- OTP
+- User database schema unless absolutely required
+- Orders
+- Addresses
+- Cart
+- Checkout
+- Razorpay
+- Product pages
+- Navigation
+- Mobile bottom navigation
+- Unrelated pages
+
+Reuse the existing user/profile API and authentication architecture.
+
+==================================================
+DESKTOP + MOBILE
+==================================================
+
+Apply the same behavior on desktop and mobile.
+
+The profile should be locked when first opened on either layout.
+
+Make the Edit button touch-friendly on mobile.
+
+Do not introduce horizontal overflow.
+
+Keep the existing Treasure Tots visual style.
+
+==================================================
+IMPORTANT SECURITY / DATA RULE
+==================================================
+
+"Locked" is primarily a UI read-only state.
+
+Do not rely on the disabled HTML input as a security mechanism.
+
+The backend must continue validating and authorizing profile updates using the authenticated user/session.
+
+Do not allow a user to update another user's profile by manipulating frontend state or request data.
+
+==================================================
+ACCEPTANCE TEST
+==================================================
+
+1. Open My Account → Profile Settings.
+
+2. Confirm Full Name cannot be edited.
+
+3. Confirm Email cannot be edited.
+
+4. Confirm Phone Number cannot be edited.
+
+5. Confirm the page shows an Edit Profile action.
+
+6. Click Edit Profile.
+
+7. Confirm editable fields become enabled.
+
+8. Change the phone number.
+
+9. Click Cancel.
+
+10. Confirm the original phone number returns and all fields are locked again.
+
+11. Click Edit Profile again.
+
+12. Change the phone number.
+
+13. Click Save Changes / Update Profile.
+
+14. Confirm the update succeeds.
+
+15. Refresh the page.
+
+16. Confirm the new phone number is still displayed.
+
+17. Log out and log back in.
+
+18. Confirm the saved phone number is still loaded from the database.
+
+19. Confirm the fields are locked again after entering the profile page.
+
+20. Verify mobile and desktop layouts.
+
+Do not stop at making the fields visually disabled. Verify the edit → save → refresh flow actually persists through the existing backend.
+
+==================================================
+FINAL VERIFICATION
+==================================================
+
+Before finishing:
+
+- Check the existing Profile Settings implementation.
+- Reuse existing APIs and state management.
+- Make the smallest necessary change.
+- Run typecheck/build.
+- Test locked mode.
+- Test edit mode.
+- Test cancel.
+- Test save.
+- Test refresh persistence.
+- Confirm no unrelated functionality changed.

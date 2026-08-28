@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LogOut, Package, MapPin, User, Plus, X, Loader2, ChevronDown, ChevronUp, CreditCard, Truck, Trash2 } from "lucide-react";
+import { LogOut, Package, MapPin, User, Plus, X, Loader2, ChevronDown, ChevronUp, CreditCard, Truck, Trash2, LockKeyhole, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -218,6 +218,7 @@ export default function Dashboard() {
   const [newAddress, setNewAddress] = useState<AddressInput>({ ...emptyAddress });
   const [profileName, setProfileName] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
+  const [profileEditing, setProfileEditing] = useState(false);
 
   // Redirect to login only once the auth check has SETTLED. isAuthenticated is
   // `!!token && !!user`, and on a direct open / refresh of /dashboard the token
@@ -265,6 +266,7 @@ export default function Dashboard() {
         data: { name: profileName, phone: profilePhone },
       });
       queryClient.setQueryData(["getMe"], updatedUser);
+      setProfileEditing(false);
       toast({ title: "Profile updated", description: "Your phone number has been saved." });
     } catch (err: any) {
       toast({
@@ -273,6 +275,12 @@ export default function Dashboard() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleCancelProfileEdit = () => {
+    setProfileName(user?.name ?? "");
+    setProfilePhone(user?.phone ?? "");
+    setProfileEditing(false);
   };
 
   const handleAddAddress = async (e: React.FormEvent) => {
@@ -369,34 +377,81 @@ export default function Dashboard() {
           <TabsContent value="profile" className="mt-0">
             <Card>
               <CardHeader>
-                <CardTitle>Profile Settings</CardTitle>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <CardTitle>Profile Settings</CardTitle>
+                  {!profileEditing && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setProfileName(user?.name ?? "");
+                        setProfilePhone(user?.phone ?? "");
+                        setProfileEditing(true);
+                      }}
+                      className="min-h-10"
+                    >
+                      <Pencil className="w-4 h-4 mr-2" /> Edit Profile
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <form className="space-y-4 max-w-md" onSubmit={handleProfileSubmit}>
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" value={profileName} onChange={(e) => setProfileName(e.target.value)} required />
+                    <div className="relative">
+                      <Input
+                        id="name"
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
+                        readOnly={!profileEditing}
+                        disabled={!profileEditing}
+                        className={!profileEditing ? "bg-muted cursor-not-allowed pr-10" : ""}
+                        required
+                      />
+                      {!profileEditing && (
+                        <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" defaultValue={user?.email || ""} readOnly disabled className="bg-muted" />
+                    <div className="relative">
+                      <Input id="email" defaultValue={user?.email || ""} readOnly disabled className="bg-muted cursor-not-allowed pr-10" />
+                      <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      placeholder="8500630595"
-                      value={profilePhone}
-                      onChange={(e) => setProfilePhone(e.target.value)}
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="phone"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        placeholder="8500630595"
+                        value={profilePhone}
+                        onChange={(e) => setProfilePhone(e.target.value)}
+                        readOnly={!profileEditing}
+                        disabled={!profileEditing}
+                        className={!profileEditing ? "bg-muted cursor-not-allowed pr-10" : ""}
+                        required
+                      />
+                      {!profileEditing && (
+                        <LockKeyhole className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      )}
+                    </div>
                   </div>
-                  <Button type="submit" className="mt-4" disabled={updateProfile.isPending}>
-                    {updateProfile.isPending ? "Updating..." : "Update Profile"}
-                  </Button>
+                  {profileEditing && (
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                      <Button type="submit" disabled={updateProfile.isPending} className="min-h-10">
+                        {updateProfile.isPending ? "Saving..." : "Save Changes"}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={handleCancelProfileEdit} disabled={updateProfile.isPending} className="min-h-10">
+                        <X className="w-4 h-4 mr-2" /> Cancel
+                      </Button>
+                    </div>
+                  )}
                 </form>
               </CardContent>
             </Card>
