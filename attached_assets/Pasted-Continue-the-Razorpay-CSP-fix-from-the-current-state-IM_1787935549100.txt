@@ -1,0 +1,167 @@
+Continue the Razorpay CSP fix from the current state.
+
+IMPORTANT:
+Do NOT restart the implementation.
+Do NOT revert the CSP changes that have already been made.
+Do NOT make broad security-policy changes.
+
+The previous run successfully fixed:
+
+- Razorpay inline checkout script blocking
+- Razorpay risk-detection bundle blocking
+- Razorpay worker/blob CSP blocking
+
+The remaining browser test showed ONE additional CSP violation related to:
+
+style-src
+
+The previous agent stopped after identifying that a Razorpay style resource was still being blocked.
+
+==================================================
+NEXT STEP
+==================================================
+
+First inspect the current uncommitted changes and current CSP configuration.
+
+Then reproduce the Razorpay checkout flow in the running preview.
+
+Open:
+
+Product
+→ Buy Now
+→ Checkout
+→ Razorpay
+
+Inspect the browser console and capture the EXACT remaining style-src CSP violation.
+
+Determine:
+
+- exact blocked resource/origin
+- whether it is an inline style or external stylesheet
+- which Razorpay origin requires it
+- which CSP directive is actually responsible
+
+Do NOT guess.
+
+==================================================
+FIX ONLY THE REMAINING ISSUE
+==================================================
+
+Update the existing CSP with the smallest possible change required for this specific Razorpay resource.
+
+If an external Razorpay stylesheet/origin is required:
+
+Allow only the required Razorpay origin under the appropriate style directive.
+
+If an inline style is genuinely required by Razorpay:
+
+Use the narrowest safe CSP solution supported by the existing architecture.
+
+Do NOT blindly add broad:
+
+https:
+*
+'unsafe-eval'
+
+or other unrestricted sources.
+
+Do NOT remove CSP.
+
+Do NOT weaken unrelated directives.
+
+==================================================
+IMPORTANT SECURITY REQUIREMENT
+==================================================
+
+Keep the existing restrictive CSP.
+
+The final policy should allow:
+
+- application resources
+- only the Razorpay resources actually required by checkout
+- the already-confirmed Razorpay risk-detection resources
+- the already-confirmed Razorpay worker requirement
+
+Nothing more.
+
+==================================================
+VERIFY THE COMPLETE FLOW
+==================================================
+
+After making the final change:
+
+1. Rebuild/restart the frontend if required.
+2. Open a fresh browser session or reload without stale resources.
+3. Navigate to a real product.
+4. Click Buy Now.
+5. Reach Checkout.
+6. Open Razorpay.
+7. Inspect the browser console.
+
+Expected:
+
+NO CSP errors blocking required Razorpay resources.
+
+Pay particular attention to:
+
+- script-src
+- script-src-elem
+- connect-src
+- frame-src
+- img-src
+- style-src
+- worker-src
+
+Do not treat unrelated browser errors as Razorpay CSP failures.
+
+==================================================
+PAYMENT SECURITY
+==================================================
+
+Do NOT change payment verification.
+
+Do NOT mark orders as paid or received from:
+
+- opening Razorpay
+- loading Razorpay
+- returning from Razorpay
+- frontend callbacks
+- client-side state
+
+The existing verified Razorpay payment-success mechanism must remain unchanged.
+
+This must remain compatible with issue #29.
+
+==================================================
+REGRESSION CHECK
+==================================================
+
+Also verify:
+
+Razorpay opened → cancel payment
+
+Expected:
+
+- payment is NOT marked paid
+- online order is NOT marked received
+
+Do not modify the #29 order-state logic while fixing CSP.
+
+==================================================
+FINAL CHECK
+==================================================
+
+Before finishing, report:
+
+1. Exact CSP violation that remained.
+2. Exact CSP directive/source added.
+3. Why that source is required.
+4. Confirmation that Razorpay checkout opens.
+5. Confirmation that the browser console has no required-Razorpay CSP errors.
+6. Confirmation that CSP remains restrictive.
+7. Confirmation that payment verification was not weakened.
+8. Typecheck/build result, clearly distinguishing any pre-existing unrelated errors.
+
+Do not stop after editing the CSP.
+
+The task is complete only after the actual Razorpay checkout has been opened and browser-tested successfully.
