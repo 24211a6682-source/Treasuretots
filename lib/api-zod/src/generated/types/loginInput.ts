@@ -7,9 +7,7 @@
  */
 
 export interface LoginInput {
-  /** @nullable */
-  email?: string | null;
-  /** @nullable */
-  phone?: string | null;
+  /** @minLength 1 */
+  identifier: string;
   password: string;
 }

@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db, usersTable, addressesTable, wishlistItemsTable, productsTable } from "@workspace/db";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, ne } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+import { normalizePhone } from "../lib/phone";
 import {
   UpdateProfileBody,
   CreateAddressBody,
@@ -29,12 +30,56 @@ router.patch("/v1/users/profile", requireAuth, async (req, res) => {
     return;
   }
   try {
+    const changes: {
+      name?: string;
+      email?: string | null;
+      phone?: string;
+    } = {};
+    if (parse.data.name !== undefined) {
+      const name = parse.data.name.trim();
+      if (!name) {
+        res.status(400).json({ error: "Full name cannot be empty" });
+        return;
+      }
+      changes.name = name;
+    }
+    if (parse.data.email !== undefined) {
+      changes.email = parse.data.email?.trim().toLowerCase() || null;
+    }
+    if (parse.data.phone !== undefined) {
+      const phone = normalizePhone(parse.data.phone);
+      if (!phone) {
+        res.status(400).json({ error: "Enter a valid Indian mobile number" });
+        return;
+      }
+      const [phoneOwner] = await db.select({ id: usersTable.id })
+        .from(usersTable)
+        .where(and(eq(usersTable.phone, phone), ne(usersTable.id, req.user!.userId)))
+        .limit(1);
+      if (phoneOwner) {
+        res.status(409).json({ error: "That phone number is already in use." });
+        return;
+      }
+      changes.phone = phone;
+    }
+    if (Object.keys(changes).length === 0) {
+      res.status(400).json({ error: "No profile changes provided" });
+      return;
+    }
     const [user] = await db.update(usersTable)
-      .set({ ...parse.data })
+      .set(changes)
       .where(eq(usersTable.id, req.user!.userId))
       .returning();
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
     res.json({ id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, createdAt: user.createdAt });
   } catch (err) {
+    if ((err as { code?: string }).code === "23505") {
+      res.status(409).json({ error: "That email or phone number is already in use." });
+      return;
+    }
     req.log.error({ err }, "Update profile error");
     res.status(500).json({ error: "Failed to update profile" });
   }

@@ -10,6 +10,9 @@ export interface ProfileUpdate {
   name?: string;
   /** @nullable */
   email?: string | null;
-  /** @nullable */
-  phone?: string | null;
+  /**
+     * @minLength 10
+     * @maxLength 20
+     */
+  phone?: string;
 }

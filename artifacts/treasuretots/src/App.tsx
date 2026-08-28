@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +8,7 @@ import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { MobileMenuProvider } from "@/hooks/use-mobile-menu";
+import { useAuth } from "@/hooks/use-auth";
 
 import Home from "@/pages/home";
 import Learning from "@/pages/learning";
@@ -30,6 +31,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
+import CompletePhone from "@/pages/complete-phone";
 import BuyNow from "@/pages/buy-now";
 import ShippingPolicy from "@/pages/shipping";
 import FAQ from "@/pages/faq";
@@ -61,6 +63,27 @@ function UserLayout({ children }: { children: React.ReactNode }) {
 }
 
 function UserRouter() {
+  const [location] = useLocation();
+  const { needsPhone, token, isLoading } = useAuth();
+
+  if (token && isLoading) {
+    return (
+      <UserLayout>
+        <div className="min-h-[60vh] flex items-center justify-center text-sm text-muted-foreground">
+          Loading account...
+        </div>
+      </UserLayout>
+    );
+  }
+
+  if (needsPhone && location !== "/complete-phone") {
+    return (
+      <UserLayout>
+        <CompletePhone returnTo={location} />
+      </UserLayout>
+    );
+  }
+
   return (
     <UserLayout>
       <Switch>
@@ -87,6 +110,7 @@ function UserRouter() {
         <Route path="/register" component={Register} />
         <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/reset-password" component={ResetPassword} />
+        <Route path="/complete-phone">{() => <CompletePhone />}</Route>
         <Route path="/buy-now" component={BuyNow} />
         <Route component={NotFound} />
       </Switch>

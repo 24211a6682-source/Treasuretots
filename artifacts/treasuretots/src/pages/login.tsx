@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getAuthLink, getSafeReturnUrl } from "@/lib/auth-navigation";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useAuth();
   const loginMutation = useLogin();
@@ -22,9 +22,9 @@ export default function Login() {
     e.preventDefault();
     try {
       const res = await loginMutation.mutateAsync({
-        data: { email, password }
+        data: { identifier, password }
       });
-      login(res.token);
+      login(res.token, res.user);
       toast({ title: "Welcome back!", description: "Successfully logged in." });
       
       setLocation(returnUrl);
@@ -49,14 +49,14 @@ export default function Login() {
         <CardContent className="p-8 pt-4">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Email or Phone Number</Label>
               <Input 
-                id="email" 
-                type="email" 
-                autoComplete="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                id="identifier"
+                type="text"
+                autoComplete="username"
+                placeholder="name@example.com or 8500630595"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
                 required
                 className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-white transition-all"
               />

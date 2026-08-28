@@ -19,20 +19,28 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Register a new user
  */
+export const registerBodyPhoneMin = 10;
+export const registerBodyPhoneMax = 20;
+
+
+
 export const RegisterBody = zod.object({
   "name": zod.string(),
-  "email": zod.string().nullish(),
-  "phone": zod.string().nullish(),
-  "password": zod.string()
+  "email": zod.string().email(),
+  "phone": zod.string().min(registerBodyPhoneMin).max(registerBodyPhoneMax),
+  "password": zod.string(),
+  "confirmPassword": zod.string()
 })
 
 
 /**
  * @summary Login
  */
+
+
+
 export const LoginBody = zod.object({
-  "email": zod.string().nullish(),
-  "phone": zod.string().nullish(),
+  "identifier": zod.string().min(1),
   "password": zod.string()
 })
 
@@ -560,10 +568,15 @@ export const GetOrderResponse = zod.object({
 /**
  * @summary Update user profile
  */
+export const updateProfileBodyPhoneMin = 10;
+export const updateProfileBodyPhoneMax = 20;
+
+
+
 export const UpdateProfileBody = zod.object({
   "name": zod.string().optional(),
   "email": zod.string().nullish(),
-  "phone": zod.string().nullish()
+  "phone": zod.string().min(updateProfileBodyPhoneMin).max(updateProfileBodyPhoneMax).optional()
 })
 
 export const UpdateProfileResponse = zod.object({

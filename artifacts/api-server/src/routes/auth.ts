@@ -1,8 +1,9 @@
 import { createHash, randomBytes } from "node:crypto";
 import { Router } from "express";
 import { db, passwordResetTokensTable, usersTable } from "@workspace/db";
-import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, eq, gt, isNull, or, sql } from "drizzle-orm";
 import { signToken, hashPassword, comparePassword } from "../lib/auth";
+import { normalizePhone } from "../lib/phone";
 import { requireAuth } from "../middlewares/requireAuth";
 import {
   RegisterBody,
@@ -47,16 +48,24 @@ router.post("/v1/auth/register", async (req, res) => {
     return;
   }
   const name = parse.data.name.trim();
-  const email = parse.data.email?.trim().toLowerCase() || null;
-  const phone = parse.data.phone?.trim() || null;
-  const { password } = parse.data;
-  if (!email && !phone) {
-    res.status(400).json({ error: "Email or phone required" });
+  const email = parse.data.email.trim().toLowerCase();
+  const phone = normalizePhone(parse.data.phone);
+  const { password, confirmPassword } = parse.data;
+  if (!name) {
+    res.status(400).json({ error: "Full name is required" });
+    return;
+  }
+  if (!phone) {
+    res.status(400).json({ error: "Enter a valid Indian mobile number" });
+    return;
+  }
+  if (password !== confirmPassword) {
+    res.status(400).json({ error: "Passwords do not match" });
     return;
   }
   try {
     const existing = await db.select().from(usersTable).where(
-      email ? eq(usersTable.email, email) : eq(usersTable.phone, phone!)
+      or(eq(usersTable.email, email), eq(usersTable.phone, phone))
     ).limit(1);
     if (existing.length > 0) {
       // Use a generic message to prevent user-enumeration via the register endpoint.
@@ -77,6 +86,10 @@ router.post("/v1/auth/register", async (req, res) => {
       user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, createdAt: user.createdAt },
     });
   } catch (err) {
+    if ((err as { code?: string }).code === "23505") {
+      res.status(409).json({ error: "That email or phone number is already in use." });
+      return;
+    }
     req.log.error({ err }, "Register error");
     res.status(500).json({ error: "Registration failed" });
   }
@@ -88,17 +101,25 @@ router.post("/v1/auth/login", async (req, res) => {
     res.status(400).json({ error: "Invalid input" });
     return;
   }
-  const email = parse.data.email?.trim().toLowerCase() || null;
-  const phone = parse.data.phone?.trim() || null;
+  const identifier = parse.data.identifier.trim();
   const { password } = parse.data;
-  if (!email && !phone) {
-    res.status(400).json({ error: "Email or phone required" });
-    return;
-  }
+  const isEmail = identifier.includes("@");
   try {
-    const condition = email
-      ? sql`lower(${usersTable.email}) = ${email}`
-      : eq(usersTable.phone, phone!);
+    let condition;
+    if (isEmail) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
+        res.status(400).json({ error: "Enter a valid email address or phone number" });
+        return;
+      }
+      condition = sql`lower(${usersTable.email}) = ${identifier.toLowerCase()}`;
+    } else {
+      const phone = normalizePhone(identifier);
+      if (!phone) {
+        res.status(400).json({ error: "Enter a valid email address or phone number" });
+        return;
+      }
+      condition = eq(usersTable.phone, phone);
+    }
     const [user] = await db.select().from(usersTable).where(condition).limit(1);
     if (!user) {
       res.status(401).json({ error: "Invalid credentials" });

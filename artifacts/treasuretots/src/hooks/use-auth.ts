@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGetMe, User } from '@workspace/api-client-react';
 
 const AUTH_CHANGED_EVENT = "tt-auth-changed";
@@ -18,6 +19,7 @@ export function useAuth() {
       retry: false,
     }
   });
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const syncToken = () => {
@@ -32,25 +34,31 @@ export function useAuth() {
     };
   }, []);
 
-  const login = useCallback((newToken: string) => {
+  const login = useCallback((newToken: string, authenticatedUser?: User) => {
     localStorage.setItem('tt_token', newToken);
+    if (authenticatedUser) {
+      queryClient.setQueryData(["getMe"], authenticatedUser);
+    }
     setToken(newToken);
     window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
     refetch();
-  }, [refetch]);
+  }, [queryClient, refetch]);
 
   const logout = useCallback(() => {
     localStorage.removeItem('tt_token');
+    queryClient.removeQueries({ queryKey: ["getMe"] });
     setToken(null);
     window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
-  }, []);
+  }, [queryClient]);
 
   return {
     user: token ? user : null,
     isLoading: token ? isLoading : false,
     isAuthenticated: !!token && !!user,
+    needsPhone: !!token && !!user && !user.phone,
     token,
     login,
-    logout
+    logout,
+    refreshUser: refetch,
   };
 }

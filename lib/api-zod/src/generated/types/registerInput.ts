@@ -8,9 +8,12 @@
 
 export interface RegisterInput {
   name: string;
-  /** @nullable */
-  email?: string | null;
-  /** @nullable */
-  phone?: string | null;
+  email: string;
+  /**
+     * @minLength 10
+     * @maxLength 20
+     */
+  phone: string;
   password: string;
+  confirmPassword: string;
 }

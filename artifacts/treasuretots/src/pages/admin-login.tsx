@@ -26,14 +26,14 @@ export default function AdminLogin() {
     e.preventDefault();
     setError("");
     try {
-      const res = await loginMutation.mutateAsync({ data: { email, password } });
+      const res = await loginMutation.mutateAsync({ data: { identifier: email, password } });
       // Check role from token by decoding JWT payload
       const payload = JSON.parse(atob(res.token.split(".")[1]));
       if (payload.role !== "admin") {
         setError("Access denied. This account does not have admin privileges.");
         return;
       }
-      login(res.token);
+      login(res.token, res.user);
       toast({ title: "Welcome, Admin" });
       setLocation("/admin");
     } catch {

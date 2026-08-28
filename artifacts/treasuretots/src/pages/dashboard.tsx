@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -216,6 +216,8 @@ export default function Dashboard() {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAddress, setNewAddress] = useState<AddressInput>({ ...emptyAddress });
+  const [profileName, setProfileName] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
 
   // Redirect to login only once the auth check has SETTLED. isAuthenticated is
   // `!!token && !!user`, and on a direct open / refresh of /dashboard the token
@@ -243,10 +245,34 @@ export default function Dashboard() {
   const createAddress = useCreateAddress();
   const setDefaultAddress = useSetDefaultAddress();
   const deleteAddress = useDeleteAddress();
+  const updateProfile = useUpdateProfile();
+
+  useEffect(() => {
+    if (!user) return;
+    setProfileName(user.name);
+    setProfilePhone(user.phone ?? "");
+  }, [user?.id, user?.name, user?.phone]);
 
   const handleLogout = () => {
     logout();
     setLocation("/");
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const updatedUser = await updateProfile.mutateAsync({
+        data: { name: profileName, phone: profilePhone },
+      });
+      queryClient.setQueryData(["getMe"], updatedUser);
+      toast({ title: "Profile updated", description: "Your phone number has been saved." });
+    } catch (err: any) {
+      toast({
+        title: "Failed to update profile",
+        description: err.message || "Please check your details and try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddAddress = async (e: React.FormEvent) => {
@@ -346,10 +372,10 @@ export default function Dashboard() {
                 <CardTitle>Profile Settings</CardTitle>
               </CardHeader>
               <CardContent>
-                <form className="space-y-4 max-w-md">
+                <form className="space-y-4 max-w-md" onSubmit={handleProfileSubmit}>
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" defaultValue={user?.name} />
+                    <Input id="name" value={profileName} onChange={(e) => setProfileName(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -357,9 +383,20 @@ export default function Dashboard() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" defaultValue={user?.phone || ""} />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      placeholder="8500630595"
+                      value={profilePhone}
+                      onChange={(e) => setProfilePhone(e.target.value)}
+                      required
+                    />
                   </div>
-                  <Button type="button" className="mt-4">Update Profile</Button>
+                  <Button type="submit" className="mt-4" disabled={updateProfile.isPending}>
+                    {updateProfile.isPending ? "Updating..." : "Update Profile"}
+                  </Button>
                 </form>
               </CardContent>
             </Card>

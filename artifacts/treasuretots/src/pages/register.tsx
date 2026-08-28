@@ -12,6 +12,7 @@ import { getAuthLink, getSafeReturnUrl } from "@/lib/auth-navigation";
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -30,9 +31,9 @@ export default function Register() {
     setPasswordError(null);
     try {
       const res = await registerMutation.mutateAsync({
-        data: { name, email, password }
+        data: { name, email, phone, password, confirmPassword }
       });
-      login(res.token);
+      login(res.token, res.user);
       toast({ title: "Account created!", description: "Welcome to TreasureTots Creations." });
       setLocation(returnUrl);
     } catch (err: any) {
@@ -74,6 +75,20 @@ export default function Register() {
                 autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                required
+                className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-white transition-all"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="8500630595"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
                 required
                 className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-white transition-all"
               />
