@@ -60,5 +60,6 @@ ADMIN_EMAIL = "treasuretots2025@gmail.com"
 [userenv.production]
 ALLOWED_ORIGIN = "https://treasuretots.in,https://treasuretots.replit.app"
 APP_URL = "https://treasuretots.in"
+FROM_EMAIL = "treasuretots2025@gmail.com"
 
 [userenv.development]
