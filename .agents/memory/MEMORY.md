@@ -5,3 +5,4 @@
 - [Captured payment settlement](payment-settlement-stock-drift.md) — captured payments must settle even when stock drift requires later fulfillment reconciliation.
 - [Replit preview CORS](replit-preview-cors.md) — preview traffic may originate from pike.repl.co, not only replit.dev.
 - [Saved address defaults](saved-address-defaults.md) — each user has at most one persisted default; deleting it promotes the oldest remaining address.
+- [Orval secure upgrades](orval-secure-upgrades.md) — early post-8.9 releases are firewall-blocked; newer Orval needs explicit Zod 3 compatibility.
