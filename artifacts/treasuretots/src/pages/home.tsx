@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star, MessageCircle, Instagram, Mail, ChevronLeft, ChevronRight, Sparkles, BookOpen, Heart, Pencil } from "lucide-react";
+import { Star, MessageCircle, Instagram, Mail, ChevronLeft, ChevronRight, Sparkles, BookOpen, Heart, Pencil, ArrowRight } from "lucide-react";
 
 const WALLPAPER_IMAGES = wallpaperProducts.flatMap(p => p.images);
 
@@ -86,6 +86,9 @@ export default function Home() {
   const learningProducts = learningData?.products ?? [];
   const flashcardProducts = flashcardsData?.products ?? [];
   const labelProducts = labelsData?.products ?? [];
+  const newRelease = learningProducts.find(
+    product => product.slug === "ammamma-cheppina-acchamaina-kathalu",
+  );
 
   // Build 2-page chunks of 3 for the learning carousel
   const learningPages: Product[][] = [];
@@ -135,6 +138,43 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* New Release announcement — intentionally placed between the hero and
+          the first existing homepage section. */}
+      {newRelease && (
+        <section className="container mx-auto px-4 pt-6 md:pt-8">
+          <Link
+            href={`/${newRelease.category}/${newRelease.slug}`}
+            className="group flex items-center gap-4 md:gap-6 overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-3 md:p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md"
+            aria-label={`View new release: ${newRelease.name}`}
+          >
+            <div className="h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-white shadow-sm md:h-28 md:w-24">
+              <img
+                src={newRelease.coverImage}
+                alt=""
+                className="h-full w-full object-contain"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                New Release
+              </div>
+              <h2 className="line-clamp-2 text-lg font-bold leading-snug text-gray-900 md:text-2xl">
+                {newRelease.name}
+              </h2>
+              <p className="mt-1 text-sm text-gray-600">Just added to TreasureTots</p>
+            </div>
+            <span className="hidden shrink-0 items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white transition group-hover:bg-primary/90 sm:inline-flex">
+              View Product
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+            </span>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white sm:hidden">
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </Link>
+        </section>
+      )}
 
       {/* Section 1: Learning & Devotion */}
       <section className="py-16 md:py-20 container mx-auto px-4">

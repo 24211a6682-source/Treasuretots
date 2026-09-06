@@ -1,0 +1,72 @@
+Add a small **“New Release” promotional block** for the product **“Amache Pinata Chamaina Katal”** to the TreasureTots homepage.
+
+### EXACT PLACEMENT
+
+Place the block **immediately below the main Hero/Banner section of the homepage and before the next existing homepage section**.
+
+The homepage order should be:
+
+```text
+1. Header / Navigation
+2. Main Hero / Banner
+3. ⭐ NEW RELEASE — Amache Pinata Chamaina Katal
+4. Existing next homepage section
+5. Remaining homepage sections
+6. Footer
+```
+
+Do **not** place it inside the hero section.
+
+Do **not** replace or modify the existing hero.
+
+Do **not** move or remove any existing homepage sections.
+
+### DESIGN
+
+Keep the New Release block relatively small — it should feel like a **featured announcement**, not another large hero banner.
+
+It should contain:
+
+**✨ NEW RELEASE**
+
+**Amache Pinata Chamaina Katal**
+
+A short line such as:
+
+**“Just added to TreasureTots”**
+
+and a CTA:
+
+**[ View Product → ]**
+
+Use the existing TreasureTots design language, typography, colors, border radius, spacing, and visual style.
+
+If the product already exists in the database, use its existing product image and data. Do not create duplicate product data.
+
+### PRODUCT LINK
+
+Clicking the block or **View Product** button must open the actual Product Details page for **Amache Pinata Chamaina Katal** using the existing product ID/slug and routing system.
+
+Do not hardcode a fake URL.
+
+### RESPONSIVE DESIGN
+
+The block must look good:
+
+* Desktop
+* Tablet
+* Mobile
+
+Keep the block compact on mobile as well.
+
+### IMPORTANT
+
+Before implementing, inspect the existing homepage structure and identify the exact Hero/Banner component.
+
+Insert the New Release block **after that Hero/Banner component and before the next existing section**.
+
+Do not redesign the homepage or alter unrelated components.
+
+After implementation, verify that the homepage order is exactly:
+
+Header → Hero → New Release Block → Existing Next Section → Remaining Content → Footer.
