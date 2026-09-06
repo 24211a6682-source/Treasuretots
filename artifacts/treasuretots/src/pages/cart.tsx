@@ -94,15 +94,24 @@ export default function Cart() {
               );
             }
 
+            const productHref = `/${product.category}/${product.slug}`;
             return (
               <Card key={`${item.productId}-${item.childName}`} className="overflow-hidden">
                 <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                  <div className="w-24 h-24 shrink-0 bg-white rounded-md border flex items-center justify-center">
+                  <Link
+                    href={productHref}
+                    aria-label={`View ${product.name}`}
+                    className="w-24 h-24 shrink-0 bg-white rounded-md border flex items-center justify-center transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
                     <img src={product.coverImage} alt={product.name} className="w-20 h-20 object-contain" />
-                  </div>
+                  </Link>
 
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg line-clamp-1">{product.name}</h3>
+                    <h3 className="font-semibold text-lg line-clamp-1">
+                      <Link href={productHref} className="hover:text-primary hover:underline underline-offset-4">
+                        {product.name}
+                      </Link>
+                    </h3>
                     <p className="text-sm text-muted-foreground capitalize mb-2">{product.category}</p>
 
                     {item.childName && (

@@ -54,7 +54,7 @@ export default function ProductDetail() {
 
   if (isLoading) return <Skeleton />;
 
-  if (isError || !product) {
+  if (isError || !product || product.category !== "learning") {
     return <div className="container mx-auto p-20 text-center text-xl">Product not found</div>;
   }
 
@@ -121,11 +121,7 @@ export default function ProductDetail() {
     setLocation(isAuthenticated ? "/buy-now" : "/login?returnUrl=%2Fbuy-now");
   };
 
-  const categoryLabel = product.category === "flashcards"
-    ? "Flash Cards"
-    : product.category === "labels"
-    ? "Name Tags"
-    : "Learning & Devotion";
+  const categoryLabel = "Learning & Devotion";
 
   return (
     <div className="container mx-auto px-4 pt-8 pb-24 md:pb-8">

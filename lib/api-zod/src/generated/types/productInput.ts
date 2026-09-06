@@ -17,6 +17,6 @@ export interface ProductInput {
   category: string;
   /** @nullable */
   subcategory?: string | null;
-  slug: string;
+  slug?: string;
   isBuyable?: boolean;
 }

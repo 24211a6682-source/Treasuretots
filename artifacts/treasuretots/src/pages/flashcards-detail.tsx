@@ -49,7 +49,7 @@ export default function FlashcardDetail() {
 
   if (isLoading) return <Skeleton />;
 
-  if (isError || !product) {
+  if (isError || !product || product.category !== "flashcards") {
     return <div className="container mx-auto p-20 text-center text-xl">Product not found</div>;
   }
 

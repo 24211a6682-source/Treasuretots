@@ -782,7 +782,7 @@ export const AdminCreateProductBody = zod.object({
   "images": zod.array(zod.string()),
   "category": zod.string(),
   "subcategory": zod.string().nullish(),
-  "slug": zod.string(),
+  "slug": zod.string().optional(),
   "isBuyable": zod.boolean().optional()
 })
 

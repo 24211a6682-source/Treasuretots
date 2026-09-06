@@ -912,7 +912,7 @@ components:
           type: string
         isBuyable:
           type: boolean
-      required: [name, coverImage, images, category, slug]
+      required: [name, coverImage, images, category]
 
     ProductUpdate:
       type: object

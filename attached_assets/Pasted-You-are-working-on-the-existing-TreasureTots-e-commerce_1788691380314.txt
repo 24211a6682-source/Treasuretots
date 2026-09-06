@@ -1,0 +1,260 @@
+You are working on the existing **TreasureTots e-commerce website**. Do NOT rebuild the project from scratch. First inspect the existing codebase, architecture, database/schema, routing, product components, cart logic, and admin dashboard.
+
+I need you to fix **two major product-flow issues**.
+
+## ISSUE 1 — Cart Product → Product Details Page
+
+Currently, when a customer adds a product to the cart, the product appears in the cart, but clicking the product does not correctly navigate to that specific product's details page.
+
+### Required behavior
+
+When a customer:
+
+1. Opens a product
+2. Adds it to the cart
+3. Opens the Cart
+4. Clicks the product/image/name in the cart
+
+They must be redirected to the **exact Product Details page for that product**.
+
+Example:
+
+```text
+Product: Teddy Bear
+Product ID: 123
+Slug: teddy-bear
+
+Cart
+   ↓
+Click Teddy Bear
+   ↓
+/products/teddy-bear
+```
+
+or whatever dynamic route already exists in the project.
+
+### Important requirements
+
+* Use the product's existing unique `id` or `slug`.
+* Do NOT hardcode product URLs.
+* Do NOT redirect every product to the same generic product page.
+* Make sure the route works for every product, including products created by admins later.
+* Preserve the existing cart functionality.
+* Clicking the quantity buttons, remove button, or other cart controls should NOT accidentally trigger product navigation.
+* If the project already has a product-details route/component, reuse it instead of creating a duplicate system.
+* If the existing routing structure is incorrect, fix it cleanly.
+
+---
+
+# ISSUE 2 — Admin Added Product Must Automatically Appear in the Correct Storefront Location
+
+When an admin creates a new product from the **Admin Dashboard**, the product should automatically be reflected on the appropriate storefront page/category.
+
+Currently, there appears to be a problem where an admin-created product is saved/created but does not correctly appear at the expected storefront path/page, or the redirect/path after creation is incorrect.
+
+### Required behavior
+
+Admin flow:
+
+```text
+Admin Dashboard
+      ↓
+Add New Product
+      ↓
+Enter product information
+      ↓
+Save Product
+      ↓
+Product stored in the database
+      ↓
+Product receives its unique ID/slug
+      ↓
+Product automatically appears
+on the appropriate storefront/category page
+      ↓
+Customer can open its Product Details page
+```
+
+For example:
+
+```text
+Admin adds:
+
+Name: Blue Dinosaur Plushie
+Category: Toys
+Price: ₹799
+Image: ...
+```
+
+After saving:
+
+```text
+Toys page
+   ↓
+Blue Dinosaur Plushie appears
+   ↓
+Click product
+   ↓
+/products/blue-dinosaur-plushie
+```
+
+### Important requirements
+
+* The admin should NOT need to manually modify frontend code for every new product.
+* The storefront should dynamically load products from the existing database/backend.
+* The product's category should determine where it appears if the current architecture uses categories.
+* The product must use its actual database `id`/`slug`.
+* The product details page must be able to retrieve the newly created product.
+* Make sure newly created products work exactly like existing products.
+* If the admin dashboard currently redirects somewhere after product creation, make that redirect logical and consistent with the existing application.
+* Do not create duplicate product records.
+* Do not break existing products.
+* Do not replace the current database with mock/static data.
+
+---
+
+# VERY IMPORTANT — FIRST INVESTIGATE
+
+Before changing anything, inspect:
+
+1. Product database/schema/model
+2. Product creation API/server action
+3. Product listing API/query
+4. Product details API/query
+5. Product routing
+6. Cart data structure
+7. Cart item component
+8. Admin product creation form
+9. Admin product creation submission logic
+10. Category filtering/routing
+11. Any slug-generation logic
+12. Any caching/state-management logic affecting product lists
+
+Trace the complete data flow:
+
+```text
+DATABASE
+   ↓
+PRODUCT API
+   ↓
+PRODUCT LIST
+   ↓
+PRODUCT DETAILS
+   ↓
+CART
+   ↓
+PRODUCT ROUTE
+```
+
+and:
+
+```text
+ADMIN FORM
+   ↓
+CREATE PRODUCT API
+   ↓
+DATABASE
+   ↓
+PRODUCT LIST
+   ↓
+CATEGORY PAGE
+   ↓
+PRODUCT DETAILS
+```
+
+Identify the **root cause** of both problems before implementing the fix.
+
+---
+
+# IMPLEMENTATION RULES
+
+* Work with the existing technology stack.
+* Do NOT migrate frameworks.
+* Do NOT replace the existing database.
+* Do NOT rewrite unrelated components.
+* Do NOT remove existing functionality.
+* Reuse existing components, APIs, utilities, and routing wherever possible.
+* Follow the project's existing coding conventions.
+* Keep the implementation production-ready.
+* Handle loading, missing-product, and invalid-product cases properly.
+* Make sure direct navigation to a product details URL works.
+* Make sure refreshing the product details page still works.
+* Make sure an admin-created product works immediately after creation.
+* Make sure the cart uses the correct product identifier.
+* Avoid duplicate API/database calls where unnecessary.
+
+---
+
+# VALIDATION / TESTING
+
+After implementing the changes, test these exact scenarios.
+
+### Test 1 — Existing Product
+
+```text
+Open existing product
+→ Add to cart
+→ Open cart
+→ Click product
+→ Correct Product Details page opens
+```
+
+### Test 2 — Multiple Products
+
+```text
+Add Product A
+Add Product B
+Open Cart
+
+Click Product A → Product A details
+Click Product B → Product B details
+```
+
+Make sure they do not all redirect to the same product.
+
+### Test 3 — Admin Product
+
+```text
+Admin Dashboard
+→ Add Product
+→ Save
+→ Verify database record
+→ Verify product appears in correct storefront/category
+→ Click product
+→ Verify correct Product Details page
+```
+
+### Test 4 — Refresh
+
+After opening the new product's details page:
+
+```text
+Refresh browser
+```
+
+The product should still load correctly.
+
+### Test 5 — Invalid Product
+
+Open a nonexistent product URL.
+
+The application should show the project's proper **Product Not Found / 404 state** instead of crashing.
+
+---
+
+# FINAL RESPONSE
+
+After making the changes, give me a concise report containing:
+
+1. Root cause of Issue 1
+2. Root cause of Issue 2
+3. Files/components changed
+4. What was changed in each file
+5. Routes involved
+6. Database/API changes, if any
+7. Tests performed and their results
+8. Any remaining issues or assumptions
+
+Do not claim that something was fixed unless you actually verified it in the code/application.
+
+Again: **do not rebuild TreasureTots. Diagnose the existing implementation and make the smallest clean changes necessary to fix these two product-flow issues.**

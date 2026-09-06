@@ -11,6 +11,7 @@ import {
   useAdminDeleteProduct,
   useAdminCreateProduct,
   useAdminUpdateProduct,
+  getListProductsQueryKey,
 } from "@workspace/api-client-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +33,7 @@ const emptyForm: ProductFormData = {
 
 const ORDER_STATUSES = ["payment_pending", "order_received", "making", "dispatched", "delivered", "cancelled"];
 const PIE_COLORS = ["#FF7A00", "#3b82f6", "#22c55e", "#a855f7", "#ef4444"];
+const PUBLIC_PRODUCTS_QUERY_ROOT = getListProductsQueryKey()[0];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -190,7 +192,7 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
         <div className="p-6 grid grid-cols-2 gap-4">
           {([
             { k: "name", label: "Product Name", type: "text", full: true },
-            { k: "slug", label: "URL Slug", type: "text", full: false },
+            { k: "slug", label: "URL Slug (optional)", type: "text", full: false },
             { k: "price", label: "Price (₹)", type: "number", full: false },
             { k: "stock", label: "Stock", type: "number", full: false },
             { k: "description", label: "Description", type: "textarea", full: true },
@@ -202,6 +204,7 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
               ) : (
                 <input type={type} value={String(form[k])} onChange={set(k)}
+                  placeholder={k === "slug" ? "Generated from product name" : undefined}
                   className="w-full h-10 px-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
               )}
             </div>
@@ -297,7 +300,7 @@ function ProductModal({ form, setForm, onSave, onClose, isPending }: {
               onChange={set("category")}
               className="w-full h-10 px-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
-              {["learning", "flashcards", "labels", "wallpapers"].map(c => <option key={c}>{c}</option>)}
+              {["learning", "flashcards", "labels"].map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
           <div>
@@ -809,19 +812,36 @@ export default function Admin() {
   });
   const deleteProduct = useAdminDeleteProduct({
     mutation: {
-      onSuccess: () => { qc.invalidateQueries({ queryKey: ["adminProducts"] }); toast({ title: "Product deleted" }); },
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ["adminProducts"] });
+        qc.invalidateQueries({ queryKey: [PUBLIC_PRODUCTS_QUERY_ROOT] });
+        qc.invalidateQueries({ queryKey: ["listProducts"] });
+        toast({ title: "Product deleted" });
+      },
       onError: () => toast({ title: "Failed", variant: "destructive" }),
     }
   });
   const createProduct = useAdminCreateProduct({
     mutation: {
-      onSuccess: () => { qc.invalidateQueries({ queryKey: ["adminProducts"] }); setProductModal({ open: false, form: emptyForm }); toast({ title: "Product added" }); },
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ["adminProducts"] });
+        qc.invalidateQueries({ queryKey: [PUBLIC_PRODUCTS_QUERY_ROOT] });
+        qc.invalidateQueries({ queryKey: ["listProducts"] });
+        setProductModal({ open: false, form: emptyForm });
+        toast({ title: "Product added" });
+      },
       onError: () => toast({ title: "Failed", variant: "destructive" }),
     }
   });
   const updateProduct = useAdminUpdateProduct({
     mutation: {
-      onSuccess: () => { qc.invalidateQueries({ queryKey: ["adminProducts"] }); setProductModal({ open: false, form: emptyForm }); toast({ title: "Product updated" }); },
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ["adminProducts"] });
+        qc.invalidateQueries({ queryKey: [PUBLIC_PRODUCTS_QUERY_ROOT] });
+        qc.invalidateQueries({ queryKey: ["listProducts"] });
+        setProductModal({ open: false, form: emptyForm });
+        toast({ title: "Product updated" });
+      },
       onError: () => toast({ title: "Failed", variant: "destructive" }),
     }
   });
@@ -832,7 +852,7 @@ export default function Admin() {
     const { id, name, slug, category, subcategory, description, coverImage, price, stock, isBuyable } = productModal.form;
     const finalImage = coverImageOverride ?? coverImage;
     const payload = {
-      name, slug, category,
+      name, slug: slug || undefined, category,
       subcategory: subcategory || undefined,
       description: description || undefined,
       coverImage: finalImage,

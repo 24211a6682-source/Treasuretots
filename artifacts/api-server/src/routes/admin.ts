@@ -7,8 +7,52 @@ import { AdminCreateProductBody, AdminUpdateProductBody, AdminUpdateOrderStatusB
 import { isOrderReceivable } from "../lib/order-status";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const STOREFRONT_CATEGORIES = new Set(["learning", "flashcards", "labels"]);
 
 const router = Router();
+
+function normalizeSlug(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 200)
+    .replace(/-+$/g, "");
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { code?: string; cause?: { code?: string } };
+  return candidate.code === "23505" || candidate.cause?.code === "23505";
+}
+
+async function insertProductWithUniqueSlug(
+  values: Omit<typeof productsTable.$inferInsert, "slug">,
+  requestedSlug: string | undefined,
+) {
+  const baseSlug = normalizeSlug(requestedSlug?.trim() || values.name);
+  if (!baseSlug) {
+    throw new Error("Product name or slug must contain letters or numbers");
+  }
+
+  for (let suffix = 1; suffix <= 100; suffix += 1) {
+    const suffixText = suffix === 1 ? "" : `-${suffix}`;
+    const slug = `${baseSlug.slice(0, 200 - suffixText.length).replace(/-+$/g, "")}${suffixText}`;
+    try {
+      const [product] = await db
+        .insert(productsTable)
+        .values({ ...values, slug })
+        .returning();
+      return product;
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+    }
+  }
+
+  throw new Error("Could not generate a unique product slug");
+}
 
 function formatProduct(p: typeof productsTable.$inferSelect) {
   return {
@@ -73,10 +117,14 @@ router.post("/v1/admin/products", requireAdmin, async (req, res) => {
   }
   try {
     const data = parse.data;
+    if (!STOREFRONT_CATEGORIES.has(data.category)) {
+      res.status(400).json({ error: "Category must be learning, flashcards, or labels" });
+      return;
+    }
     const imagesList = data.images && data.images.length > 0
       ? data.images
       : data.coverImage ? [data.coverImage] : [];
-    const [product] = await db.insert(productsTable).values({
+    const product = await insertProductWithUniqueSlug({
       name: data.name,
       description: data.description ?? null,
       price: data.price != null ? String(data.price) : null,
@@ -85,12 +133,15 @@ router.post("/v1/admin/products", requireAdmin, async (req, res) => {
       images: imagesList,
       category: data.category,
       subcategory: data.subcategory ?? null,
-      slug: data.slug,
       isBuyable: data.isBuyable ?? true,
       isActive: true,
-    }).returning();
+    }, data.slug);
     res.status(201).json(formatProduct(product));
   } catch (err) {
+    if (err instanceof Error && /letters or numbers|unique product slug/.test(err.message)) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
     req.log.error({ err }, "Admin create product error");
     res.status(500).json({ error: "Failed to create product" });
   }
@@ -105,6 +156,10 @@ router.put("/v1/admin/products/:id", requireAdmin, async (req, res) => {
   }
   try {
     const data = parse.data;
+    if (data.category !== undefined && !STOREFRONT_CATEGORIES.has(data.category)) {
+      res.status(400).json({ error: "Category must be learning, flashcards, or labels" });
+      return;
+    }
     const updateData: Partial<typeof productsTable.$inferInsert> = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
