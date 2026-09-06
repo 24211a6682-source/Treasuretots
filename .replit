@@ -58,6 +58,7 @@ VITE_CLOUDINARY_UPLOAD_PRESET = "treasuretots_unsigned"
 ADMIN_EMAIL = "treasuretots2025@gmail.com"
 
 [userenv.production]
-ALLOWED_ORIGIN = "https://treasuretots.replit.app"
+ALLOWED_ORIGIN = "https://treasuretots.in,https://treasuretots.replit.app"
+APP_URL = "https://treasuretots.in"
 
 [userenv.development]

@@ -1,0 +1,280 @@
+We have moved the production website from the Replit deployment domain to our custom domain:
+
+https://treasuretots.in
+
+The authentication system was working on the Replit .replit.app deployment URL, but after connecting the custom domain, login/authentication and password-reset functionality are no longer working correctly.
+
+IMPORTANT: Do NOT rebuild the authentication system. Inspect the existing implementation and production environment configuration first.
+
+The repository uses:
+
+* React + Vite frontend
+* Express 5 API
+* PostgreSQL + Drizzle
+* JWT authentication
+* localStorage key: tt_token
+* API routes under /api
+* Resend for password-reset emails
+* Wouter routing
+
+The existing authentication implementation is in:
+
+* artifacts/treasuretots/src/pages/login.tsx
+* artifacts/treasuretots/src/pages/forgot-password.tsx
+* artifacts/treasuretots/src/pages/reset-password.tsx
+* artifacts/api-server/src/routes/auth.ts
+* artifacts/api-server/src/lib/email.ts
+* artifacts/api-server/src/index.ts
+
+## PRIMARY PROBLEM
+
+The application works differently on:
+
+1. https://treasuretots.in
+2. the old Replit .replit.app deployment URL
+
+The custom domain must become the canonical production origin.
+
+Investigate and fix all domain-dependent authentication configuration.
+
+## 1. LOGIN
+
+Verify that:
+
+https://treasuretots.in/login
+
+correctly sends the login request to the production API through the existing /api proxy.
+
+Verify that:
+
+POST /api/v1/auth/login
+
+reaches the Express API correctly.
+
+Do NOT introduce a separate authentication system.
+
+Verify:
+
+* email login
+* phone login
+* invalid credentials
+* successful login
+* JWT generation
+* tt_token storage
+* authenticated page access
+* logout
+* refresh/reload while logged in
+
+The frontend currently uses the generated useLogin() hook and the backend already implements /v1/auth/login. Preserve this architecture.
+
+## 2. PASSWORD RESET
+
+This is the highest-priority issue.
+
+Inspect the existing password reset implementation.
+
+The backend currently determines the application origin using:
+
+APP_URL
+then ALLOWED_ORIGIN
+then REPLIT_DOMAINS
+
+Make sure production password-reset emails generate links using:
+
+https://treasuretots.in/reset-password?token=...
+
+and NEVER the old Replit deployment URL.
+
+Do not hardcode the domain directly into application source code if an environment variable is the intended configuration mechanism.
+
+Set/document the correct production environment configuration.
+
+## 3. RESEND EMAIL CONFIGURATION
+
+Inspect:
+
+artifacts/api-server/src/lib/email.ts
+
+Verify the production environment contains the required:
+
+RESEND_API_KEY
+FROM_EMAIL
+
+Verify that FROM_EMAIL uses a domain/address that is actually verified in Resend.
+
+Do not expose RESEND_API_KEY or any other secret to the frontend.
+
+Do not put secrets into source code.
+
+## 4. CUSTOM DOMAIN / CORS / API PROXY
+
+Inspect the Express server and frontend deployment configuration.
+
+Verify that the custom domain correctly supports:
+
+https://treasuretots.in/api/...
+
+and that the frontend does not accidentally call an old Replit API URL.
+
+Check:
+
+* CORS
+* ALLOWED_ORIGIN
+* API base URL
+* Vite environment variables
+* Replit deployment configuration
+* custom-domain routing
+* /api proxy
+* HTTPS
+* trailing slash behavior
+* www vs non-www behavior
+
+The canonical production domain should be:
+
+https://treasuretots.in
+
+If [www.treasuretots.in](http://www.treasuretots.in) is supported, configure it consistently rather than creating two independent authentication origins.
+
+## 5. PASSWORD RESET FLOW
+
+Test the entire flow:
+
+User opens:
+
+https://treasuretots.in/forgot-password
+
+↓
+
+Enters registered email
+
+↓
+
+POST /api/v1/auth/password-reset/request
+
+↓
+
+Backend generates secure one-time token
+
+↓
+
+Token is hashed and stored in PostgreSQL
+
+↓
+
+Resend sends email
+
+↓
+
+Email link points to:
+
+https://treasuretots.in/reset-password?token=TOKEN
+
+↓
+
+User opens the link
+
+↓
+
+React reset-password page reads the token
+
+↓
+
+POST /api/v1/auth/password-reset
+
+↓
+
+Password is updated
+
+↓
+
+Old token becomes unusable
+
+↓
+
+User can log in with the new password
+
+Verify that the reset token still expires after one hour and can only be used once.
+
+## 6. DO NOT BREAK SECURITY
+
+Preserve:
+
+* password hashing
+* JWT signing
+* reset-token hashing
+* one-time reset tokens
+* token expiration
+* generic forgot-password response
+* server-side secrets
+* authentication middleware
+
+Do not log passwords, API keys, JWT secrets, or raw password-reset tokens.
+
+## 7. IMPORTANT PRODUCTION TESTS
+
+After making changes, test using the actual custom domain, NOT only the Replit preview URL.
+
+Test:
+
+A. Login
+
+https://treasuretots.in/login
+
+B. Forgot password
+
+https://treasuretots.in/forgot-password
+
+C. Reset password
+
+https://treasuretots.in/reset-password?token=...
+
+D. Authenticated dashboard
+
+E. Logout
+
+F. Browser refresh while logged in
+
+G. Direct navigation to reset-password URL
+
+H. Expired reset token
+
+I. Reused reset token
+
+J. Invalid reset token
+
+## 8. ENVIRONMENT VARIABLE REPORT
+
+After diagnosing the issue, tell me exactly which production environment variables need to exist and what each one is used for.
+
+Do NOT reveal the actual secret values.
+
+Expected categories include:
+
+APP_URL
+ALLOWED_ORIGIN
+RESEND_API_KEY
+FROM_EMAIL
+
+Also identify any other domain/API-related environment variables discovered in the codebase.
+
+## 9. FINAL REPORT
+
+Before changing anything, identify the root cause.
+
+Then implement the smallest clean fix.
+
+Finally report:
+
+1. Exact root cause
+2. Files changed
+3. Environment variables that need updating
+4. API routes tested
+5. Custom-domain URLs tested
+6. Password reset email URL verified
+7. Login verified
+8. Whether the old Replit domain still works and whether it should
+9. Any remaining deployment configuration that I must manually change in Replit
+
+Do not claim the issue is fixed unless you actually test the production custom domain.
+
+Most importantly: the production authentication flow must treat https://treasuretots.in as the canonical application origin.
