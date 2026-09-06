@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { getAuthLink, getSafeReturnUrl } from "@/lib/auth-navigation";
+import { trackEvent } from "@/lib/analytics";
 
 export default function Login() {
   const [identifier, setIdentifier] = useState("");
@@ -25,6 +26,9 @@ export default function Login() {
         data: { identifier, password }
       });
       login(res.token, res.user);
+      trackEvent("login_completed", {
+        method: identifier.includes("@") ? "email" : "phone",
+      });
       toast({ title: "Welcome back!", description: "Successfully logged in." });
       
       setLocation(returnUrl);

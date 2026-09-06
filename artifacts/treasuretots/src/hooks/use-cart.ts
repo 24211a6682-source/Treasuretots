@@ -12,6 +12,7 @@ import {
 } from '@workspace/api-client-react';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
+import { trackEvent } from '@/lib/analytics';
 
 export interface LocalCartItem {
   productId: number;
@@ -149,6 +150,12 @@ export function useCart() {
       });
       toast({ title: "Added to cart" });
     }
+    trackEvent("cart_item_added", {
+      product_id: productId,
+      quantity,
+      signed_in: isAuthenticated,
+      personalized: Boolean(childName),
+    });
   };
 
   const updateQuantity = async (productId: number, quantity: number) => {
@@ -169,6 +176,10 @@ export function useCart() {
       setSyncedLocalCart(prev => prev.filter(item => item.productId !== productId));
       toast({ title: "Removed from cart" });
     }
+    trackEvent("cart_item_removed", {
+      product_id: productId,
+      signed_in: isAuthenticated,
+    });
   };
 
   const clearLocalCart = () => {

@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Loader2, ArrowLeft } from "lucide-react";
 import { BuyNowIntent, clearBuyNowIntent, readBuyNowIntent } from "@/lib/buy-now";
+import { trackEvent } from "@/lib/analytics";
 
 declare global {
   interface Window {
@@ -256,6 +257,13 @@ export default function Checkout() {
   };
 
   const handlePayment = async () => {
+    const purchaseMode = isDirectPurchase ? "buy_now" : "cart";
+    trackEvent("checkout_started", {
+      purchase_mode: purchaseMode,
+      item_count: checkoutItems.reduce((total, item) => total + item.quantity, 0),
+      subtotal: checkoutTotal,
+      address_source: addressMode,
+    });
     try {
       const items = checkoutItems.map(i => ({ productId: i.productId, quantity: i.quantity }));
       const hasCustomName = checkoutItems.find(i => i.childName);
@@ -265,7 +273,7 @@ export default function Checkout() {
           items,
           childName: hasCustomName?.childName || null,
           address,
-          purchaseMode: isDirectPurchase ? "buy_now" : "cart",
+          purchaseMode,
         }
       });
 
@@ -273,6 +281,12 @@ export default function Checkout() {
       const recordPaymentOutcome = (paymentStatus: "failed" | "cancelled") => {
         if (paymentOutcomeRecorded) return;
         paymentOutcomeRecorded = true;
+        trackEvent("payment_outcome", {
+          status: paymentStatus,
+          purchase_mode: purchaseMode,
+          amount: orderData.amount / 100,
+          currency: "INR",
+        });
         void updatePaymentStatus.mutateAsync({
           id: orderData.orderId,
           data: { paymentStatus },
@@ -299,6 +313,12 @@ export default function Checkout() {
                 orderId: orderData.orderId
               }
             });
+            trackEvent("purchase_completed", {
+              purchase_mode: purchaseMode,
+              item_count: checkoutItems.reduce((total, item) => total + item.quantity, 0),
+              amount: orderData.amount / 100,
+              currency: "INR",
+            });
             if (isDirectPurchase) {
               clearBuyNowIntent();
             } else {
@@ -307,6 +327,11 @@ export default function Checkout() {
             await refetch();
             setLocation("/order-success");
           } catch {
+            trackEvent("payment_verification_failed", {
+              purchase_mode: purchaseMode,
+              amount: orderData.amount / 100,
+              currency: "INR",
+            });
             toast({ title: "Payment verification failed", variant: "destructive" });
           }
         },
@@ -346,6 +371,10 @@ export default function Checkout() {
       rzp.open();
 
     } catch {
+      trackEvent("checkout_initialization_failed", {
+        purchase_mode: purchaseMode,
+        item_count: checkoutItems.reduce((total, item) => total + item.quantity, 0),
+      });
       toast({ title: "Failed to initialize order", variant: "destructive" });
     }
   };

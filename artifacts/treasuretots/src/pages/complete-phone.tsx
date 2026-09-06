@@ -14,6 +14,7 @@ import {
   type PhoneCountry,
 } from "@/lib/phone-countries";
 import { InternationalPhoneInput } from "@/components/InternationalPhoneInput";
+import { trackEvent } from "@/lib/analytics";
 
 export default function CompletePhone({ returnTo = "/dashboard" }: { returnTo?: string }) {
   const { user, isLoading, refreshUser } = useAuth();
@@ -45,6 +46,10 @@ export default function CompletePhone({ returnTo = "/dashboard" }: { returnTo?: 
     try {
       await updateProfile.mutateAsync({ data: { phone: toInternationalPhone(country, phone) } });
       await refreshUser();
+      trackEvent("profile_phone_completed", {
+        country: country.name,
+        calling_code: `+${country.dialCode}`,
+      });
       toast({ title: "Phone number saved", description: "Your account is ready to use." });
       setLocation(returnTo === "/complete-phone" ? "/dashboard" : returnTo);
     } catch (err: any) {

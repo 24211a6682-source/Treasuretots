@@ -15,6 +15,7 @@ import {
   type PhoneCountry,
 } from "@/lib/phone-countries";
 import { InternationalPhoneInput } from "@/components/InternationalPhoneInput";
+import { trackEvent } from "@/lib/analytics";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -49,6 +50,10 @@ export default function Register() {
         data: { name, email, phone: toInternationalPhone(country, phone), password, confirmPassword }
       });
       login(res.token, res.user);
+      trackEvent("signup_completed", {
+        country: country.name,
+        calling_code: `+${country.dialCode}`,
+      });
       toast({ title: "Account created!", description: "Welcome to TreasureTots Creations." });
       setLocation(returnUrl);
     } catch (err: any) {
