@@ -4,7 +4,7 @@ import { storybookProducts, getWhatsAppEnquiryUrl, INSTAGRAM_URL, EMAIL } from "
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
-import { Star, MessageCircle, Instagram, Sparkles, Paintbrush, FileText, Truck, Mail, ArrowLeft } from "lucide-react";
+import { MessageCircle, Instagram, Sparkles, Paintbrush, FileText, Truck, Mail, ArrowLeft } from "lucide-react";
 import { StorybookCard } from "@/components/StorybookCard";
 
 const categoryColors: Record<string, string> = {
@@ -104,15 +104,6 @@ export default function StorybookDetail() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
             {book.name}
           </h1>
-
-          <div className="flex items-center gap-2 mb-6">
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map(i => (
-                <Star key={i} className="w-5 h-5 fill-orange-500 text-orange-500" />
-              ))}
-            </div>
-            <span className="text-gray-700 font-medium ml-1">Loved by parents</span>
-          </div>
 
           {/* Feature highlights */}
           <div className="bg-orange-50/80 rounded-2xl p-5 border border-orange-100 mb-6 space-y-3">

@@ -145,22 +145,6 @@ export function searchStaticCatalog(query: string): StaticCatalogSearchResult[] 
   return [...storybookMatches, ...wallpaperMatches];
 }
 
-export const reviews = [
-  { id: 1, text: "Received the items... The quality is very nice. All items received in good condition with proper packing. Thanks dear.", stars: 5 },
-  { id: 2, text: "Hi sir, received the book. It is too good. He liked it very much. Thank you so much ❤️", stars: 5 },
-  { id: 3, text: "Received ma'am. Really beautiful. The photo feels real. It doesn't look like animated or AI.", stars: 5 },
-  { id: 4, text: "Hi Akshatha, we received the book and we love it ❤️ Looking forward to more!!!", stars: 5 },
-  { id: 5, text: "Wow amazing thank you so much 😊 The book is absolutely beautiful. Quality is great, personalization is perfect. My son loved it! Highly recommend!", stars: 5 },
-  { id: 6, text: "Thank you for the wonderful book. It turned out really well and the quality is excellent. Looking forward to ordering again.", stars: 5 },
-  { id: 7, text: "Thank you for delivering the book personally. Book quality is very good. I was searching for Hanuman Chalisa book from many days. This is so perfect and affordable too.", stars: 5 },
-  { id: 8, text: "Thank you for the beautiful personalized Harry Potter book ma'am. We received it just in time. He's flying to USA tomorrow and he absolutely loved it. Incredible work.", stars: 5 },
-  { id: 9, text: "Everyone in the house liked it a lot. Nice work friend, lots of love. Keep shining with unique projects like this.", stars: 5 },
-  { id: 10, text: "This was a really good story book. My daughter liked it a lot and all her friends' parents liked it and took your contact number.", stars: 5 },
-  { id: 11, text: "I gave my daughter 6 gifts on her 6th birthday. The most favourite was the rangoli book. She is learning through it. We are really happy.", stars: 5 },
-  { id: 12, text: "I bought your flashcards from Vinay Varanasi's Sundara Hanuman event stall. They are really good.", stars: 5 },
-  { id: 13, text: "My son loved the book. He was so happy.", stars: 5 },
-];
-
 export const WHATSAPP_NUMBER = "918050640552";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 export const INSTAGRAM_URL = "https://www.instagram.com/treasuretots2025";

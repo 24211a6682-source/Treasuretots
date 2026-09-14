@@ -4,9 +4,8 @@ import { useGetProduct } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Star, MessageCircle, Instagram, Mail, CheckCircle2, Truck, Gift, ArrowLeft } from "lucide-react";
+import { MessageCircle, Instagram, Mail, CheckCircle2, Truck, Gift, ArrowLeft } from "lucide-react";
 import { WHATSAPP_URL, INSTAGRAM_URL, EMAIL } from "@/lib/products";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { saveBuyNowIntent } from "@/lib/buy-now";
 import { RecommendedProducts } from "@/components/RecommendedProducts";
@@ -178,14 +177,6 @@ export default function ProductDetail() {
 
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
 
-          <div className="flex items-center gap-2 mb-6 cursor-pointer">
-            <div className="flex">
-              {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-orange-500 text-orange-500" />)}
-            </div>
-            <span className="text-sm font-semibold text-gray-700">4.9</span>
-            <span className="text-sm text-muted-foreground underline decoration-dotted underline-offset-4">13 reviews</span>
-          </div>
-
           <div className="text-4xl font-extrabold text-primary mb-6">
             ₹{product.price}
           </div>
@@ -259,13 +250,7 @@ export default function ProductDetail() {
       </div>
 
       <div className="mt-16">
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 mb-8 bg-muted/50 p-1">
-            <TabsTrigger value="details" className="text-base py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Details & Specs</TabsTrigger>
-            <TabsTrigger value="reviews" className="text-base py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Reviews</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="details" className="bg-white rounded-2xl border p-6 md:p-8">
+          <div className="bg-white rounded-2xl border p-6 md:p-8">
             <h3 className="text-xl font-bold mb-6">Product Specifications</h3>
             <div className="grid md:grid-cols-2 gap-x-12 gap-y-4">
               <div className="flex justify-between py-3 border-b border-dashed">
@@ -285,18 +270,7 @@ export default function ProductDetail() {
                 <span className="font-medium text-right">India · Handmade</span>
               </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="reviews" className="bg-white rounded-2xl border p-6 md:p-8">
-            <div className="text-center py-10">
-              <div className="flex justify-center mb-4">
-                {[1,2,3,4,5].map(i => <Star key={i} className="w-8 h-8 fill-orange-500 text-orange-500" />)}
-              </div>
-              <h3 className="text-2xl font-bold">4.9 out of 5 stars</h3>
-              <p className="text-muted-foreground">Based on verified parent reviews</p>
-            </div>
-          </TabsContent>
-        </Tabs>
+          </div>
       </div>
 
       <RecommendedProducts product={product} />

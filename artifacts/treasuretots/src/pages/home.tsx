@@ -2,16 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
 import { useListProducts, Product } from "@workspace/api-client-react";
 import {
-  storybookProducts, wallpaperProducts, reviews,
+  storybookProducts, wallpaperProducts,
   INSTAGRAM_URL, EMAIL, WHATSAPP_URL
 } from "@/lib/products";
 import { ProductCard } from "@/components/ProductCard";
 import { BookCarousel3D } from "@/components/BookCarousel3D";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star, MessageCircle, Instagram, Mail, ChevronLeft, ChevronRight, Sparkles, BookOpen, Heart, Pencil, ArrowRight } from "lucide-react";
+import { MessageCircle, Instagram, Mail, ChevronLeft, ChevronRight, Sparkles, BookOpen, Heart, Pencil, ArrowRight, Truck } from "lucide-react";
 
 const WALLPAPER_IMAGES = wallpaperProducts.flatMap(p => p.images);
 
@@ -110,8 +108,8 @@ export default function Home() {
         <div className="container mx-auto px-4 py-14 md:py-24 grid md:grid-cols-2 gap-10 md:gap-8 items-center">
           <div className="flex flex-col gap-6 z-10">
             <div className="inline-flex items-center gap-2 bg-white px-3 py-1 rounded-full text-xs sm:text-sm font-medium w-fit text-orange-600 shadow-sm border border-orange-100">
-              <Star className="w-4 h-4 fill-orange-500 text-orange-500" />
-              4.9 Rating <span aria-hidden="true">|</span> India Shipping
+              <Truck className="w-4 h-4 text-orange-500" />
+              Pan-India Shipping
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight">
               Stories Where Your <span className="text-primary">Child is the Hero</span>
@@ -336,44 +334,6 @@ export default function Home() {
               </Button>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Reviews Section */}
-      <section className="py-16 md:py-20 container mx-auto px-4 overflow-hidden">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Loved by Parents Across India ⭐⭐⭐⭐⭐
-          </h2>
-          <div className="flex justify-center gap-1">
-            {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-6 h-6 fill-orange-500 text-orange-500" />)}
-          </div>
-        </div>
-
-        <div className="flex overflow-x-auto pb-8 gap-6 snap-x -mx-4 px-4 hide-scrollbar">
-          {reviews.map(review => (
-            <Card key={review.id} className="min-w-[300px] max-w-[350px] snap-center shrink-0 border-orange-100 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(review.stars)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-orange-500 text-orange-500" />
-                  ))}
-                </div>
-                <p className="text-gray-700 italic mb-6">"{review.text}"</p>
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback className="bg-orange-100 text-orange-700 font-bold">
-                      {String.fromCharCode(64 + review.id)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold text-sm">Happy Parent</p>
-                    <p className="text-xs text-gray-500">Verified Buyer</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
         </div>
       </section>
 
